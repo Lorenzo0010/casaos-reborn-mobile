@@ -51,11 +51,11 @@ export default function DashboardScreen() {
         <>
           <View style={styles.card}>
             <Text style={styles.cardTitle}>CPU Usage</Text>
-            <Text style={styles.cardValue}>{formatCpu(stats.cpu.usage)}%</Text>
+            <Text style={styles.cardValue}>{formatCpu(stats.cpu?.usage)}%</Text>
           </View>
           <View style={styles.card}>
             <Text style={styles.cardTitle}>RAM Usage</Text>
-            <Text style={styles.cardValue}>{formatBytes(stats.memory.used)} / {formatBytes(stats.memory.total)}</Text>
+            <Text style={styles.cardValue}>{formatBytes(stats.memory?.used)} / {formatBytes(stats.memory?.total)}</Text>
           </View>
         </>
       )}
