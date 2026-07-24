@@ -15,14 +15,32 @@ export default function LoginScreen({ navigation }) {
     const loadSavedData = async () => {
       try {
         const savedIp = await AsyncStorage.getItem('server_ip');
-        if (savedIp) setIpAddress(savedIp);
-        // You could also auto-login here if token is saved and valid
+        const token = await AsyncStorage.getItem('token');
+        
+        if (savedIp) {
+          setIpAddress(savedIp);
+          setBaseUrl(savedIp);
+        }
+
+        if (token && savedIp) {
+          setLoading(true);
+          try {
+            // Verify token
+            await apiClient.get('/api/health');
+            navigation.replace('MainApp');
+          } catch (e) {
+            // Token invalid or network error
+            await AsyncStorage.removeItem('token');
+            setLoading(false);
+          }
+        }
       } catch (e) {
         console.error('Failed to load saved data');
+        setLoading(false);
       }
     };
     loadSavedData();
-  }, []);
+  }, [navigation]);
 
   const handleLogin = async () => {
     if (!ipAddress || !username || !password) {

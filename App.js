@@ -19,17 +19,4 @@ export default function App() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#1e1e1e',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    marginBottom: 20,
-  }
-});
+// Styles removed
