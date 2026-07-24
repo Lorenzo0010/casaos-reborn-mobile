@@ -6,7 +6,12 @@ import DashboardScreen from '../screens/DashboardScreen';
 import ContainersScreen from '../screens/ContainersScreen';
 
 // Placeholders for other screens
-const PlaceholderScreen = () => <></>;
+import { StyleSheet, Text, View } from 'react-native';
+const PlaceholderScreen = ({ route }) => (
+  <View style={{ flex: 1, backgroundColor: '#1e1e1e', justifyContent: 'center', alignItems: 'center' }}>
+    <Text style={{ color: '#aaa', fontSize: 18 }}>{route.name} - Work in progress</Text>
+  </View>
+);
 
 const Tab = createBottomTabNavigator();
 

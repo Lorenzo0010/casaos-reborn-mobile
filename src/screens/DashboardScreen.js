@@ -31,6 +31,19 @@ export default function DashboardScreen() {
     );
   }
 
+  const formatBytes = (bytes) => {
+    if (!bytes || isNaN(bytes)) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const formatCpu = (cpu) => {
+    if (!cpu || isNaN(cpu)) return '0.0';
+    return parseFloat(cpu).toFixed(1);
+  };
+
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.header}>System Overview</Text>
@@ -38,11 +51,11 @@ export default function DashboardScreen() {
         <>
           <View style={styles.card}>
             <Text style={styles.cardTitle}>CPU Usage</Text>
-            <Text style={styles.cardValue}>{stats.cpu.usage}%</Text>
+            <Text style={styles.cardValue}>{formatCpu(stats.cpu.usage)}%</Text>
           </View>
           <View style={styles.card}>
             <Text style={styles.cardTitle}>RAM Usage</Text>
-            <Text style={styles.cardValue}>{stats.memory.used} / {stats.memory.total}</Text>
+            <Text style={styles.cardValue}>{formatBytes(stats.memory.used)} / {formatBytes(stats.memory.total)}</Text>
           </View>
         </>
       )}

@@ -20,14 +20,20 @@ export default function ContainersScreen() {
     fetchContainers();
   }, []);
 
-  const renderItem = ({ item }) => (
-    <View style={styles.card}>
-      <Text style={styles.name}>{item.name}</Text>
-      <Text style={[styles.status, { color: item.state === 'running' ? '#4ade80' : '#f87171' }]}>
-        {item.state}
-      </Text>
-    </View>
-  );
+  const renderItem = ({ item }) => {
+    const containerName = item.name || item.title || (item.Names && item.Names[0]) || 'Sconosciuto';
+    const containerState = item.state || item.State || item.status || 'Sconosciuto';
+    const isRunning = (containerState || '').toLowerCase().includes('running');
+
+    return (
+      <View style={styles.card}>
+        <Text style={styles.name}>{String(containerName).replace(/^\\//, '')}</Text>
+        <Text style={[styles.status, { color: isRunning ? '#4ade80' : '#f87171' }]}>
+          {String(containerState)}
+        </Text>
+      </View>
+    );
+  };
 
   if (loading) {
     return (
