@@ -47,7 +47,8 @@ export default function LoginScreen({ navigation }) {
         setError('Login fallito. Nessun token restituito.');
       }
     } catch (err) {
-      setError('Impossibile connettersi o credenziali errate');
+      const errorMsg = err.response ? `Errore API: ${err.response.status}` : err.message;
+      setError(`Errore: ${errorMsg}`);
     } finally {
       setLoading(false);
     }
