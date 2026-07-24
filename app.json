@@ -22,11 +22,20 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#1e1e1e"
       },
-      "package": "com.casaos.reborn.mobile",
-      "usesCleartextTraffic": true
+      "package": "com.casaos.reborn.mobile"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
+    ]
   }
 }
