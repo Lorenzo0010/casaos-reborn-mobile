@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, Text, View, FlatList, ActivityIndicator, RefreshControl, TouchableOpacity, Alert } from 'react-native';
 import { Play, Square, RotateCw } from 'lucide-react-native';
+import { useNavigation } from '@react-navigation/native';
 import { apiClient } from '../api/client';
 import { colors } from '../theme';
 
@@ -9,6 +10,7 @@ export default function ContainersScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [actionLoading, setActionLoading] = useState(null);
+  const navigation = useNavigation();
 
   const fetchContainers = async () => {
     try {
@@ -39,8 +41,9 @@ export default function ContainersScreen() {
       // Ricarica la lista per mostrare il nuovo stato
       await fetchContainers();
     } catch (e) {
-      console.error(e);
-      Alert.alert('Errore', `Impossibile eseguire l'azione ${action}`);
+      console.error('Action Error:', e.response?.data || e.message);
+      const serverMsg = e.response?.data?.error || e.message;
+      Alert.alert('Errore', `Impossibile eseguire l'azione '${action}': ${serverMsg}`);
     } finally {
       setActionLoading(null);
     }
@@ -57,7 +60,11 @@ export default function ContainersScreen() {
     const casaosName = item.Labels?.['casaos.reborn.name'] || String(containerName).replace(/^\//, '');
 
     return (
-      <View style={styles.card}>
+      <TouchableOpacity 
+        style={styles.card}
+        onPress={() => navigation.navigate('ContainerDetails', { containerId, containerName: casaosName })}
+        activeOpacity={0.7}
+      >
         <View style={styles.cardInfo}>
           <Text style={styles.name}>{casaosName}</Text>
           <Text style={[styles.status, { color: isRunning ? colors.success : colors.error }]}>
@@ -87,7 +94,7 @@ export default function ContainersScreen() {
             </>
           )}
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 
