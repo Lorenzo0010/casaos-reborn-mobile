@@ -3,7 +3,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const apiClient = axios.create({
   baseURL: '',
-  timeout: 10000,
+  timeout: 15000,
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
+  }
 });
 
 apiClient.interceptors.request.use(async (config) => {
@@ -30,6 +34,9 @@ export const setBaseUrl = (url) => {
   let formattedUrl = url;
   if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
     formattedUrl = 'http://' + formattedUrl;
+  }
+  if (formattedUrl.endsWith('/')) {
+    formattedUrl = formattedUrl.slice(0, -1);
   }
   apiClient.defaults.baseURL = formattedUrl;
 };

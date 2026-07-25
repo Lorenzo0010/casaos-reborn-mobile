@@ -144,7 +144,7 @@ export default function ContainerSettingsScreen({ route, navigation }) {
           onPress: async () => {
             setDeleteLoading(true);
             try {
-              await apiClient.post(`/api/docker/containers/${containerId}/delete`);
+              await apiClient.post(`/api/docker/containers/${containerId}/delete`, {});
               Alert.alert('Successo', 'Container eliminato.', [
                 { text: 'OK', onPress: () => navigation.navigate('ContainersList') }
               ]);

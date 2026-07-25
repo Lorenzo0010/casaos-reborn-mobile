@@ -37,7 +37,7 @@ export default function ContainersScreen() {
   const handleAction = async (id, action) => {
     setActionLoading(id);
     try {
-      await apiClient.post(`/api/docker/containers/${id}/${action}`);
+      await apiClient.post(`/api/docker/containers/${id}/${action}`, {});
       // Ricarica la lista per mostrare il nuovo stato
       await fetchContainers();
     } catch (e) {
