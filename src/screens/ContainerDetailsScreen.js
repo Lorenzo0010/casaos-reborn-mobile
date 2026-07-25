@@ -147,18 +147,20 @@ export default function ContainerDetailsScreen({ route, navigation }) {
         {iconUrl ? (
           <Image 
             source={{ uri: iconUrl }} 
-            style={{ width: 64, height: 64, borderRadius: 12, marginBottom: 12 }} 
+            style={{ width: 64, height: 64, borderRadius: 12, marginRight: 16 }} 
             resizeMode="contain"
           />
         ) : (
-          <View style={{ width: 64, height: 64, borderRadius: 12, backgroundColor: bgColor, justifyContent: 'center', alignItems: 'center', marginBottom: 12 }}>
+          <View style={{ width: 64, height: 64, borderRadius: 12, backgroundColor: bgColor, justifyContent: 'center', alignItems: 'center', marginRight: 16 }}>
             <Text style={{ color: 'white', fontSize: 32, fontWeight: 'bold' }}>{initial}</Text>
           </View>
         )}
-        <Text style={styles.title}>{stableId || containerName}</Text>
-        <Text style={[styles.status, { color: statusColor }]}>
-          {details.State?.Status?.toUpperCase()}
-        </Text>
+        <View style={{ flex: 1, justifyContent: 'center' }}>
+          <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit>{stableId || containerName}</Text>
+          <Text style={[styles.status, { color: statusColor }]}>
+            {details.State?.Status?.toUpperCase()}
+          </Text>
+        </View>
       </View>
 
       <View style={styles.actionRow}>
@@ -251,14 +253,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     padding: 20,
     borderRadius: 12,
+    flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,
   },
   title: {
     color: colors.text,
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: 'bold',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   status: {
     fontSize: 14,

@@ -287,7 +287,7 @@ export default function ContainersScreen() {
         style={[
           styles.card, 
           (editMode || isPinned) && { borderColor: isPinned ? colors.primary : colors.border, borderWidth: 1 },
-          isTablet && { flex: 1, marginHorizontal: 8 }
+          isTablet && { flex: 1 }
         ]}
         onPress={() => {
           if (isRecreating || editMode) return;
@@ -422,11 +422,11 @@ export default function ContainersScreen() {
         keyExtractor={(item) => item.Id || item.id || Math.random().toString()}
         renderItem={renderItem}
         numColumns={numColumns}
-        columnWrapperStyle={isTablet ? { paddingHorizontal: 8, justifyContent: 'space-between' } : undefined}
+        columnWrapperStyle={isTablet ? { gap: 16 } : undefined}
         ListHeaderComponent={renderHeader}
         contentContainerStyle={{ padding: 16 }}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
+          <RefreshControl refreshing={refreshing} onRefresh={fetchContainers} tintColor={colors.primary} />
         }
         ListEmptyComponent={
           !loading && <Text style={styles.emptyText}>Nessun container trovato</Text>

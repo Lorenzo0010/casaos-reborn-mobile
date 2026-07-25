@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert, Modal } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert, Modal, useWindowDimensions } from 'react-native';
 import { RefreshCw, DownloadCloud, CheckCircle, Smartphone } from 'lucide-react-native';
 import { apiClient } from '../api/client';
 import { colors } from '../theme';
@@ -13,6 +13,9 @@ import * as IntentLauncher from 'expo-intent-launcher';
 export default function UpdatesScreen() {
   const [updates, setUpdates] = useState([]);
   const [isChecking, setIsChecking] = useState(false);
+  const { width } = useWindowDimensions();
+  const isTablet = width >= 768;
+  const numColumns = isTablet ? 2 : 1;
   const [checkStatus, setCheckStatus] = useState(null);
   
   // Per l'aggiornamento bloccante di casaos-reborn
@@ -250,7 +253,7 @@ export default function UpdatesScreen() {
     const isRecreating = !!task;
     
     return (
-      <View style={styles.card}>
+      <View style={[styles.card, isTablet && { flex: 1 }]}>
         <View style={styles.cardInfo}>
           <Text style={styles.containerName}>{item.name}</Text>
           <Text style={styles.imageName}>{item.image}</Text>
@@ -335,9 +338,12 @@ export default function UpdatesScreen() {
         </View>
       ) : (
         <FlatList
+          key={numColumns}
           data={updates}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
+          numColumns={numColumns}
+          columnWrapperStyle={isTablet ? { gap: 16 } : undefined}
           contentContainerStyle={styles.list}
         />
       )}

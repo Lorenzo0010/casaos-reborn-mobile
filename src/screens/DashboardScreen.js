@@ -12,8 +12,7 @@ export default function DashboardScreen() {
   const navigation = useNavigation();
   const { width: windowWidth } = useWindowDimensions();
   const isTablet = windowWidth >= 768;
-  const halfCardStyle = isTablet ? { width: (windowWidth - 32 - 48) / 4 } : styles.halfCard;
-  const fullCardStyle = isTablet ? { width: (windowWidth - 32 - 16) / 2 } : styles.fullCard;
+  const cardStyle = isTablet ? { width: (windowWidth - 32 - 16) / 2 } : { width: '100%' };
 
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -104,7 +103,7 @@ export default function DashboardScreen() {
         <View style={styles.grid}>
           {/* CPU Card */}
           <TouchableOpacity 
-            style={[styles.card, halfCardStyle]} 
+            style={[styles.card, cardStyle]} 
             activeOpacity={0.7}
             onPress={() => navigation.navigate('WidgetDetails', { type: 'cpu', title: 'Dettagli Processore' })}
           >
@@ -124,7 +123,7 @@ export default function DashboardScreen() {
 
           {/* RAM Card */}
           <TouchableOpacity 
-            style={[styles.card, halfCardStyle]}
+            style={[styles.card, cardStyle]}
             activeOpacity={0.7}
             onPress={() => navigation.navigate('WidgetDetails', { type: 'ram', title: 'Dettagli RAM' })}
           >
@@ -140,7 +139,7 @@ export default function DashboardScreen() {
           </TouchableOpacity>
 
           {/* DISK Card */}
-          <View style={[styles.card, halfCardStyle]}>
+          <View style={[styles.card, cardStyle]}>
             <View style={styles.cardHeader}>
               <View style={[styles.iconBox, { backgroundColor: 'rgba(16, 185, 129, 0.2)' }]}>
                 <HardDrive color="#10b981" size={24} />
@@ -153,7 +152,7 @@ export default function DashboardScreen() {
           </View>
 
           {/* NETWORK Card */}
-          <View style={[styles.card, fullCardStyle]}>
+          <View style={[styles.card, cardStyle]}>
             <View style={styles.cardHeader}>
               <View style={[styles.iconBox, { backgroundColor: 'rgba(245, 158, 11, 0.2)' }]}>
                 <Network color="#f59e0b" size={24} />
@@ -181,7 +180,7 @@ export default function DashboardScreen() {
           </View>
 
           {/* SYSTEM INFO Card */}
-          <View style={[styles.card, fullCardStyle, styles.systemCard]}>
+          <View style={[styles.card, cardStyle, styles.systemCard]}>
             <View style={styles.systemRow}>
               <Server color={colors.textSecondary} size={20} />
               <Text style={styles.systemText}>{stats.os?.distro} {stats.os?.release}</Text>
