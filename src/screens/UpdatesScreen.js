@@ -82,11 +82,22 @@ export default function UpdatesScreen() {
         const ip = await AsyncStorage.getItem('server_ip');
         if (!ip) throw new Error("IP Server non trovato");
         
-        // Sostituiamo la porta corrente (es. 1111) con 1112
-        const updaterUrl = ip.replace(/:\d+$/, ':1112') + '/api/update';
+        // Costruzione sicura dell'URL
+        const parsedUrl = new URL(ip);
+        parsedUrl.port = '1112';
+        const updaterUrl = `${parsedUrl.protocol}//${parsedUrl.hostname}:1112/api/update`;
         
+        // Timeout di sicurezza (es. 2 minuti) per evitare che l'app si blocchi all'infinito
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 120000);
+
         // Chiamata POST (attenderà la fine dello stream SSE)
-        await fetch(updaterUrl, { method: 'POST' });
+        await fetch(updaterUrl, { 
+          method: 'POST',
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
         
         Alert.alert('Successo', 'CasaOS Reborn è stato aggiornato e si sta riavviando.');
         // Rimuoviamo l'aggiornamento dalla lista
