@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, Text, View, ScrollView, ActivityIndicator, RefreshControl, Dimensions, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, ActivityIndicator, RefreshControl, Dimensions, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { Cpu, HardDrive, Network, Server, ArrowDown, ArrowUp, Activity, Smartphone } from 'lucide-react-native';
 import { apiClient } from '../api/client';
 import { colors } from '../theme';
@@ -10,6 +10,11 @@ const { width } = Dimensions.get('window');
 
 export default function DashboardScreen() {
   const navigation = useNavigation();
+  const { width: windowWidth } = useWindowDimensions();
+  const isTablet = windowWidth >= 768;
+  const halfCardStyle = isTablet ? { width: (windowWidth - 32 - 48) / 4 } : styles.halfCard;
+  const fullCardStyle = isTablet ? { width: (windowWidth - 32 - 16) / 2 } : styles.fullCard;
+
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -99,9 +104,9 @@ export default function DashboardScreen() {
         <View style={styles.grid}>
           {/* CPU Card */}
           <TouchableOpacity 
-            style={[styles.card, styles.fullCard]} 
+            style={[styles.card, halfCardStyle]} 
             activeOpacity={0.7}
-            onPress={() => navigation.navigate('WidgetDetails', { type: 'cpu', title: 'Dettagli CPU' })}
+            onPress={() => navigation.navigate('WidgetDetails', { type: 'cpu', title: 'Dettagli Processore' })}
           >
             <View style={styles.cardHeader}>
               <View style={[styles.iconBox, { backgroundColor: 'rgba(59, 130, 246, 0.2)' }]}>
@@ -119,7 +124,7 @@ export default function DashboardScreen() {
 
           {/* RAM Card */}
           <TouchableOpacity 
-            style={[styles.card, styles.halfCard]}
+            style={[styles.card, halfCardStyle]}
             activeOpacity={0.7}
             onPress={() => navigation.navigate('WidgetDetails', { type: 'ram', title: 'Dettagli RAM' })}
           >
@@ -135,7 +140,7 @@ export default function DashboardScreen() {
           </TouchableOpacity>
 
           {/* DISK Card */}
-          <View style={[styles.card, styles.halfCard]}>
+          <View style={[styles.card, halfCardStyle]}>
             <View style={styles.cardHeader}>
               <View style={[styles.iconBox, { backgroundColor: 'rgba(16, 185, 129, 0.2)' }]}>
                 <HardDrive color="#10b981" size={24} />
@@ -148,7 +153,7 @@ export default function DashboardScreen() {
           </View>
 
           {/* NETWORK Card */}
-          <View style={[styles.card, styles.fullCard]}>
+          <View style={[styles.card, fullCardStyle]}>
             <View style={styles.cardHeader}>
               <View style={[styles.iconBox, { backgroundColor: 'rgba(245, 158, 11, 0.2)' }]}>
                 <Network color="#f59e0b" size={24} />
@@ -176,7 +181,7 @@ export default function DashboardScreen() {
           </View>
 
           {/* SYSTEM INFO Card */}
-          <View style={[styles.card, styles.fullCard, styles.systemCard]}>
+          <View style={[styles.card, fullCardStyle, styles.systemCard]}>
             <View style={styles.systemRow}>
               <Server color={colors.textSecondary} size={20} />
               <Text style={styles.systemText}>{stats.os?.distro} {stats.os?.release}</Text>

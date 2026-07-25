@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { StyleSheet, Text, View, FlatList, ActivityIndicator, RefreshControl, TouchableOpacity, Alert, Image, Linking } from 'react-native';
+import { StyleSheet, Text, View, FlatList, ActivityIndicator, RefreshControl, TouchableOpacity, Alert, Image, Linking, useWindowDimensions } from 'react-native';
 import { Play, Square, RotateCw, Edit, Check, CheckSquare, Pin, ChevronUp, ChevronDown, Globe, PlusCircle, LogOut } from 'lucide-react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { apiClient, logout } from '../api/client';
@@ -22,6 +22,9 @@ export default function ContainersScreen() {
   const [tasks, setTasks] = useState({});
   const prevTasksCount = useRef(0);
   const navigation = useNavigation();
+  const { width } = useWindowDimensions();
+  const isTablet = width >= 768;
+  const numColumns = isTablet ? 2 : 1;
 
   useEffect(() => {
     navigation.setOptions({
@@ -281,7 +284,11 @@ export default function ContainersScreen() {
 
     return (
       <TouchableOpacity
-        style={[styles.card, (editMode || isPinned) && { borderColor: isPinned ? colors.primary : colors.border, borderWidth: 1 }]}
+        style={[
+          styles.card, 
+          (editMode || isPinned) && { borderColor: isPinned ? colors.primary : colors.border, borderWidth: 1 },
+          isTablet && { flex: 1, marginHorizontal: 8 }
+        ]}
         onPress={() => {
           if (isRecreating || editMode) return;
           if (isRunning && webUrl) {
@@ -410,9 +417,12 @@ export default function ContainersScreen() {
   return (
     <View style={styles.container}>
       <FlatList
+        key={numColumns}
         data={sortedContainers}
         keyExtractor={(item) => item.Id || item.id || Math.random().toString()}
         renderItem={renderItem}
+        numColumns={numColumns}
+        columnWrapperStyle={isTablet ? { paddingHorizontal: 8, justifyContent: 'space-between' } : undefined}
         ListHeaderComponent={renderHeader}
         contentContainerStyle={{ padding: 16 }}
         refreshControl={
