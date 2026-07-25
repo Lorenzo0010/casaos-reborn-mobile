@@ -88,7 +88,7 @@ export default function ContainersScreen() {
 
     const containerName = item.name || item.title || (item.Names && item.Names[0]) || 'Sconosciuto';
     let containerState = item.state || item.State || item.status || 'Sconosciuto';
-    
+
     if (isRecreating) {
       containerState = task.status || 'Aggiornamento in corso...';
     }
@@ -99,7 +99,7 @@ export default function ContainersScreen() {
     const casaosName = item.Labels?.['casaos.reborn.name'] || String(containerName).replace(/^\//, '');
 
     return (
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.card}
         onPress={() => !isRecreating && navigation.navigate('ContainerDetails', { containerId, containerName: casaosName })}
         activeOpacity={isRecreating ? 1 : 0.7}
@@ -110,7 +110,7 @@ export default function ContainersScreen() {
             {String(containerState).toUpperCase()}
           </Text>
         </View>
-        
+
         <View style={styles.actions}>
           {(actionLoading === containerId || isRecreating) ? (
             <ActivityIndicator color={colors.primary} size="small" style={{ margin: 10 }} />

@@ -1,7 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Home, Server, LogOut } from 'lucide-react-native';
+import { Home, Server, LogOut, RefreshCw } from 'lucide-react-native';
 import { TouchableOpacity, Alert, View } from 'react-native';
 import { logout } from '../api/client';
 import { useNavigation } from '@react-navigation/native';
@@ -12,6 +12,7 @@ import ContainersScreen from '../screens/ContainersScreen';
 import ContainerDetailsScreen from '../screens/ContainerDetailsScreen';
 import ContainerSettingsScreen from '../screens/ContainerSettingsScreen';
 import ContainerCreateScreen from '../screens/ContainerCreateScreen';
+import UpdatesScreen from '../screens/UpdatesScreen';
 import { PlusCircle } from 'lucide-react-native';
 
 const Tab = createBottomTabNavigator();
@@ -87,6 +88,8 @@ export default function AppNavigator() {
             return <Home color={color} size={size} />;
           } else if (route.name === 'ContainersTab') {
             return <Server color={color} size={size} />;
+          } else if (route.name === 'Updates') {
+            return <RefreshCw color={color} size={size} />;
           }
         },
         tabBarActiveTintColor: colors.primary,
@@ -110,6 +113,11 @@ export default function AppNavigator() {
         name="ContainersTab" 
         component={ContainersStackNavigator}
         options={{ headerShown: false, title: 'Containers' }}
+      />
+      <Tab.Screen 
+        name="Updates" 
+        component={UpdatesScreen} 
+        options={{ title: 'Aggiornamenti', headerRight: () => <LogoutButton /> }} 
       />
     </Tab.Navigator>
   );

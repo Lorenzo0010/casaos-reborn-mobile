@@ -8,3 +8,11 @@ Whenever you are asked to implement a new feature, modify an API call, or integr
 2. Identify the exact API endpoints exposed by the backend (e.g., look in `backend/` or `frontend/src/` inside the backend repo).
 3. Verify the required HTTP methods, request payloads, and URL parameters.
 4. Do not guess the API structure. Always extract the real details from the backend codebase to ensure perfect compatibility.
+
+# Context and Project Focus Rule
+
+By default, ALL modifications, file creations, and searches must be performed strictly within the currently active/open project directory.
+
+**Instructions for the Agent:**
+1. If the user asks for a modification without explicitly mentioning a different project, you MUST restrict your actions entirely to the currently open project.
+2. Only exit the current project's scope if the user explicitly specifies another project by name or path in their request.
