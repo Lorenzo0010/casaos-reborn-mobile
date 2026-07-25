@@ -10,6 +10,9 @@ on:
       - main
       - master
 
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Build APK
@@ -46,8 +49,21 @@ jobs:
         working-directory: ./android
         run: ./gradlew assembleRelease --no-daemon --parallel --build-cache
 
-      - name: Upload APK
+      - name: Upload APK as Artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-release
           path: android/app/build/outputs/apk/release/app-release.apk
+
+      - name: Publish APK to GitHub Releases
+        if: github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: CasaOS Reborn Mobile Build #${{ github.run_number }}
+          body: |
+            Build automatico generato dal commit ${{ github.sha }}
+            Scarica l'APK allegato per l'installazione su Android.
+          files: android/app/build/outputs/apk/release/app-release.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
