@@ -3,7 +3,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert, Modal, useWindowDimensions } from 'react-native';
 import { RefreshCw, DownloadCloud, CheckCircle, Smartphone } from 'lucide-react-native';
 import { apiClient } from '../api/client';
-import { colors } from '../theme';
+import { useTheme } from '../contexts/ThemeContext';
 import io from 'socket.io-client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
@@ -11,6 +11,9 @@ import * as FileSystem from 'expo-file-system';
 import * as IntentLauncher from 'expo-intent-launcher';
 
 export default function UpdatesScreen() {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
+
   const [updates, setUpdates] = useState([]);
   const [isChecking, setIsChecking] = useState(false);
   const { width } = useWindowDimensions();
@@ -362,7 +365,7 @@ export default function UpdatesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

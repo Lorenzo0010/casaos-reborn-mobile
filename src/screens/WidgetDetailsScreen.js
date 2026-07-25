@@ -2,9 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, Text, View, ScrollView, ActivityIndicator, RefreshControl, Dimensions } from 'react-native';
 import { Cpu, Activity, Server, Activity as ProcessIcon } from 'lucide-react-native';
 import { apiClient } from '../api/client';
-import { colors } from '../theme';
+import { useTheme } from '../contexts/ThemeContext';
 
 export default function WidgetDetailsScreen({ route }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
+
   const { type } = route.params || {}; // 'cpu' or 'ram'
   const [processes, setProcesses] = useState([]);
   const [containers, setContainers] = useState([]);
@@ -148,7 +151,7 @@ export default function WidgetDetailsScreen({ route }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

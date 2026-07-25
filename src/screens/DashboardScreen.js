@@ -2,13 +2,16 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, Text, View, ScrollView, ActivityIndicator, RefreshControl, Dimensions, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { Cpu, HardDrive, Network, Server, ArrowDown, ArrowUp, Activity, Smartphone } from 'lucide-react-native';
 import { apiClient } from '../api/client';
-import { colors } from '../theme';
+import { useTheme } from '../contexts/ThemeContext';
 
 import { useNavigation } from '@react-navigation/native';
 
 const { width } = Dimensions.get('window');
 
 export default function DashboardScreen() {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
+
   const navigation = useNavigation();
   const { width: windowWidth } = useWindowDimensions();
   const isTablet = windowWidth >= 768;
@@ -197,7 +200,7 @@ export default function DashboardScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, FlatList, ActivityIndicator, RefreshControl, To
 import { Play, Square, RotateCw, Edit, Check, CheckSquare, Pin, ChevronUp, ChevronDown, Globe, PlusCircle, LogOut, Info } from 'lucide-react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { apiClient, logout } from '../api/client';
-import { colors } from '../theme';
+import { useTheme } from '../contexts/ThemeContext';
 
 const getContainerColor = (name) => {
     let hash = 0;
@@ -15,6 +15,9 @@ const getContainerColor = (name) => {
 };
 
 export default function ContainersScreen() {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
+
   const [containers, setContainers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -437,7 +440,7 @@ export default function ContainersScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

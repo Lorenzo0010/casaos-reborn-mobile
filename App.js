@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, Alert, Modal, ActivityIndicator } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as FileSystem from 'expo-file-system';
 import * as IntentLauncher from 'expo-intent-launcher';
@@ -10,8 +10,30 @@ import axios from 'axios';
 
 import LoginScreen from './src/screens/LoginScreen';
 import AppNavigator from './src/navigation/AppNavigator';
+import { ThemeProvider, useTheme } from './src/contexts/ThemeContext';
 
 const Stack = createNativeStackNavigator();
+
+function MainNavigation() {
+  const { colors } = useTheme();
+  
+  const customDarkTheme = {
+    ...DarkTheme,
+    colors: {
+      ...DarkTheme.colors,
+      background: colors.background,
+    },
+  };
+
+  return (
+    <NavigationContainer theme={customDarkTheme}>
+      <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
+        <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="MainApp" component={AppNavigator} />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}
 
 export default function App() {
   const [isUpdating, setIsUpdating] = useState(false);
@@ -110,13 +132,8 @@ export default function App() {
   };
 
   return (
-    <>
-      <NavigationContainer>
-        <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen name="MainApp" component={AppNavigator} />
-        </Stack.Navigator>
-      </NavigationContainer>
+    <ThemeProvider>
+      <MainNavigation />
 
       {/* Modal di download aggiornamento */}
       <Modal visible={isUpdating} transparent={true} animationType="fade">
@@ -128,7 +145,7 @@ export default function App() {
           </View>
         </View>
       </Modal>
-    </>
+    </ThemeProvider>
   );
 }
 

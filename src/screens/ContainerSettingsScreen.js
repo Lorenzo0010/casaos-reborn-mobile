@@ -2,9 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { Plus, Trash2, Settings, AlertTriangle } from 'lucide-react-native';
 import { apiClient } from '../api/client';
-import { colors } from '../theme';
+import { useTheme } from '../contexts/ThemeContext';
 
 export default function ContainerSettingsScreen({ route, navigation }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
+
   const { containerId, containerName, details } = route.params;
 
   const [ports, setPorts] = useState([]);
@@ -232,7 +235,7 @@ export default function ContainerSettingsScreen({ route, navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

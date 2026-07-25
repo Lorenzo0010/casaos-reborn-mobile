@@ -13,8 +13,9 @@ import ContainerDetailsScreen from '../screens/ContainerDetailsScreen';
 import ContainerSettingsScreen from '../screens/ContainerSettingsScreen';
 import ContainerCreateScreen from '../screens/ContainerCreateScreen';
 import UpdatesScreen from '../screens/UpdatesScreen';
+import AdvancedScreen from '../screens/AdvancedScreen';
 import WidgetDetailsScreen from '../screens/WidgetDetailsScreen';
-import { PlusCircle } from 'lucide-react-native';
+import { PlusCircle, Settings as SettingsIcon } from 'lucide-react-native';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -107,6 +108,8 @@ export default function AppNavigator() {
             return <Server color={color} size={size} />;
           } else if (route.name === 'Updates') {
             return <RefreshCw color={color} size={size} />;
+          } else if (route.name === 'Advanced') {
+            return <SettingsIcon color={color} size={size} />;
           }
         },
         tabBarActiveTintColor: colors.primary,
@@ -135,6 +138,11 @@ export default function AppNavigator() {
         name="Updates" 
         component={UpdatesScreen} 
         options={{ title: 'Aggiornamenti', headerRight: () => <LogoutButton /> }} 
+      />
+      <Tab.Screen 
+        name="Advanced" 
+        component={AdvancedScreen} 
+        options={{ title: 'Avanzate', headerRight: () => <LogoutButton /> }} 
       />
     </Tab.Navigator>
   );

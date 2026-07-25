@@ -2,9 +2,12 @@ import React, { useState } from 'react';
 import { StyleSheet, Text, View, TextInput, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { Plus, Trash2, Server } from 'lucide-react-native';
 import { apiClient } from '../api/client';
-import { colors } from '../theme';
+import { useTheme } from '../contexts/ThemeContext';
 
 export default function ContainerCreateScreen({ navigation }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
+
   const [image, setImage] = useState('');
   const [name, setName] = useState('');
   
@@ -157,7 +160,7 @@ export default function ContainerCreateScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

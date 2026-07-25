@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, Text, View, ScrollView, ActivityIndicator, TouchableOpacity, Alert, RefreshControl, Linking, Image } from 'react-native';
 import { Settings, Play, Square, RotateCw, Globe, RefreshCcw } from 'lucide-react-native';
 import { apiClient } from '../api/client';
-import { colors } from '../theme';
+import { useTheme } from '../contexts/ThemeContext';
 
 const getContainerColor = (name) => {
     let hash = 0;
@@ -14,6 +14,9 @@ const getContainerColor = (name) => {
 };
 
 export default function ContainerDetailsScreen({ route, navigation }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
+
   const { containerId, containerName } = route.params;
   const [details, setDetails] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -238,7 +241,7 @@ export default function ContainerDetailsScreen({ route, navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
