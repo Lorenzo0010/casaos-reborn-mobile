@@ -23,7 +23,13 @@ export default function App() {
         const repo = 'Lorenzo0010/casaos-reborn-mobile';
         // Utilizziamo l'endpoint /releases invece di /releases/latest perché i tag build-X non sono SemVer
         // e GitHub potrebbe non etichettarli automaticamente come 'latest'.
-        const res = await axios.get(`https://api.github.com/repos/${repo}/releases`);
+        const res = await axios.get(`https://api.github.com/repos/${repo}/releases`, {
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
+        });
         if (!res.data || res.data.length === 0) return;
         
         const latestRelease = res.data[0]; // Prende l'ultima release creata in ordine cronologico
