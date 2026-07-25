@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, Text, View, ScrollView, ActivityIndicator, TouchableOpacity, Alert, RefreshControl, Linking, Image } from 'react-native';
-import { Settings, Play, Square, RotateCw, Globe, RefreshCcw } from 'lucide-react-native';
+import { Settings, Play, Square, RotateCw, Globe, RefreshCcw, Github } from 'lucide-react-native';
 import { apiClient } from '../api/client';
 import { useTheme } from '../contexts/ThemeContext';
 
@@ -131,7 +131,7 @@ export default function ContainerDetailsScreen({ route, navigation }) {
 
   const stableId = details.Name?.replace(/^\//, '') || containerId;
   const override = containerOverrides[stableId];
-  let iconUrl = (override && override.icon) || (details.Config?.Labels && details.Config.Labels['casaos.reborn.icon']);
+  let iconUrl = (override && override.icon) || (details.Config?.Labels && (details.Config.Labels['casaos.reborn.icon'] || details.Config.Labels['casaos.app.icon'] || details.Config.Labels['icon']));
   
   if (iconUrl && iconUrl.startsWith('/')) {
       iconUrl = `${apiClient.defaults.baseURL}${iconUrl}`;
@@ -232,6 +232,23 @@ export default function ContainerDetailsScreen({ route, navigation }) {
                 <Text style={styles.actionText}>Web</Text>
               </TouchableOpacity>
             )}
+
+            <TouchableOpacity 
+              style={styles.actionBtn} 
+              onPress={() => {
+                const image = details.Config?.Image || '';
+                const sourceUrl = details.Config?.Labels?.['org.opencontainers.image.source'] || details.Config?.Labels?.['org.opencontainers.image.url'];
+                if (sourceUrl && sourceUrl.startsWith('http')) {
+                  Linking.openURL(sourceUrl).catch(() => Alert.alert('Errore', 'Impossibile aprire il link'));
+                } else {
+                  const imageBase = image.split(':')[0];
+                  Linking.openURL(`https://github.com/search?q=${encodeURIComponent(imageBase)}&type=repositories`).catch(() => Alert.alert('Errore', 'Impossibile aprire il link'));
+                }
+              }}
+            >
+              <Github color={colors.primary} size={24} />
+              <Text style={styles.actionText}>Sorgente</Text>
+            </TouchableOpacity>
           </View>
         )}
       </View>

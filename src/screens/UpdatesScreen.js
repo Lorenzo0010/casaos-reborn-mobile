@@ -30,6 +30,22 @@ export default function UpdatesScreen() {
   const [isAppUpdating, setIsAppUpdating] = useState(false);
   const [appUpdateProgress, setAppUpdateProgress] = useState(0);
 
+  // Custom Themed Alert
+  const [alertConfig, setAlertConfig] = useState({ visible: false, title: '', message: '', buttons: [] });
+
+  const showThemedAlert = (title, message, buttons) => {
+    setAlertConfig({
+      visible: true,
+      title,
+      message,
+      buttons: buttons || [{ text: 'OK' }]
+    });
+  };
+
+  const closeThemedAlert = () => {
+    setAlertConfig(prev => ({ ...prev, visible: false }));
+  };
+
   // Background Tasks State
   const [tasks, setTasks] = useState({});
   const prevTasksCount = useRef(0);
@@ -219,7 +235,7 @@ export default function UpdatesScreen() {
         }
       });
       if (!res.data || res.data.length === 0) {
-        Alert.alert('Nessun aggiornamento', 'Non ci sono release dell\'app su GitHub.');
+        showThemedAlert('Nessun aggiornamento', 'Non ci sono release dell\'app su GitHub.');
         return;
       }
       
@@ -230,7 +246,7 @@ export default function UpdatesScreen() {
       if (latestTag && latestTag !== storedLatest) {
         const apkAsset = latestRelease.assets.find(a => a.name.endsWith('.apk'));
         if (apkAsset) {
-          Alert.alert(
+          showThemedAlert(
             'Aggiornamento App',
             `Nuova versione ${latestTag} disponibile. Vuoi scaricarla e installarla?`,
             [
@@ -239,13 +255,13 @@ export default function UpdatesScreen() {
             ]
           );
         } else {
-            Alert.alert('Nessun APK', 'La release trovata non contiene un file APK valido.');
+          showThemedAlert('Nessun APK', 'La release trovata non contiene un file APK valido.');
         }
       } else {
-        Alert.alert('App Aggiornata', 'Hai già l\'ultima versione installata.');
+        showThemedAlert('App Aggiornata', 'Hai già l\'ultima versione installata.');
       }
     } catch (e) {
-      Alert.alert('Errore', 'Impossibile controllare aggiornamenti app: ' + e.message);
+      showThemedAlert('Errore', 'Impossibile controllare aggiornamenti app: ' + e.message);
     } finally {
       setIsCheckingApp(false);
     }
@@ -358,6 +374,30 @@ export default function UpdatesScreen() {
             <ActivityIndicator size="large" color="#3b82f6" />
             <Text style={styles.modalText}>Download App in corso...</Text>
             <Text style={styles.modalSubtext}>{Math.round(appUpdateProgress * 100)}%</Text>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Popup di Alert personalizzato (Themed Alert) */}
+      <Modal visible={alertConfig.visible} transparent={true} animationType="fade" onRequestClose={closeThemedAlert}>
+        <View style={styles.modalBackground}>
+          <View style={styles.modalContent}>
+            <Text style={styles.alertTitle}>{alertConfig.title}</Text>
+            <Text style={styles.alertMessage}>{alertConfig.message}</Text>
+            <View style={styles.alertButtonsRow}>
+              {alertConfig.buttons.map((btn, idx) => (
+                <TouchableOpacity 
+                  key={idx} 
+                  style={[styles.alertButton, btn.style === 'cancel' && { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.border }]} 
+                  onPress={() => {
+                    closeThemedAlert();
+                    if (btn.onPress) btn.onPress();
+                  }}
+                >
+                  <Text style={[styles.alertButtonText, btn.style === 'cancel' && { color: colors.textSecondary }]}>{btn.text}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
         </View>
       </Modal>
@@ -484,5 +524,35 @@ const createStyles = (colors) => StyleSheet.create({
     fontSize: 14,
     marginTop: 8,
     textAlign: 'center',
+  },
+  alertTitle: {
+    color: colors.text,
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  alertMessage: {
+    color: colors.textSecondary,
+    fontSize: 14,
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  alertButtonsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 12,
+    width: '100%',
+  },
+  alertButton: {
+    flex: 1,
+    backgroundColor: colors.primary,
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  alertButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
   }
 });

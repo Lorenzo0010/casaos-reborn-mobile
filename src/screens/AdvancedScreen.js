@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Text, View, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, useWindowDimensions, PlatformColor } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, useWindowDimensions, PlatformColor, Switch } from 'react-native';
 import { useTheme, predefinedThemes } from '../contexts/ThemeContext';
-import { apiClient } from '../api/client';
-import { Palette, Trash2, Send, Save, RefreshCcw } from 'lucide-react-native';
+import { apiClient, logout } from '../api/client';
+import { Palette, Trash2, Send, Save, RefreshCcw, LogOut } from 'lucide-react-native';
+import { useNavigation } from '@react-navigation/native';
 
 export default function AdvancedScreen() {
-  const { colors, activeTheme, currentTheme, themeMode, changeTheme } = useTheme();
+  const { colors, activeTheme, currentTheme, themeMode, changeTheme, showNavLabels, toggleNavLabels } = useTheme();
   const styles = createStyles(colors);
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
+  const navigation = useNavigation();
 
   const [telegramToken, setTelegramToken] = useState('');
   const [telegramChatId, setTelegramChatId] = useState('');
@@ -126,6 +128,13 @@ export default function AdvancedScreen() {
     ]);
   };
 
+  const handleLogout = () => {
+    Alert.alert('Logout', 'Vuoi davvero disconnetterti?', [
+      { text: 'Annulla', style: 'cancel' },
+      { text: 'Sì, Esci', style: 'destructive', onPress: () => logout(navigation) },
+    ]);
+  };
+
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -180,6 +189,15 @@ export default function AdvancedScreen() {
                   </TouchableOpacity>
                 );
               })}
+            </View>
+
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 24 }}>
+              <Text style={[styles.label, { marginBottom: 0 }]}>Mostra testo nella barra in basso</Text>
+              <Switch 
+                value={showNavLabels}
+                onValueChange={toggleNavLabels}
+                trackColor={{ false: colors.border, true: colors.primary }}
+              />
             </View>
           </View>
 
@@ -265,6 +283,14 @@ export default function AdvancedScreen() {
 
           <TouchableOpacity style={[styles.dangerBtn, { marginTop: 12 }]} onPress={clearLogs}>
             <Text style={styles.dangerBtnText}>Svuota Log</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Logout */}
+        <View style={styles.section}>
+          <TouchableOpacity style={[styles.dangerBtn, { marginBottom: 0, flexDirection: 'row', justifyContent: 'center' }]} onPress={handleLogout}>
+            <LogOut color={colors.error} size={20} style={{ marginRight: 8 }} />
+            <Text style={styles.dangerBtnText}>Disconnetti Account</Text>
           </TouchableOpacity>
         </View>
         

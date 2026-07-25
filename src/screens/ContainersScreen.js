@@ -312,7 +312,7 @@ export default function ContainersScreen() {
 
           {(() => {
             const override = containerOverrides[stableId];
-            let iconUrl = (override && override.icon) || (item.Labels && item.Labels['casaos.reborn.icon']);
+            let iconUrl = (override && override.icon) || (item.Labels && (item.Labels['casaos.reborn.icon'] || item.Labels['casaos.app.icon'] || item.Labels['icon']));
             if (iconUrl) {
                 if (iconUrl.startsWith('/')) {
                     iconUrl = `${apiClient.defaults.baseURL}${iconUrl}`;

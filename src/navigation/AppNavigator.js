@@ -1,9 +1,8 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Home, Server, LogOut, RefreshCw } from 'lucide-react-native';
-import { TouchableOpacity, Alert, View } from 'react-native';
-import { logout } from '../api/client';
+import { Home, Server, RefreshCw } from 'lucide-react-native';
+import { Alert, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
 
@@ -19,22 +18,6 @@ import { PlusCircle, Settings as SettingsIcon } from 'lucide-react-native';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
-
-const handleLogout = (navigation) => {
-  Alert.alert('Logout', 'Vuoi davvero disconnetterti?', [
-    { text: 'Annulla', style: 'cancel' },
-    { text: 'Sì, Esci', style: 'destructive', onPress: () => logout(navigation) },
-  ]);
-};
-
-const LogoutButton = () => {
-  const navigation = useNavigation();
-  return (
-    <TouchableOpacity onPress={() => handleLogout(navigation)} style={{ marginLeft: 16 }}>
-      <LogOut color="#ff4d4f" size={24} />
-    </TouchableOpacity>
-  );
-};
 
 
 
@@ -93,7 +76,7 @@ function DashboardStackNavigator() {
       <Stack.Screen 
         name="WidgetDetails" 
         component={WidgetDetailsScreen} 
-        options={({ route }) => ({ title: route.params?.title || 'Dettagli', headerRight: () => <LogoutButton /> })}
+        options={({ route }) => ({ title: route.params?.title || 'Dettagli' })}
       />
     </Stack.Navigator>
   );
@@ -117,6 +100,7 @@ export default function AppNavigator() {
         },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textSecondary,
+        tabBarShowLabel: showNavLabels,
         tabBarStyle: {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
@@ -140,12 +124,12 @@ export default function AppNavigator() {
       <Tab.Screen 
         name="Updates" 
         component={UpdatesScreen} 
-        options={{ title: 'Aggiornamenti', headerRight: () => <LogoutButton /> }} 
+        options={{ title: 'Aggiornamenti' }} 
       />
       <Tab.Screen 
         name="Advanced" 
         component={AdvancedScreen} 
-        options={{ title: 'Avanzate', headerRight: () => <LogoutButton /> }} 
+        options={{ title: 'Avanzate' }} 
       />
     </Tab.Navigator>
   );

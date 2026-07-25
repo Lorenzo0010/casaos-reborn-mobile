@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, Text, View, ScrollView, ActivityIndicator, RefreshControl, Dimensions, TouchableOpacity, useWindowDimensions } from 'react-native';
-import { Cpu, HardDrive, Network, Server, ArrowDown, ArrowUp, Activity, Smartphone } from 'lucide-react-native';
+import { StyleSheet, Text, View, ScrollView, ActivityIndicator, RefreshControl, Dimensions, TouchableOpacity, useWindowDimensions, SafeAreaView } from 'react-native';
+import { Cpu, HardDrive, Network, Server, ArrowDown, ArrowUp, Activity } from 'lucide-react-native';
 import { apiClient } from '../api/client';
 import { useTheme } from '../contexts/ThemeContext';
 
@@ -13,8 +13,7 @@ export default function DashboardScreen() {
   const navigation = useNavigation();
   const { width: windowWidth } = useWindowDimensions();
   const isTablet = windowWidth >= 768;
-  
-  // Style calculations based on screen width
+
   const fullCardStyle = { width: '100%' };
   const cpuCardStyle = isTablet ? { width: (windowWidth - 32 - 32) / 3 } : { width: '100%' };
   const resourceCardStyle = isTablet ? { width: (windowWidth - 32 - 32) / 3 } : { width: (windowWidth - 32 - 16) / 2 };
@@ -66,8 +65,8 @@ export default function DashboardScreen() {
   };
 
   const formatCpu = (cpu) => {
-    if (cpu === undefined || isNaN(cpu)) return '0.0';
-    return parseFloat(cpu).toFixed(1);
+    if (cpu === undefined || isNaN(cpu)) return '0';
+    return Math.round(cpu).toString();
   };
 
   const formatUptime = (seconds) => {
@@ -75,143 +74,134 @@ export default function DashboardScreen() {
     const d = Math.floor(seconds / 86400);
     const h = Math.floor((seconds % 86400) / 3600);
     const m = Math.floor((seconds % 3600) / 60);
-    if (d > 0) return `${d}d ${h}h`;
+    if (d > 0) return `${d}g ${h}h`;
     return `${h}h ${m}m`;
   };
 
-  const ProgressBar = ({ percent, color }) => (
-    <View style={styles.progressBarBg}>
-      <View style={[styles.progressBarFill, { width: `${Math.min(100, Math.max(0, percent || 0))}%`, backgroundColor: color }]} />
-    </View>
+  const WidgetCard = ({ title, icon, color, mainValue, percent, subLeft, subRight, onPress, style }) => (
+    <TouchableOpacity
+      style={[styles.card, style]}
+      activeOpacity={onPress ? 0.7 : 1}
+      onPress={onPress}
+    >
+      <View style={styles.cardHeaderFlex}>
+        <View style={styles.rowCentered}>
+          <View style={[styles.iconBox, { backgroundColor: `${color}22` }]}>
+            {icon}
+          </View>
+          <Text style={styles.cardTitle}>{title}</Text>
+        </View>
+        <Text style={styles.cardValue}>{mainValue}</Text>
+      </View>
+
+      {percent !== undefined ? (
+        <View style={styles.progressBarBg}>
+          <View style={[styles.progressBarFill, { width: `${Math.min(100, Math.max(0, percent || 0))}%`, backgroundColor: color }]} />
+        </View>
+      ) : (
+        <View style={styles.spacer} />
+      )}
+
+      <View style={styles.footerRow}>
+        <View>{subLeft}</View>
+        <View>{subRight}</View>
+      </View>
+    </TouchableOpacity>
   );
 
   return (
-    <ScrollView 
-      style={styles.container}
-      contentContainerStyle={styles.scrollContent}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
-      }
-    >
-      <View style={styles.headerContainer}>
-        <Text style={styles.header}>Dashboard</Text>
-        <Text style={styles.subHeader}>Panoramica di sistema</Text>
-      </View>
-
-      {error && (
-        <View style={styles.errorBox}>
-          <Text style={styles.errorText}>{error}</Text>
+    <SafeAreaView style={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
+        }
+      >
+        <View style={styles.headerContainer}>
+          <Text style={styles.header}>Dashboard</Text>
         </View>
-      )}
 
-      {stats && (
-        <View style={styles.grid}>
-          {/* SYSTEM INFO Card (Full Width) */}
-          <View style={[styles.card, fullCardStyle]}>
-            <View style={[styles.cardHeaderFlex, { marginBottom: 0 }]}>
-              <View style={styles.rowCentered}>
-                <View style={[styles.iconBox, { backgroundColor: 'rgba(139, 92, 246, 0.2)' }]}>
-                  <Server color="#8b5cf6" size={24} />
-                </View>
-                <View>
-                  <Text style={styles.cardTitle}>Sistema Operativo</Text>
-                  <Text style={styles.systemText}>{stats.os?.distro} {stats.os?.release}</Text>
-                </View>
-              </View>
-              <View style={styles.alignEnd}>
-                <Text style={styles.cardFooterText}>Uptime</Text>
-                <Text style={styles.systemText}>{formatUptime(stats.os?.uptime)}</Text>
-              </View>
-            </View>
+        {error && (
+          <View style={styles.errorBox}>
+            <Text style={styles.errorText}>{error}</Text>
           </View>
+        )}
 
-          {/* CPU Card */}
-          <TouchableOpacity 
-            style={[styles.card, cpuCardStyle]} 
-            activeOpacity={0.7}
-            onPress={() => navigation.navigate('WidgetDetails', { type: 'cpu', title: 'Dettagli Processore' })}
-          >
-            <View style={styles.cardHeaderFlex}>
-              <View style={styles.rowCentered}>
-                <View style={[styles.iconBox, { backgroundColor: 'rgba(59, 130, 246, 0.2)' }]}>
-                  <Cpu color="#3b82f6" size={24} />
-                </View>
-                <Text style={styles.cardTitle}>CPU</Text>
-              </View>
-              <View style={styles.alignEnd}>
-                <Text style={styles.cardValue}>{formatCpu(stats.cpu?.load)}%</Text>
-                {!!stats.cpu?.temperature && <Text style={styles.cardFooterText}>{stats.cpu.temperature}°C</Text>}
-              </View>
-            </View>
-            <ProgressBar percent={stats.cpu?.load} color="#3b82f6" />
-            <Text style={styles.cardFooterText}>{stats.cpu?.cores || 0} Core(s) attivi</Text>
-          </TouchableOpacity>
+        {stats && (
+          <View style={styles.grid}>
+            {/* SYSTEM INFO Card (Full Width) */}
+            <WidgetCard
+              title="Sistema"
+              icon={<Server color="#8b5cf6" size={20} />}
+              color="#8b5cf6"
+              style={fullCardStyle}
+              mainValue={formatUptime(stats.os?.uptime)}
+              subLeft={<Text style={styles.cardFooterText}>{stats.os?.distro} {stats.os?.release}</Text>}
+              subRight={<Text style={styles.cardFooterText}>Uptime</Text>}
+            />
 
-          {/* RAM Card */}
-          <TouchableOpacity 
-            style={[styles.card, resourceCardStyle]}
-            activeOpacity={0.7}
-            onPress={() => navigation.navigate('WidgetDetails', { type: 'ram', title: 'Dettagli RAM' })}
-          >
-            <View style={styles.cardHeaderFlex}>
-              <View style={styles.rowCentered}>
-                <View style={[styles.iconBoxSmall, { backgroundColor: 'rgba(139, 92, 246, 0.2)' }]}>
-                  <Activity color="#8b5cf6" size={20} />
-                </View>
-                <Text style={styles.cardTitle}>RAM</Text>
-              </View>
-              <Text style={styles.cardValue}>{stats.memory?.percent || 0}%</Text>
-            </View>
-            <ProgressBar percent={stats.memory?.percent} color="#8b5cf6" />
-            <Text style={styles.cardFooterText}>{formatBytes(stats.memory?.used)} / {formatBytes(stats.memory?.total)}</Text>
-          </TouchableOpacity>
+            {/* CPU Card */}
+            <WidgetCard
+              title="CPU"
+              icon={<Cpu color="#3b82f6" size={20} />}
+              color="#3b82f6"
+              style={cpuCardStyle}
+              onPress={() => navigation.navigate('WidgetDetails', { type: 'cpu', title: 'Dettagli Processore' })}
+              mainValue={`${formatCpu(stats.cpu?.load)}% ${stats.cpu?.temperature ? `| ${Math.round(stats.cpu.temperature)}°C` : ''}`}
+              percent={stats.cpu?.load}
+              subLeft={<Text style={styles.cardFooterText}>{stats.cpu?.cores || 0} Core</Text>}
+              subRight={<Text style={styles.cardFooterText}>Attivi</Text>}
+            />
 
-          {/* DISK Card */}
-          <View style={[styles.card, resourceCardStyle]}>
-            <View style={styles.cardHeaderFlex}>
-              <View style={styles.rowCentered}>
-                <View style={[styles.iconBoxSmall, { backgroundColor: 'rgba(16, 185, 129, 0.2)' }]}>
-                  <HardDrive color="#10b981" size={20} />
-                </View>
-                <Text style={styles.cardTitle}>Disco</Text>
-              </View>
-              <Text style={styles.cardValue}>{stats.disk?.percent || 0}%</Text>
-            </View>
-            <ProgressBar percent={stats.disk?.percent} color="#10b981" />
-            <Text style={styles.cardFooterText}>{formatBytes(stats.disk?.used)} / {formatBytes(stats.disk?.total)}</Text>
-          </View>
+            {/* RAM Card */}
+            <WidgetCard
+              title="RAM"
+              icon={<Activity color="#8b5cf6" size={20} />}
+              color="#8b5cf6"
+              style={resourceCardStyle}
+              onPress={() => navigation.navigate('WidgetDetails', { type: 'ram', title: 'Dettagli RAM' })}
+              mainValue={`${Math.round(stats.memory?.percent || 0)}%`}
+              percent={stats.memory?.percent}
+              subLeft={<Text style={styles.cardFooterText}>{formatBytes(stats.memory?.used)}</Text>}
+              subRight={<Text style={styles.cardFooterText}>{formatBytes(stats.memory?.total)}</Text>}
+            />
 
-          {/* NETWORK Card */}
-          <View style={[styles.card, fullCardStyle]}>
-            <View style={styles.cardHeaderFlex}>
-              <View style={styles.rowCentered}>
-                <View style={[styles.iconBox, { backgroundColor: 'rgba(245, 158, 11, 0.2)' }]}>
-                  <Network color="#f59e0b" size={24} />
-                </View>
-                <Text style={styles.cardTitle}>Traffico Rete</Text>
-              </View>
-            </View>
-            <View style={styles.networkStats}>
-              <View style={styles.networkCol}>
-                <ArrowDown color="#10b981" size={20} />
-                <View>
+            {/* DISK Card */}
+            <WidgetCard
+              title="Disco"
+              icon={<HardDrive color="#10b981" size={20} />}
+              color="#10b981"
+              style={resourceCardStyle}
+              mainValue={`${Math.round(stats.disk?.percent || 0)}%`}
+              percent={stats.disk?.percent}
+              subLeft={<Text style={styles.cardFooterText}>{formatBytes(stats.disk?.used)}</Text>}
+              subRight={<Text style={styles.cardFooterText}>{formatBytes(stats.disk?.total)}</Text>}
+            />
+
+            {/* NETWORK Card */}
+            <WidgetCard
+              title="Rete"
+              icon={<Network color="#f59e0b" size={20} />}
+              color="#f59e0b"
+              style={fullCardStyle}
+              mainValue="In Tempo Reale"
+              subLeft={
+                <View style={styles.networkCol}>
+                  <ArrowDown color="#10b981" size={16} />
                   <Text style={styles.networkValue}>{formatBytes(stats.network?.rx_sec)}/s</Text>
-                  <Text style={styles.cardFooterText}>Download</Text>
                 </View>
-              </View>
-              <View style={styles.networkCol}>
-                <ArrowUp color="#3b82f6" size={20} />
-                <View>
+              }
+              subRight={
+                <View style={styles.networkCol}>
+                  <ArrowUp color="#3b82f6" size={16} />
                   <Text style={styles.networkValue}>{formatBytes(stats.network?.tx_sec)}/s</Text>
-                  <Text style={styles.cardFooterText}>Upload</Text>
                 </View>
-              </View>
-            </View>
+              }
+            />
           </View>
-
-        </View>
-      )}
-    </ScrollView>
+        )}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -279,24 +269,12 @@ const createStyles = (colors) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
   },
   rowCentered: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  alignEnd: {
-    alignItems: 'flex-end',
-  },
   iconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  iconBoxSmall: {
     width: 36,
     height: 36,
     borderRadius: 10,
@@ -306,51 +284,47 @@ const createStyles = (colors) => StyleSheet.create({
   },
   cardTitle: {
     color: colors.textSecondary,
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
   },
   cardValue: {
     color: colors.text,
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: 'bold',
   },
-  cardFooterText: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    marginTop: 4,
-    fontWeight: '500',
+  spacer: {
+    height: 12,
   },
   progressBarBg: {
     height: 6,
     backgroundColor: 'rgba(255,255,255,0.05)',
     borderRadius: 3,
     overflow: 'hidden',
-    marginTop: 8,
-    marginBottom: 4,
+    marginTop: 12,
+    marginBottom: 8,
   },
   progressBarFill: {
     height: '100%',
     borderRadius: 3,
   },
-  networkStats: {
+  footerRow: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: 4,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  cardFooterText: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    fontWeight: '500',
   },
   networkCol: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 6,
   },
   networkValue: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  systemText: {
-    color: colors.text,
-    fontSize: 14,
-    fontWeight: '500',
-    marginTop: 4,
+    color: colors.textSecondary,
+    fontSize: 13,
+    fontWeight: '600',
   },
 });

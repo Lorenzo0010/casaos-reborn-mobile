@@ -1,8 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Alert, Image } from 'react-native';
 import { Plus, Trash2, Settings, AlertTriangle } from 'lucide-react-native';
 import { apiClient } from '../api/client';
 import { useTheme } from '../contexts/ThemeContext';
+
+const getContainerColor = (name) => {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const h = Math.abs(hash) % 360;
+    return `hsl(${h}, 60%, 50%)`;
+};
 
 export default function ContainerSettingsScreen({ route, navigation }) {
   const { colors } = useTheme();
@@ -113,7 +122,7 @@ export default function ContainerSettingsScreen({ route, navigation }) {
       tag: imageTag,
       name: details.Name?.replace(/^\//, ''),
       displayName: details.Config?.Labels?.['casaos.reborn.name'] || '',
-      icon: details.Config?.Labels?.['casaos.reborn.icon'] || '',
+      icon: details.Config?.Labels?.['casaos.reborn.icon'] || details.Config?.Labels?.['casaos.app.icon'] || details.Config?.Labels?.['icon'] || '',
       restartPolicy: details.HostConfig?.RestartPolicy?.Name || 'unless-stopped',
       privileged: !!details.HostConfig?.Privileged,
       networkMode: details.HostConfig?.NetworkMode || 'bridge',
@@ -204,13 +213,35 @@ export default function ContainerSettingsScreen({ route, navigation }) {
     </View>
   );
 
+  const stableId = details?.Name?.replace(/^\//, '') || containerName;
+  let iconUrl = details?.Config?.Labels?.['casaos.reborn.icon'] || details?.Config?.Labels?.['casaos.app.icon'] || details?.Config?.Labels?.['icon'];
+  
+  if (iconUrl && iconUrl.startsWith('/')) {
+      iconUrl = `${apiClient.defaults.baseURL}${iconUrl}`;
+  }
+
+  const initial = stableId ? stableId.charAt(0).toUpperCase() : '?';
+  const bgColor = stableId ? getContainerColor(stableId) : colors.primary;
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ padding: 16 }}>
       
-      <View style={styles.headerCard}>
-        <Settings color={colors.primary} size={48} style={{ marginBottom: 16 }} />
-        <Text style={styles.title}>Impostazioni</Text>
-        <Text style={styles.subtitle}>{containerName}</Text>
+      <View style={[styles.headerCard, { flexDirection: 'row', alignItems: 'center' }]}>
+        {iconUrl ? (
+          <Image 
+            source={{ uri: iconUrl }} 
+            style={{ width: 64, height: 64, borderRadius: 12, marginRight: 16 }} 
+            resizeMode="contain"
+          />
+        ) : (
+          <View style={{ width: 64, height: 64, borderRadius: 12, backgroundColor: bgColor, justifyContent: 'center', alignItems: 'center', marginRight: 16 }}>
+            <Text style={{ color: 'white', fontSize: 32, fontWeight: 'bold' }}>{initial}</Text>
+          </View>
+        )}
+        <View style={{ flex: 1, justifyContent: 'center' }}>
+          <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit>{stableId}</Text>
+          <Text style={styles.subtitle}>Impostazioni</Text>
+        </View>
       </View>
 
       {renderDynamicList('Porte', ports, handleAddPort, handleRemovePort, handlePortChange, 'host', 'container', 'Host (es. 8080)', 'Container (es. 80)')}
@@ -244,18 +275,19 @@ const createStyles = (colors) => StyleSheet.create({
     backgroundColor: colors.surface,
     padding: 24,
     borderRadius: 12,
-    alignItems: 'center',
     marginBottom: 16,
   },
   title: {
     color: colors.text,
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: 'bold',
   },
   subtitle: {
     color: colors.textSecondary,
-    fontSize: 16,
+    fontSize: 14,
     marginTop: 4,
+    textTransform: 'uppercase',
+    fontWeight: '600',
   },
   section: {
     backgroundColor: colors.surface,
