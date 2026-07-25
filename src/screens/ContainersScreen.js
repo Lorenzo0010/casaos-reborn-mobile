@@ -1,9 +1,18 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { StyleSheet, Text, View, FlatList, ActivityIndicator, RefreshControl, TouchableOpacity, Alert } from 'react-native';
-import { Play, Square, RotateCw, Edit, Check, CheckSquare, Pin, ChevronUp, ChevronDown } from 'lucide-react-native';
+import { StyleSheet, Text, View, FlatList, ActivityIndicator, RefreshControl, TouchableOpacity, Alert, Image, Linking } from 'react-native';
+import { Play, Square, RotateCw, Edit, Check, CheckSquare, Pin, ChevronUp, ChevronDown, Globe } from 'lucide-react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { apiClient } from '../api/client';
 import { colors } from '../theme';
+
+const getContainerColor = (name) => {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const h = Math.abs(hash) % 360;
+    return `hsl(${h}, 60%, 50%)`;
+};
 
 export default function ContainersScreen() {
   const [containers, setContainers] = useState([]);
@@ -21,6 +30,7 @@ export default function ContainersScreen() {
   const [showSystemContainers, setShowSystemContainers] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [prefsLoaded, setPrefsLoaded] = useState(false);
+  const [containerOverrides, setContainerOverrides] = useState({});
 
   const fetchPreferences = async () => {
     try {
@@ -29,6 +39,7 @@ export default function ContainersScreen() {
       if (Array.isArray(res.data.pinnedContainers)) setPinnedContainers(res.data.pinnedContainers);
       if (Array.isArray(res.data.customOrder)) setCustomOrder(res.data.customOrder);
       if (res.data.showSystemContainers !== undefined) setShowSystemContainers(res.data.showSystemContainers);
+      if (res.data.containerOverrides) setContainerOverrides(res.data.containerOverrides);
     } catch (e) {
       console.error('Error loading preferences', e);
     } finally {
@@ -124,6 +135,36 @@ export default function ContainersScreen() {
     return c.Labels?.['casaos.reborn.name'] || stableId;
   };
 
+  const getContainerUrl = (container) => {
+    const stableId = container.Names ? container.Names[0].replace('/', '') : container.Id;
+    const override = containerOverrides[stableId];
+    
+    const baseUrl = apiClient.defaults.baseURL || '';
+    const hostname = baseUrl.replace(/^https?:\/\//, '').split(':')[0].split('/')[0];
+    if (!hostname) return null;
+
+    if (override && override.url) {
+      if (override.url.startsWith('http')) return override.url;
+      return `http://${hostname}:${override.url}`;
+    }
+
+    const labels = container.Labels || {};
+    let port = labels['casaos.reborn.webport'] || labels['casaos.reborn.port'];
+    
+    if (!port && container.Ports) {
+      const publicPort = container.Ports.find(p => p.PublicPort);
+      if (publicPort) {
+        port = publicPort.PublicPort;
+      }
+    }
+    
+    if (port) {
+      return `http://${hostname}:${port}`;
+    }
+    
+    return null;
+  };
+
   const sortedContainers = React.useMemo(() => {
     let sorted = [...containers];
 
@@ -213,6 +254,7 @@ export default function ContainersScreen() {
 
     const isRunning = (containerState || '').toLowerCase().includes('running');
     const casaosName = getContainerName(item);
+    const webUrl = isRunning ? getContainerUrl(item) : null;
 
     return (
       <TouchableOpacity
@@ -226,6 +268,27 @@ export default function ContainersScreen() {
               <Pin size={20} color={isPinned ? colors.primary : colors.textSecondary} fill={isPinned ? colors.primary : 'none'} />
             </TouchableOpacity>
           )}
+
+          {(() => {
+            const override = containerOverrides[stableId];
+            const iconUrl = (override && override.icon) || (item.Labels && item.Labels['casaos.reborn.icon']);
+            if (iconUrl) {
+                return (
+                    <Image 
+                        source={{ uri: iconUrl }} 
+                        style={{ width: 40, height: 40, borderRadius: 8, marginRight: 12 }} 
+                        resizeMode="contain"
+                    />
+                );
+            }
+            const initial = stableId.charAt(0).toUpperCase();
+            const bgColor = getContainerColor(stableId);
+            return (
+                <View style={{ width: 40, height: 40, borderRadius: 8, backgroundColor: bgColor, justifyContent: 'center', alignItems: 'center', marginRight: 12 }}>
+                    <Text style={{ color: 'white', fontSize: 20, fontWeight: 'bold' }}>{initial}</Text>
+                </View>
+            );
+          })()}
           
           <View style={styles.cardInfo}>
             <Text style={styles.name}>{casaosName}</Text>
@@ -252,6 +315,11 @@ export default function ContainersScreen() {
               <>
                 {isRunning ? (
                   <>
+                    {webUrl && (
+                      <TouchableOpacity style={styles.actionBtn} onPress={() => Linking.openURL(webUrl).catch(() => Alert.alert('Errore', 'Impossibile aprire il link'))}>
+                        <Globe color={colors.primary} size={20} />
+                      </TouchableOpacity>
+                    )}
                     <TouchableOpacity style={styles.actionBtn} onPress={() => handleAction(containerId, 'restart')}>
                       <RotateCw color={colors.primary} size={20} />
                     </TouchableOpacity>
@@ -283,8 +351,7 @@ export default function ContainersScreen() {
   // Header UI with Edit options
   const renderHeader = () => (
     <View style={styles.header}>
-      <View style={styles.headerRow}>
-        <Text style={styles.headerTitle}>Container</Text>
+      <View style={[styles.headerRow, { justifyContent: 'flex-end' }]}>
         <TouchableOpacity style={styles.editBtn} onPress={() => setEditMode(!editMode)}>
           {editMode ? <Check color={colors.success} size={24} /> : <Edit color={colors.text} size={24} />}
         </TouchableOpacity>

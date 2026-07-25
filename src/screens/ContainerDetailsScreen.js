@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, Text, View, ScrollView, ActivityIndicator, TouchableOpacity, Alert, RefreshControl } from 'react-native';
-import { Settings, Play, Square, RotateCw } from 'lucide-react-native';
+import { StyleSheet, Text, View, ScrollView, ActivityIndicator, TouchableOpacity, Alert, RefreshControl, Linking } from 'react-native';
+import { Settings, Play, Square, RotateCw, Globe } from 'lucide-react-native';
 import { apiClient } from '../api/client';
 import { colors } from '../theme';
 
@@ -10,6 +10,16 @@ export default function ContainerDetailsScreen({ route, navigation }) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [containerOverrides, setContainerOverrides] = useState({});
+
+  const fetchPreferences = async () => {
+    try {
+      const res = await apiClient.get('/api/system/preferences');
+      if (res.data.containerOverrides) setContainerOverrides(res.data.containerOverrides);
+    } catch (e) {
+      console.error('Error loading preferences', e);
+    }
+  };
 
   const fetchDetails = async () => {
     try {
@@ -36,6 +46,7 @@ export default function ContainerDetailsScreen({ route, navigation }) {
   }, [containerId, containerName, navigation, details]);
 
   useEffect(() => {
+    fetchPreferences();
     fetchDetails();
   }, [containerId]);
 
@@ -76,6 +87,41 @@ export default function ContainerDetailsScreen({ route, navigation }) {
   const isRunning = details.State?.Running || false;
   const statusColor = isRunning ? colors.success : colors.error;
 
+  const getContainerUrl = () => {
+    if (!details) return null;
+    const stableId = details.Name?.replace(/^\//, '') || containerId;
+    const override = containerOverrides[stableId];
+    
+    const baseUrl = apiClient.defaults.baseURL || '';
+    const hostname = baseUrl.replace(/^https?:\/\//, '').split(':')[0].split('/')[0];
+    if (!hostname) return null;
+
+    if (override && override.url) {
+      if (override.url.startsWith('http')) return override.url;
+      return `http://${hostname}:${override.url}`;
+    }
+
+    const labels = details.Config?.Labels || {};
+    let port = labels['casaos.reborn.webport'] || labels['casaos.reborn.port'];
+    
+    if (!port && details.NetworkSettings?.Ports) {
+      // Find the first mapped public port
+      for (const [key, val] of Object.entries(details.NetworkSettings.Ports)) {
+        if (val && val.length > 0) {
+          port = val[0].HostPort;
+          break;
+        }
+      }
+    }
+    
+    if (port) {
+      return `http://${hostname}:${port}`;
+    }
+    return null;
+  };
+
+  const webUrl = isRunning ? getContainerUrl() : null;
+
   return (
     <ScrollView 
       style={styles.container}
@@ -96,6 +142,12 @@ export default function ContainerDetailsScreen({ route, navigation }) {
           <>
             {isRunning ? (
               <>
+                {webUrl && (
+                  <TouchableOpacity style={styles.actionBtn} onPress={() => Linking.openURL(webUrl).catch(()=> Alert.alert('Errore', 'Impossibile aprire il link'))}>
+                    <Globe color={colors.primary} size={24} />
+                    <Text style={styles.actionText}>Web</Text>
+                  </TouchableOpacity>
+                )}
                 <TouchableOpacity style={styles.actionBtn} onPress={() => handleAction('restart')}>
                   <RotateCw color={colors.primary} size={24} />
                   <Text style={styles.actionText}>Restart</Text>

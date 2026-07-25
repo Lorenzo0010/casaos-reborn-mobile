@@ -13,6 +13,7 @@ import ContainerDetailsScreen from '../screens/ContainerDetailsScreen';
 import ContainerSettingsScreen from '../screens/ContainerSettingsScreen';
 import ContainerCreateScreen from '../screens/ContainerCreateScreen';
 import UpdatesScreen from '../screens/UpdatesScreen';
+import WidgetDetailsScreen from '../screens/WidgetDetailsScreen';
 import { PlusCircle } from 'lucide-react-native';
 
 const Tab = createBottomTabNavigator();
@@ -79,6 +80,29 @@ function ContainersStackNavigator() {
   );
 }
 
+function DashboardStackNavigator() {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: { backgroundColor: colors.surface },
+        headerTintColor: colors.text,
+        headerBackTitleVisible: false,
+      }}
+    >
+      <Stack.Screen 
+        name="DashboardMain" 
+        component={DashboardScreen} 
+        options={{ headerShown: false }} 
+      />
+      <Stack.Screen 
+        name="WidgetDetails" 
+        component={WidgetDetailsScreen} 
+        options={({ route }) => ({ title: route.params?.title || 'Dettagli', headerRight: () => <LogoutButton /> })}
+      />
+    </Stack.Navigator>
+  );
+}
+
 export default function AppNavigator() {
   return (
     <Tab.Navigator
@@ -106,8 +130,8 @@ export default function AppNavigator() {
     >
       <Tab.Screen 
         name="Dashboard" 
-        component={DashboardScreen} 
-        options={{ headerRight: () => <LogoutButton /> }} 
+        component={DashboardStackNavigator} 
+        options={{ headerShown: false }} 
       />
       <Tab.Screen 
         name="ContainersTab" 
