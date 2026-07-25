@@ -21,8 +21,12 @@ export default function App() {
     const checkForUpdates = async () => {
       try {
         const repo = 'Lorenzo0010/casaos-reborn-mobile';
-        const res = await axios.get(`https://api.github.com/repos/${repo}/releases/latest`);
-        const latestRelease = res.data;
+        // Utilizziamo l'endpoint /releases invece di /releases/latest perché i tag build-X non sono SemVer
+        // e GitHub potrebbe non etichettarli automaticamente come 'latest'.
+        const res = await axios.get(`https://api.github.com/repos/${repo}/releases`);
+        if (!res.data || res.data.length === 0) return;
+        
+        const latestRelease = res.data[0]; // Prende l'ultima release creata in ordine cronologico
         const latestTag = latestRelease.tag_name;
         
         const lastIgnored = await AsyncStorage.getItem('ignored_update_tag');
