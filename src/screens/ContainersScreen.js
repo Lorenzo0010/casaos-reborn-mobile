@@ -27,7 +27,7 @@ export default function ContainersScreen() {
     navigation.setOptions({
       headerRight: () => (
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <TouchableOpacity onPress={() => setEditMode(!editMode)} style={{ marginRight: 16 }}>
+          <TouchableOpacity onPress={() => setEditMode(prev => !prev)} style={{ marginRight: 16 }}>
             {editMode ? <Check color={colors.success} size={24} /> : <Edit color={colors.text} size={24} />}
           </TouchableOpacity>
           <TouchableOpacity onPress={() => navigation.navigate('ContainerCreate')} style={{ marginRight: 16 }}>
@@ -282,7 +282,14 @@ export default function ContainersScreen() {
     return (
       <TouchableOpacity
         style={[styles.card, (editMode || isPinned) && { borderColor: isPinned ? colors.primary : colors.border, borderWidth: 1 }]}
-        onPress={() => !isRecreating && !editMode && navigation.navigate('ContainerDetails', { containerId, containerName: casaosName })}
+        onPress={() => {
+          if (isRecreating || editMode) return;
+          if (isRunning && webUrl) {
+            Linking.openURL(webUrl).catch(() => Alert.alert('Errore', 'Impossibile aprire il link'));
+          } else {
+            navigation.navigate('ContainerDetails', { containerId, containerName: casaosName });
+          }
+        }}
         activeOpacity={(isRecreating || editMode) ? 1 : 0.7}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
@@ -294,8 +301,11 @@ export default function ContainersScreen() {
 
           {(() => {
             const override = containerOverrides[stableId];
-            const iconUrl = (override && override.icon) || (item.Labels && item.Labels['casaos.reborn.icon']);
+            let iconUrl = (override && override.icon) || (item.Labels && item.Labels['casaos.reborn.icon']);
             if (iconUrl) {
+                if (iconUrl.startsWith('/')) {
+                    iconUrl = `${apiClient.defaults.baseURL}${iconUrl}`;
+                }
                 return (
                     <Image 
                         source={{ uri: iconUrl }} 
@@ -336,20 +346,13 @@ export default function ContainersScreen() {
               </View>
             ) : (
               <>
+                <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.navigate('ContainerDetails', { containerId, containerName: casaosName })}>
+                  <Info color={colors.textSecondary} size={20} />
+                </TouchableOpacity>
                 {isRunning ? (
-                  <>
-                    {webUrl && (
-                      <TouchableOpacity style={styles.actionBtn} onPress={() => Linking.openURL(webUrl).catch(() => Alert.alert('Errore', 'Impossibile aprire il link'))}>
-                        <Globe color={colors.primary} size={20} />
-                      </TouchableOpacity>
-                    )}
-                    <TouchableOpacity style={styles.actionBtn} onPress={() => handleAction(containerId, 'restart')}>
-                      <RotateCw color={colors.primary} size={20} />
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.actionBtn} onPress={() => handleAction(containerId, 'stop')}>
-                      <Square color={colors.error} size={20} fill={colors.error} />
-                    </TouchableOpacity>
-                  </>
+                  <TouchableOpacity style={styles.actionBtn} onPress={() => handleAction(containerId, 'stop')}>
+                    <Square color={colors.error} size={20} fill={colors.error} />
+                  </TouchableOpacity>
                 ) : (
                   <TouchableOpacity style={styles.actionBtn} onPress={() => handleAction(containerId, 'start')}>
                     <Play color={colors.success} size={20} fill={colors.success} />

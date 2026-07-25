@@ -1,8 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, Text, View, ScrollView, ActivityIndicator, TouchableOpacity, Alert, RefreshControl, Linking } from 'react-native';
-import { Settings, Play, Square, RotateCw, Globe } from 'lucide-react-native';
+import { StyleSheet, Text, View, ScrollView, ActivityIndicator, TouchableOpacity, Alert, RefreshControl, Linking, Image } from 'react-native';
+import { Settings, Play, Square, RotateCw, Globe, RefreshCcw } from 'lucide-react-native';
 import { apiClient } from '../api/client';
 import { colors } from '../theme';
+
+const getContainerColor = (name) => {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const h = Math.abs(hash) % 360;
+    return `hsl(${h}, 60%, 50%)`;
+};
 
 export default function ContainerDetailsScreen({ route, navigation }) {
   const { containerId, containerName } = route.params;
@@ -36,12 +45,7 @@ export default function ContainerDetailsScreen({ route, navigation }) {
 
   useEffect(() => {
     navigation.setOptions({
-      title: containerName || 'Dettagli Container',
-      headerRight: () => (
-        <TouchableOpacity onPress={() => navigation.navigate('ContainerSettings', { containerId, containerName, details })} style={{ marginRight: 16 }}>
-          <Settings color={colors.text} size={24} />
-        </TouchableOpacity>
-      )
+      title: containerName || 'Dettagli Container'
     });
   }, [containerId, containerName, navigation, details]);
 
@@ -122,6 +126,17 @@ export default function ContainerDetailsScreen({ route, navigation }) {
 
   const webUrl = isRunning ? getContainerUrl() : null;
 
+  const stableId = details.Name?.replace(/^\//, '') || containerId;
+  const override = containerOverrides[stableId];
+  let iconUrl = (override && override.icon) || (details.Config?.Labels && details.Config.Labels['casaos.reborn.icon']);
+  
+  if (iconUrl && iconUrl.startsWith('/')) {
+      iconUrl = `${apiClient.defaults.baseURL}${iconUrl}`;
+  }
+
+  const initial = stableId.charAt(0).toUpperCase();
+  const bgColor = getContainerColor(stableId);
+
   return (
     <ScrollView 
       style={styles.container}
@@ -129,7 +144,18 @@ export default function ContainerDetailsScreen({ route, navigation }) {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
     >
       <View style={styles.headerCard}>
-        <Text style={styles.title}>{details.Name?.replace(/^\//, '') || containerName}</Text>
+        {iconUrl ? (
+          <Image 
+            source={{ uri: iconUrl }} 
+            style={{ width: 64, height: 64, borderRadius: 12, marginBottom: 12 }} 
+            resizeMode="contain"
+          />
+        ) : (
+          <View style={{ width: 64, height: 64, borderRadius: 12, backgroundColor: bgColor, justifyContent: 'center', alignItems: 'center', marginBottom: 12 }}>
+            <Text style={{ color: 'white', fontSize: 32, fontWeight: 'bold' }}>{initial}</Text>
+          </View>
+        )}
+        <Text style={styles.title}>{stableId || containerName}</Text>
         <Text style={[styles.status, { color: statusColor }]}>
           {details.State?.Status?.toUpperCase()}
         </Text>
@@ -139,31 +165,54 @@ export default function ContainerDetailsScreen({ route, navigation }) {
         {actionLoading ? (
           <ActivityIndicator color={colors.primary} size="small" />
         ) : (
-          <>
+          <View style={styles.actionGrid}>
             {isRunning ? (
-              <>
-                {webUrl && (
-                  <TouchableOpacity style={styles.actionBtn} onPress={() => Linking.openURL(webUrl).catch(()=> Alert.alert('Errore', 'Impossibile aprire il link'))}>
-                    <Globe color={colors.primary} size={24} />
-                    <Text style={styles.actionText}>Web</Text>
-                  </TouchableOpacity>
-                )}
-                <TouchableOpacity style={styles.actionBtn} onPress={() => handleAction('restart')}>
-                  <RotateCw color={colors.primary} size={24} />
-                  <Text style={styles.actionText}>Restart</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.actionBtn} onPress={() => handleAction('stop')}>
-                  <Square color={colors.error} size={24} fill={colors.error} />
-                  <Text style={[styles.actionText, { color: colors.error }]}>Stop</Text>
-                </TouchableOpacity>
-              </>
+              <TouchableOpacity style={styles.actionBtn} onPress={() => handleAction('stop')}>
+                <Square color={colors.error} size={24} fill={colors.error} />
+                <Text style={[styles.actionText, { color: colors.error }]}>Stop</Text>
+              </TouchableOpacity>
             ) : (
               <TouchableOpacity style={styles.actionBtn} onPress={() => handleAction('start')}>
                 <Play color={colors.success} size={24} fill={colors.success} />
                 <Text style={[styles.actionText, { color: colors.success }]}>Start</Text>
               </TouchableOpacity>
             )}
-          </>
+
+            <TouchableOpacity style={styles.actionBtn} onPress={() => handleAction('restart')}>
+              <RotateCw color={colors.primary} size={24} />
+              <Text style={styles.actionText}>Riavvia</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.actionBtn} 
+              onPress={async () => {
+                setActionLoading(true);
+                try {
+                  await apiClient.post(`/api/docker/containers/${containerId}/update`, { image: details.Config?.Image });
+                  navigation.navigate('ContainersList');
+                } catch (e) {
+                  Alert.alert('Errore', 'Impossibile ricreare il container: ' + (e.response?.data?.error || e.message));
+                } finally {
+                  setActionLoading(false);
+                }
+              }}
+            >
+              <RefreshCcw color={colors.primary} size={24} />
+              <Text style={styles.actionText}>Ricrea</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.navigate('ContainerSettings', { containerId, containerName, details })}>
+              <Settings color={colors.text} size={24} />
+              <Text style={styles.actionText}>Impostazioni</Text>
+            </TouchableOpacity>
+
+            {isRunning && webUrl && (
+              <TouchableOpacity style={styles.actionBtn} onPress={() => Linking.openURL(webUrl).catch(() => Alert.alert('Errore', 'Impossibile aprire il link'))}>
+                <Globe color={colors.primary} size={24} />
+                <Text style={styles.actionText}>Web</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         )}
       </View>
 
@@ -221,13 +270,19 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     minHeight: 50,
   },
+  actionGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 12,
+  },
   actionBtn: {
     alignItems: 'center',
-    marginHorizontal: 16,
     padding: 12,
     backgroundColor: colors.surface,
     borderRadius: 12,
-    minWidth: 80,
+    width: '30%',
+    marginBottom: 4,
   },
   actionText: {
     color: colors.primary,
