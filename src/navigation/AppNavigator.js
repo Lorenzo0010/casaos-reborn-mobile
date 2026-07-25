@@ -83,7 +83,7 @@ function DashboardStackNavigator() {
 }
 
 export default function AppNavigator() {
-  const { colors } = useTheme();
+  const { colors, showNavLabels } = useTheme();
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -103,10 +103,36 @@ export default function AppNavigator() {
         tabBarShowLabel: showNavLabels,
         tabBarStyle: {
           backgroundColor: colors.surface,
-          borderTopColor: colors.border,
+          borderTopWidth: 0,
+          position: 'absolute',
+          bottom: 24,
+          left: 16,
+          right: 16,
+          borderRadius: 32,
+          height: showNavLabels ? 74 : 64,
+          paddingBottom: showNavLabels ? 12 : 0,
+          paddingTop: showNavLabels ? 12 : 0,
+          elevation: 8,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.3,
+          shadowRadius: 8,
+        },
+        tabBarLabelStyle: {
+          marginTop: 4,
+          fontSize: 11,
+          fontWeight: '600',
+        },
+        tabBarItemStyle: {
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: 4,
         },
         headerStyle: {
           backgroundColor: colors.surface,
+          borderBottomWidth: 0,
+          elevation: 0,
+          shadowOpacity: 0,
         },
         headerTintColor: colors.text,
       })}

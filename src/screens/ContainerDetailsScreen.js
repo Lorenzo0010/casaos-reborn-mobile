@@ -133,7 +133,7 @@ export default function ContainerDetailsScreen({ route, navigation }) {
   const override = containerOverrides[stableId];
   let iconUrl = (override && override.icon) || (details.Config?.Labels && (details.Config.Labels['casaos.reborn.icon'] || details.Config.Labels['casaos.app.icon'] || details.Config.Labels['icon']));
   
-  if (iconUrl && iconUrl.startsWith('/')) {
+  if (iconUrl && typeof iconUrl === 'string' && iconUrl.startsWith('/')) {
       iconUrl = `${apiClient.defaults.baseURL}${iconUrl}`;
   }
 

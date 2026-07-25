@@ -6,6 +6,43 @@ import { useTheme } from '../contexts/ThemeContext';
 
 import { useNavigation } from '@react-navigation/native';
 
+const WidgetCard = ({ title, icon, color, style, onPress, mainValue, percent, subLeft, subRight }) => {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
+  
+  const CardComponent = onPress ? TouchableOpacity : View;
+
+  return (
+    <CardComponent 
+      style={[styles.card, style]} 
+      onPress={onPress} 
+      activeOpacity={onPress ? 0.7 : 1}
+    >
+      <View style={styles.cardHeaderFlex}>
+        <View style={styles.rowCentered}>
+          <View style={[styles.iconBox, { backgroundColor: `${color}33` }]}>
+            {icon}
+          </View>
+          <Text style={styles.cardTitle}>{title}</Text>
+        </View>
+        <Text style={styles.cardValue}>{mainValue}</Text>
+      </View>
+
+      {percent !== undefined && (
+        <View style={styles.progressBarBg}>
+          <View style={[styles.progressBarFill, { width: `${Math.min(100, Math.max(0, percent))}%`, backgroundColor: color }]} />
+        </View>
+      )}
+
+      {percent === undefined && <View style={styles.spacer} />}
+
+      <View style={styles.footerRow}>
+        {subLeft}
+        {subRight}
+      </View>
+    </CardComponent>
+  );
+};
 export default function DashboardScreen() {
   const { colors } = useTheme();
   const styles = createStyles(colors);
@@ -212,7 +249,7 @@ const createStyles = (colors) => StyleSheet.create({
   },
   scrollContent: {
     padding: 16,
-    paddingBottom: 40,
+    paddingBottom: 120,
   },
   center: {
     flex: 1,

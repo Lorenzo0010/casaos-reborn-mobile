@@ -306,7 +306,7 @@ const createStyles = (colors) => StyleSheet.create({
   },
   scrollContent: {
     padding: 16,
-    paddingBottom: 40,
+    paddingBottom: 120,
   },
   tabletGrid: {
     flexDirection: 'row',

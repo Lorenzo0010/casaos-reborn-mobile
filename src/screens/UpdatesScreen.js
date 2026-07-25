@@ -463,6 +463,7 @@ const createStyles = (colors) => StyleSheet.create({
   },
   list: {
     padding: 16,
+    paddingBottom: 120,
   },
   card: {
     backgroundColor: colors.surface,

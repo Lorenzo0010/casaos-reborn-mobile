@@ -313,7 +313,7 @@ export default function ContainersScreen() {
           {(() => {
             const override = containerOverrides[stableId];
             let iconUrl = (override && override.icon) || (item.Labels && (item.Labels['casaos.reborn.icon'] || item.Labels['casaos.app.icon'] || item.Labels['icon']));
-            if (iconUrl) {
+            if (iconUrl && typeof iconUrl === 'string') {
                 if (iconUrl.startsWith('/')) {
                     iconUrl = `${apiClient.defaults.baseURL}${iconUrl}`;
                 }
@@ -428,7 +428,7 @@ export default function ContainersScreen() {
         numColumns={numColumns}
         columnWrapperStyle={isTablet ? { gap: 16 } : undefined}
         ListHeaderComponent={renderHeader}
-        contentContainerStyle={{ padding: 16 }}
+        contentContainerStyle={{ padding: 16, paddingBottom: 120 }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={fetchContainers} tintColor={colors.primary} />
         }
