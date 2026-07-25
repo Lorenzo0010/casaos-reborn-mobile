@@ -116,13 +116,23 @@ export default function ContainerSettingsScreen({ route, navigation }) {
       networkMode: details.HostConfig?.NetworkMode || 'bridge',
       ports: portsObj,
       volumes: volumesArray,
-      env: envArray
+      env: envArray,
+      memory: details.HostConfig?.Memory,
+      cpuQuota: details.HostConfig?.CpuShares,
+      devices: details.HostConfig?.Devices,
+      capAdd: details.HostConfig?.CapAdd,
+      cmd: details.Config?.Cmd,
+      webUI: details.Config?.Labels?.['casaos.reborn.web.port'] ? {
+        scheme: details.Config.Labels['casaos.reborn.web.scheme'] || 'http',
+        path: details.Config.Labels['casaos.reborn.web.path'] || '/',
+        port: details.Config.Labels['casaos.reborn.web.port']
+      } : undefined
     };
 
     try {
       await apiClient.post(`/api/docker/containers/${containerId}/recreate`, payload);
-      Alert.alert('Successo', 'Container aggiornato con successo!', [
-        { text: 'OK', onPress: () => navigation.goBack() }
+      Alert.alert('Successo', 'Container in fase di ricreazione!', [
+        { text: 'OK', onPress: () => navigation.navigate('ContainersList') }
       ]);
     } catch (e) {
       console.error(e);

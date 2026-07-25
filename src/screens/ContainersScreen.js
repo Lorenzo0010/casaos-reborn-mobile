@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { StyleSheet, Text, View, FlatList, ActivityIndicator, RefreshControl, TouchableOpacity, Alert } from 'react-native';
 import { Play, Square, RotateCw } from 'lucide-react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { apiClient } from '../api/client';
 import { colors } from '../theme';
 
@@ -10,6 +10,8 @@ export default function ContainersScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [actionLoading, setActionLoading] = useState(null);
+  const [tasks, setTasks] = useState({});
+  const prevTasksCount = useRef(0);
   const navigation = useNavigation();
 
   const fetchContainers = async () => {
@@ -25,13 +27,42 @@ export default function ContainersScreen() {
     }
   };
 
+  const fetchTasks = async () => {
+    try {
+      const res = await apiClient.get('/api/docker/tasks');
+      const tasksList = res.data || [];
+      const tasksMap = {};
+      tasksList.forEach(t => {
+        if (t.id) tasksMap[t.id] = t;
+      });
+      setTasks(tasksMap);
+
+      if (tasksList.length < prevTasksCount.current) {
+        // Un task è terminato, ricarichiamo la lista
+        fetchContainers();
+      }
+      prevTasksCount.current = tasksList.length;
+    } catch (e) {
+      // Ignora l'errore o logga in modo silenzioso
+    }
+  };
+
   useEffect(() => {
     fetchContainers();
   }, []);
 
+  useFocusEffect(
+    useCallback(() => {
+      fetchTasks();
+      const interval = setInterval(fetchTasks, 2000);
+      return () => clearInterval(interval);
+    }, [])
+  );
+
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     fetchContainers();
+    fetchTasks();
   }, []);
 
   const handleAction = async (id, action) => {
@@ -51,10 +82,18 @@ export default function ContainersScreen() {
 
   const renderItem = ({ item }) => {
     // Gestisce diversi formati JSON delle API
-    const containerName = item.name || item.title || (item.Names && item.Names[0]) || 'Sconosciuto';
-    const containerState = item.state || item.State || item.status || 'Sconosciuto';
-    const isRunning = (containerState || '').toLowerCase().includes('running');
     const containerId = item.Id || item.id;
+    const task = tasks[containerId];
+    const isRecreating = !!task;
+
+    const containerName = item.name || item.title || (item.Names && item.Names[0]) || 'Sconosciuto';
+    let containerState = item.state || item.State || item.status || 'Sconosciuto';
+    
+    if (isRecreating) {
+      containerState = task.status || 'Aggiornamento in corso...';
+    }
+
+    const isRunning = (containerState || '').toLowerCase().includes('running');
 
     // Estrae l'icona e il nome CasaOS se disponibili
     const casaosName = item.Labels?.['casaos.reborn.name'] || String(containerName).replace(/^\//, '');
@@ -62,18 +101,18 @@ export default function ContainersScreen() {
     return (
       <TouchableOpacity 
         style={styles.card}
-        onPress={() => navigation.navigate('ContainerDetails', { containerId, containerName: casaosName })}
-        activeOpacity={0.7}
+        onPress={() => !isRecreating && navigation.navigate('ContainerDetails', { containerId, containerName: casaosName })}
+        activeOpacity={isRecreating ? 1 : 0.7}
       >
         <View style={styles.cardInfo}>
           <Text style={styles.name}>{casaosName}</Text>
-          <Text style={[styles.status, { color: isRunning ? colors.success : colors.error }]}>
+          <Text style={[styles.status, { color: isRecreating ? colors.primary : (isRunning ? colors.success : colors.error) }]}>
             {String(containerState).toUpperCase()}
           </Text>
         </View>
         
         <View style={styles.actions}>
-          {actionLoading === containerId ? (
+          {(actionLoading === containerId || isRecreating) ? (
             <ActivityIndicator color={colors.primary} size="small" style={{ margin: 10 }} />
           ) : (
             <>
