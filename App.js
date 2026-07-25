@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, Alert, Modal, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, Alert, Modal, ActivityIndicator, Platform } from 'react-native';
 import { NavigationContainer, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as FileSystem from 'expo-file-system';
@@ -14,8 +14,18 @@ import { ThemeProvider, useTheme } from './src/contexts/ThemeContext';
 
 const Stack = createNativeStackNavigator();
 
+import { StatusBar } from 'expo-status-bar';
+import * as NavigationBar from 'expo-navigation-bar';
+
 function MainNavigation() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
+  
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      NavigationBar.setBackgroundColorAsync(colors.background).catch(() => {});
+      NavigationBar.setButtonStyleAsync(isDark ? 'light' : 'dark').catch(() => {});
+    }
+  }, [colors.background, isDark]);
   
   const customDarkTheme = {
     ...DarkTheme,
@@ -27,6 +37,7 @@ function MainNavigation() {
 
   return (
     <NavigationContainer theme={customDarkTheme}>
+      <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={colors.background} />
       <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="MainApp" component={AppNavigator} />

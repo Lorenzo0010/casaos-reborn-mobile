@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Text, View, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, useWindowDimensions } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, useWindowDimensions, PlatformColor } from 'react-native';
 import { useTheme, predefinedThemes } from '../contexts/ThemeContext';
 import { apiClient } from '../api/client';
 import { Palette, Trash2, Send, Save, RefreshCcw } from 'lucide-react-native';
