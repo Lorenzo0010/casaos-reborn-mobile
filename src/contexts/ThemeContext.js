@@ -1,42 +1,67 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useColorScheme, Platform, PlatformColor } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiClient } from '../api/client';
 
-export const predefinedAccents = [
-  { name: 'Rosso', hex: '#ef4444' },
-  { name: 'Arancione', hex: '#f97316' },
-  { name: 'Giallo', hex: '#eab308' },
-  { name: 'Giallo Cyber', hex: '#facc15' },
-  { name: 'Smeraldo', hex: '#10b981' },
-  { name: 'Azzurro', hex: '#0ea5e9' },
-  { name: 'Blu CasaOS', hex: '#3b82f6' },
-  { name: 'Viola', hex: '#8b5cf6' },
-  { name: 'Rosa', hex: '#ec4899' },
-];
-
-export const predefinedBackgrounds = [
-  { id: 'gray', name: 'Grigio Scuro', darkHex: '#1f2937', surfaceHex: '#374151' },
-  { id: 'mediumgray', name: 'Grigio Medio', darkHex: '#374151', surfaceHex: '#4b5563' },
-  { id: 'anthracite', name: 'Antracite', darkHex: '#18181b', surfaceHex: '#27272a' },
-  { id: 'black', name: 'Total Black', darkHex: '#000000', surfaceHex: '#111111' },
-  { id: 'navy', name: 'Blu Scuro', darkHex: '#020617', surfaceHex: '#0f172a' },
-  { id: 'ocean', name: 'Verde Petrolio', darkHex: '#083344', surfaceHex: '#164e63' },
-  { id: 'red', name: 'Rosso Scuro', darkHex: '#2a040d', surfaceHex: '#4c0519' },
+export const predefinedThemes = [
+  { 
+    id: 'navy', name: 'Oceano', 
+    primary: '#3b82f6', 
+    darkBg: '#020617', darkSurface: '#0f172a',
+    lightBg: '#f8f9fb', lightSurface: '#ffffff'
+  },
+  { 
+    id: 'forest', name: 'Smeraldo', 
+    primary: '#10b981', 
+    darkBg: '#022c22', darkSurface: '#064e3b',
+    lightBg: '#f0fdf4', lightSurface: '#ffffff'
+  },
+  { 
+    id: 'red', name: 'Rubino', 
+    primary: '#f43f5e', 
+    darkBg: '#2a040d', darkSurface: '#4c0519',
+    lightBg: '#fff1f2', lightSurface: '#ffffff'
+  },
+  { 
+    id: 'rust', name: 'Ambra', 
+    primary: '#f59e0b', 
+    darkBg: '#451a03', darkSurface: '#78350f',
+    lightBg: '#fffbeb', lightSurface: '#ffffff'
+  },
+  { 
+    id: 'purple', name: 'Ametista', 
+    primary: '#8b5cf6', 
+    darkBg: '#2e1065', darkSurface: '#4c1d95',
+    lightBg: '#f5f3ff', lightSurface: '#ffffff'
+  },
+  { 
+    id: 'anthracite', name: 'Antracite', 
+    primary: '#94a3b8', 
+    darkBg: '#18181b', darkSurface: '#27272a',
+    lightBg: '#f8f9fb', lightSurface: '#ffffff'
+  },
+  { 
+    id: 'monet', name: 'Monet (Auto)', 
+    primary: 'monet', 
+    darkBg: '#18181b', darkSurface: '#27272a',
+    lightBg: '#f8f9fb', lightSurface: '#ffffff'
+  }
 ];
 
 const ThemeContext = createContext();
 
 export function ThemeProvider({ children }) {
-  const [accentColor, setAccentColor] = useState('#3b82f6');
-  const [bgTheme, setBgTheme] = useState('gray');
+  const [activeTheme, setActiveTheme] = useState('navy');
+  const [themeMode, setThemeMode] = useState('system');
+  const colorScheme = useColorScheme();
 
   useEffect(() => {
     const loadTheme = async () => {
       try {
-        const storedAccent = await AsyncStorage.getItem('accentColor');
-        const storedBg = await AsyncStorage.getItem('bgTheme');
-        if (storedAccent) setAccentColor(storedAccent);
-        if (storedBg) setBgTheme(storedBg);
+        const storedTheme = await AsyncStorage.getItem('activeTheme');
+        const storedMode = await AsyncStorage.getItem('themeMode');
+        if (storedTheme) setActiveTheme(storedTheme);
+        if (storedMode) setThemeMode(storedMode);
         
         // Fetch dal server se siamo loggati (gestiamo in background in modo silente)
         const token = await AsyncStorage.getItem('token');
@@ -44,13 +69,14 @@ export function ThemeProvider({ children }) {
           try {
             const res = await apiClient.get('/api/system/preferences');
             if (res.data) {
-              if (res.data.accentColor) {
-                setAccentColor(res.data.accentColor);
-                await AsyncStorage.setItem('accentColor', res.data.accentColor);
+              // Backward compatibility check
+              if (res.data.mobileTheme) {
+                setActiveTheme(res.data.mobileTheme);
+                await AsyncStorage.setItem('activeTheme', res.data.mobileTheme);
               }
-              if (res.data.bgTheme) {
-                setBgTheme(res.data.bgTheme);
-                await AsyncStorage.setItem('bgTheme', res.data.bgTheme);
+              if (res.data.themeMode) {
+                setThemeMode(res.data.themeMode);
+                await AsyncStorage.setItem('themeMode', res.data.themeMode);
               }
             }
           } catch(e) { } // ignoriamo errori di rete silenti
@@ -62,37 +88,50 @@ export function ThemeProvider({ children }) {
     loadTheme();
   }, []);
 
-  const changeTheme = async (newAccent, newBg) => {
-    setAccentColor(newAccent);
-    setBgTheme(newBg);
-    await AsyncStorage.setItem('accentColor', newAccent);
-    await AsyncStorage.setItem('bgTheme', newBg);
+  const changeTheme = async (newThemeId, newMode = themeMode) => {
+    setActiveTheme(newThemeId);
+    setThemeMode(newMode);
+    await AsyncStorage.setItem('activeTheme', newThemeId);
+    await AsyncStorage.setItem('themeMode', newMode);
   };
 
+  const resolvedMode = themeMode === 'system' ? (colorScheme || 'dark') : themeMode;
+  const isDark = resolvedMode === 'dark';
+
+  const currentTheme = predefinedThemes.find(t => t.id === activeTheme) || predefinedThemes[0];
+
   const getBackgroundColor = () => {
-    const bg = predefinedBackgrounds.find(b => b.id === bgTheme);
-    return bg ? bg.darkHex : '#1e1e1e';
+    return isDark ? currentTheme.darkBg : currentTheme.lightBg;
   };
 
   const getSurfaceColor = () => {
-    const bg = predefinedBackgrounds.find(b => b.id === bgTheme);
-    return bg ? bg.surfaceHex : '#2a2a2a';
+    return isDark ? currentTheme.darkSurface : currentTheme.lightSurface;
+  };
+
+  const getPrimaryColor = () => {
+    if (currentTheme.primary === 'monet') {
+      if (Platform.OS === 'android' && Platform.Version >= 31) {
+        return PlatformColor('@android:color/system_accent1_500');
+      }
+      return '#3b82f6'; // Fallback se non supportato
+    }
+    return currentTheme.primary;
   };
 
   // Derive the active theme palette
   const colors = {
     background: getBackgroundColor(),
     surface: getSurfaceColor(),
-    primary: accentColor,
-    text: '#ffffff',
-    textSecondary: '#aaaaaa',
-    border: '#333333',
+    primary: getPrimaryColor(),
+    text: isDark ? '#ffffff' : '#111827',
+    textSecondary: isDark ? '#aaaaaa' : '#6b7280',
+    border: isDark ? '#333333' : '#e5e7eb',
     success: '#4ade80',
     error: '#f87171',
   };
 
   return (
-    <ThemeContext.Provider value={{ colors, accentColor, bgTheme, changeTheme }}>
+    <ThemeContext.Provider value={{ colors, activeTheme, currentTheme, themeMode, resolvedMode, isDark, changeTheme }}>
       {children}
     </ThemeContext.Provider>
   );

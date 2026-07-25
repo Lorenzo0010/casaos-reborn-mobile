@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, Text, View, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, useWindowDimensions } from 'react-native';
-import { useTheme, predefinedAccents, predefinedBackgrounds } from '../contexts/ThemeContext';
+import { useTheme, predefinedThemes } from '../contexts/ThemeContext';
 import { apiClient } from '../api/client';
 import { Palette, Trash2, Send, Save, RefreshCcw } from 'lucide-react-native';
 
 export default function AdvancedScreen() {
-  const { colors, accentColor, bgTheme, changeTheme } = useTheme();
+  const { colors, activeTheme, currentTheme, themeMode, changeTheme } = useTheme();
   const styles = createStyles(colors);
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
@@ -57,8 +57,8 @@ export default function AdvancedScreen() {
         ...prefs,
         telegramToken,
         telegramChatId,
-        accentColor,
-        bgTheme
+        mobileTheme: activeTheme,
+        themeMode
       });
       Alert.alert('Successo', 'Preferenze salvate correttamente');
     } catch (e) {
@@ -68,19 +68,27 @@ export default function AdvancedScreen() {
     }
   };
 
-  const handleThemeChange = (type, val) => {
-    if (type === 'accent') {
-      changeTheme(val, bgTheme);
-    } else {
-      changeTheme(accentColor, val);
-    }
+  const handleThemeChange = (themeId) => {
+    changeTheme(themeId, themeMode);
     // Salvataggio sul server in background
     apiClient.get('/api/system/preferences').then(res => {
       const prefs = res.data || {};
       apiClient.post('/api/system/preferences', {
         ...prefs,
-        accentColor: type === 'accent' ? val : accentColor,
-        bgTheme: type === 'bg' ? val : bgTheme
+        mobileTheme: themeId,
+        themeMode
+      }).catch(e => console.error(e));
+    }).catch(e => console.error(e));
+  };
+
+  const handleModeChange = (mode) => {
+    changeTheme(activeTheme, mode);
+    apiClient.get('/api/system/preferences').then(res => {
+      const prefs = res.data || {};
+      apiClient.post('/api/system/preferences', {
+        ...prefs,
+        mobileTheme: activeTheme,
+        themeMode: mode
       }).catch(e => console.error(e));
     }).catch(e => console.error(e));
   };
@@ -129,27 +137,49 @@ export default function AdvancedScreen() {
               <Palette color={colors.text} size={24} />
               <Text style={styles.sectionTitle}>Aspetto</Text>
             </View>
-            
-            <Text style={styles.label}>Colore Principale (Accent)</Text>
-            <View style={styles.colorRow}>
-              {predefinedAccents.map(acc => (
+
+            <Text style={styles.label}>Modalità Tema</Text>
+            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
+              {['system', 'light', 'dark'].map(mode => (
                 <TouchableOpacity 
-                  key={acc.name} 
-                  style={[styles.colorCircle, { backgroundColor: acc.hex }, accentColor === acc.hex && styles.colorSelected]}
-                  onPress={() => handleThemeChange('accent', acc.hex)}
-                />
+                  key={mode} 
+                  style={[styles.modeBtn, themeMode === mode && { backgroundColor: colors.primary, borderColor: colors.primary }]}
+                  onPress={() => handleModeChange(mode)}
+                >
+                  <Text style={[styles.modeText, themeMode === mode && { color: '#fff' }]}>
+                    {mode === 'system' ? 'Auto' : mode === 'light' ? 'Chiaro' : 'Scuro'}
+                  </Text>
+                </TouchableOpacity>
               ))}
             </View>
-
-            <Text style={[styles.label, { marginTop: 16 }]}>Tema Sfondo</Text>
+            
+            <Text style={styles.label}>Tema Grafico</Text>
             <View style={styles.colorRow}>
-              {predefinedBackgrounds.map(bg => (
-                <TouchableOpacity 
-                  key={bg.id} 
-                  style={[styles.colorCircle, { backgroundColor: bg.darkHex, borderWidth: 1, borderColor: '#444' }, bgTheme === bg.id && styles.colorSelected]}
-                  onPress={() => handleThemeChange('bg', bg.id)}
-                />
-              ))}
+              {predefinedThemes.map(theme => {
+                const isMonet = theme.id === 'monet';
+                let btnColor = theme.primary;
+                if (isMonet) {
+                  btnColor = (Platform.OS === 'android' && Platform.Version >= 31) 
+                    ? PlatformColor('@android:color/system_accent1_500') 
+                    : '#3b82f6';
+                }
+                
+                return (
+                  <TouchableOpacity 
+                    key={theme.id} 
+                    style={[
+                      styles.colorCircle, 
+                      { backgroundColor: btnColor }, 
+                      activeTheme === theme.id && styles.colorSelected
+                    ]}
+                    onPress={() => handleThemeChange(theme.id)}
+                  >
+                    {isMonet && (
+                      <Text style={{ color: '#ffffff', fontWeight: 'bold', fontSize: 18 }}>M</Text>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </View>
 
@@ -302,10 +332,25 @@ const createStyles = (colors) => StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   colorSelected: {
     borderWidth: 3,
-    borderColor: '#ffffff',
+    borderColor: colors.text,
+  },
+  modeBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    alignItems: 'center',
+    backgroundColor: colors.background,
+  },
+  modeText: {
+    color: colors.textSecondary,
+    fontWeight: 'bold',
   },
   primaryBtn: {
     backgroundColor: colors.primary,
