@@ -28,13 +28,16 @@ export default function ContainerDetailsScreen({ route, navigation }) {
     navigation.setOptions({
       title: containerName || 'Dettagli Container',
       headerRight: () => (
-        <TouchableOpacity onPress={() => navigation.navigate('ContainerSettings', { containerId, containerName })} style={{ marginRight: 16 }}>
+        <TouchableOpacity onPress={() => navigation.navigate('ContainerSettings', { containerId, containerName, details })} style={{ marginRight: 16 }}>
           <Settings color={colors.text} size={24} />
         </TouchableOpacity>
       )
     });
+  }, [containerId, containerName, navigation, details]);
+
+  useEffect(() => {
     fetchDetails();
-  }, [containerId, containerName, navigation]);
+  }, [containerId]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);

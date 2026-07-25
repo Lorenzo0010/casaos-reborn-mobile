@@ -11,6 +11,8 @@ import DashboardScreen from '../screens/DashboardScreen';
 import ContainersScreen from '../screens/ContainersScreen';
 import ContainerDetailsScreen from '../screens/ContainerDetailsScreen';
 import ContainerSettingsScreen from '../screens/ContainerSettingsScreen';
+import ContainerCreateScreen from '../screens/ContainerCreateScreen';
+import { PlusCircle } from 'lucide-react-native';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -25,9 +27,21 @@ const handleLogout = (navigation) => {
 const LogoutButton = () => {
   const navigation = useNavigation();
   return (
-    <TouchableOpacity onPress={() => handleLogout(navigation)} style={{ marginRight: 16 }}>
+    <TouchableOpacity onPress={() => handleLogout(navigation)} style={{ marginLeft: 16 }}>
       <LogOut color="#ff4d4f" size={24} />
     </TouchableOpacity>
+  );
+};
+
+const ContainersHeaderRight = () => {
+  const navigation = useNavigation();
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}>
+      <TouchableOpacity onPress={() => navigation.navigate('ContainerCreate')} style={{ marginRight: 16 }}>
+        <PlusCircle color={colors.primary} size={24} />
+      </TouchableOpacity>
+      <LogoutButton />
+    </View>
   );
 };
 
@@ -43,7 +57,7 @@ function ContainersStackNavigator() {
       <Stack.Screen 
         name="ContainersList" 
         component={ContainersScreen} 
-        options={{ title: 'Containers', headerRight: () => <LogoutButton /> }} 
+        options={{ title: 'Containers', headerRight: () => <ContainersHeaderRight /> }} 
       />
       <Stack.Screen 
         name="ContainerDetails" 
@@ -54,6 +68,11 @@ function ContainersStackNavigator() {
         name="ContainerSettings" 
         component={ContainerSettingsScreen} 
         options={{ title: 'Impostazioni' }} 
+      />
+      <Stack.Screen 
+        name="ContainerCreate" 
+        component={ContainerCreateScreen} 
+        options={{ title: 'Nuovo Container' }} 
       />
     </Stack.Navigator>
   );

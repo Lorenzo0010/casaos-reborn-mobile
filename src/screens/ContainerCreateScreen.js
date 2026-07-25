@@ -1,57 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
-import { Plus, Trash2, Settings, AlertTriangle } from 'lucide-react-native';
+import React, { useState } from 'react';
+import { StyleSheet, Text, View, TextInput, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { Plus, Trash2, Server } from 'lucide-react-native';
 import { apiClient } from '../api/client';
 import { colors } from '../theme';
 
-export default function ContainerSettingsScreen({ route, navigation }) {
-  const { containerId, containerName, details } = route.params;
-
-  const [ports, setPorts] = useState([]);
-  const [volumes, setVolumes] = useState([]);
-  const [envs, setEnvs] = useState([]);
+export default function ContainerCreateScreen({ navigation }) {
+  const [image, setImage] = useState('');
+  const [name, setName] = useState('');
+  
+  const [ports, setPorts] = useState([{ host: '', container: '' }]);
+  const [volumes, setVolumes] = useState([{ host: '', container: '' }]);
+  const [envs, setEnvs] = useState([{ key: '', value: '' }]);
+  
   const [loading, setLoading] = useState(false);
-  const [deleteLoading, setDeleteLoading] = useState(false);
-
-  useEffect(() => {
-    if (details) {
-      // Parse Ports
-      const parsedPorts = [];
-      if (details.HostConfig?.PortBindings) {
-        Object.entries(details.HostConfig.PortBindings).forEach(([containerPortStr, hostBindings]) => {
-          const containerPort = containerPortStr.split('/')[0];
-          hostBindings?.forEach(binding => {
-            parsedPorts.push({ host: binding.HostPort, container: containerPort });
-          });
-        });
-      }
-      setPorts(parsedPorts);
-
-      // Parse Volumes (Binds)
-      const parsedVolumes = [];
-      if (details.HostConfig?.Binds) {
-        details.HostConfig.Binds.forEach(bind => {
-          const parts = bind.split(':');
-          if (parts.length >= 2) {
-            parsedVolumes.push({ host: parts[0], container: parts[1] });
-          }
-        });
-      }
-      setVolumes(parsedVolumes);
-
-      // Parse Envs
-      const parsedEnvs = [];
-      if (details.Config?.Env) {
-        details.Config.Env.forEach(envStr => {
-          const eqIdx = envStr.indexOf('=');
-          if (eqIdx !== -1) {
-            parsedEnvs.push({ key: envStr.substring(0, eqIdx), value: envStr.substring(eqIdx + 1) });
-          }
-        });
-      }
-      setEnvs(parsedEnvs);
-    }
-  }, [details]);
 
   const handleAddPort = () => setPorts([...ports, { host: '', container: '' }]);
   const handleRemovePort = (index) => setPorts(ports.filter((_, i) => i !== index));
@@ -77,10 +38,18 @@ export default function ContainerSettingsScreen({ route, navigation }) {
     setEnvs(newEnvs);
   };
 
-  const handleSave = async () => {
+  const handleCreate = async () => {
+    if (!image) {
+      Alert.alert('Errore', 'Inserisci un nome immagine (es. nginx:latest)');
+      return;
+    }
+
     setLoading(true);
     
+    // Preparazione Payload
     const payload = {
+      image,
+      container_name: name || undefined,
       ports: ports.filter(p => p.host && p.container).map(p => ({
         host: p.host,
         container: p.container
@@ -96,44 +65,16 @@ export default function ContainerSettingsScreen({ route, navigation }) {
     };
 
     try {
-      await apiClient.post(`/api/docker/containers/${containerId}/recreate`, payload);
-      Alert.alert('Successo', 'Container aggiornato con successo!', [
+      await apiClient.post('/api/docker/containers/create', payload);
+      Alert.alert('Successo', 'Container creato con successo!', [
         { text: 'OK', onPress: () => navigation.goBack() }
       ]);
     } catch (e) {
       console.error(e);
-      Alert.alert('Errore', 'Aggiornamento fallito: ' + (e.response?.data?.error || e.message));
+      Alert.alert('Errore', 'Creazione fallita: ' + (e.response?.data?.error || e.message));
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleDelete = () => {
-    Alert.alert(
-      'Elimina Container', 
-      `Sei sicuro di voler eliminare definitivamente il container ${containerName}? Questa operazione non è reversibile.`,
-      [
-        { text: 'Annulla', style: 'cancel' },
-        { 
-          text: 'Sì, Elimina', 
-          style: 'destructive',
-          onPress: async () => {
-            setDeleteLoading(true);
-            try {
-              await apiClient.post(`/api/docker/containers/${containerId}/delete`);
-              Alert.alert('Successo', 'Container eliminato.', [
-                { text: 'OK', onPress: () => navigation.navigate('ContainersList') }
-              ]);
-            } catch (e) {
-              console.error(e);
-              Alert.alert('Errore', 'Eliminazione fallita: ' + (e.response?.data?.error || e.message));
-            } finally {
-              setDeleteLoading(false);
-            }
-          }
-        }
-      ]
-    );
   };
 
   const renderDynamicList = (title, items, handleAdd, handleRemove, handleChange, field1, field2, placeholder1, placeholder2) => (
@@ -165,9 +106,6 @@ export default function ContainerSettingsScreen({ route, navigation }) {
           </TouchableOpacity>
         </View>
       ))}
-      {items.length === 0 && (
-        <Text style={{ color: colors.textSecondary, fontStyle: 'italic' }}>Nessun elemento configurato.</Text>
-      )}
     </View>
   );
 
@@ -175,26 +113,39 @@ export default function ContainerSettingsScreen({ route, navigation }) {
     <ScrollView style={styles.container} contentContainerStyle={{ padding: 16 }}>
       
       <View style={styles.headerCard}>
-        <Settings color={colors.primary} size={48} style={{ marginBottom: 16 }} />
-        <Text style={styles.title}>Impostazioni</Text>
-        <Text style={styles.subtitle}>{containerName}</Text>
+        <Server color={colors.primary} size={48} style={{ marginBottom: 16 }} />
+        <Text style={styles.title}>Nuovo Container</Text>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Impostazioni Base</Text>
+        <Text style={styles.label}>Immagine *</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="es. nginx:latest"
+          placeholderTextColor={colors.textSecondary}
+          value={image}
+          onChangeText={setImage}
+          autoCapitalize="none"
+        />
+        
+        <Text style={styles.label}>Nome Container (Opzionale)</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="es. my-nginx"
+          placeholderTextColor={colors.textSecondary}
+          value={name}
+          onChangeText={setName}
+          autoCapitalize="none"
+        />
       </View>
 
       {renderDynamicList('Porte', ports, handleAddPort, handleRemovePort, handlePortChange, 'host', 'container', 'Host (es. 8080)', 'Container (es. 80)')}
       {renderDynamicList('Volumi', volumes, handleAddVolume, handleRemoveVolume, handleVolumeChange, 'host', 'container', 'Host (es. /dati)', 'Container (es. /app)')}
       {renderDynamicList('Variabili d\'Ambiente', envs, handleAddEnv, handleRemoveEnv, handleEnvChange, 'key', 'value', 'Chiave (es. PUID)', 'Valore (es. 1000)')}
 
-      <TouchableOpacity style={styles.createBtn} onPress={handleSave} disabled={loading || deleteLoading}>
-        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.createBtnText}>SALVA E RICREA</Text>}
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete} disabled={loading || deleteLoading}>
-        {deleteLoading ? <ActivityIndicator color="#fff" /> : (
-          <>
-            <AlertTriangle color="#fff" size={20} style={{ marginRight: 8 }} />
-            <Text style={styles.deleteBtnText}>ELIMINA CONTAINER</Text>
-          </>
-        )}
+      <TouchableOpacity style={styles.createBtn} onPress={handleCreate} disabled={loading}>
+        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.createBtnText}>CREA CONTAINER</Text>}
       </TouchableOpacity>
       
       <View style={{ height: 40 }} />
@@ -219,11 +170,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
   },
-  subtitle: {
-    color: colors.textSecondary,
-    fontSize: 16,
-    marginTop: 4,
-  },
   section: {
     backgroundColor: colors.surface,
     padding: 16,
@@ -240,6 +186,11 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 18,
     fontWeight: '600',
+  },
+  label: {
+    color: colors.textSecondary,
+    fontSize: 14,
+    marginBottom: 8,
   },
   input: {
     backgroundColor: 'rgba(255,255,255,0.05)',
@@ -275,20 +226,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   createBtnText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  deleteBtn: {
-    backgroundColor: colors.error,
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 16,
-  },
-  deleteBtnText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
