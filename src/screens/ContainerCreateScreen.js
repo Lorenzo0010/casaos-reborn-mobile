@@ -47,21 +47,27 @@ export default function ContainerCreateScreen({ navigation }) {
     setLoading(true);
     
     // Preparazione Payload
+    const portsObj = {};
+    ports.forEach(p => {
+      if (p.host && p.container) {
+          const key = `${p.container}/tcp`;
+          if (!portsObj[key]) portsObj[key] = [];
+          portsObj[key].push({ HostPort: p.host });
+      }
+    });
+
+    const envArray = envs.filter(e => e.key && e.value).map(e => `${e.key}=${e.value}`);
+    const volumesArray = volumes.filter(v => v.host && v.container).map(v => `${v.host}:${v.container}`);
+
     const payload = {
       image,
-      container_name: name || undefined,
-      ports: ports.filter(p => p.host && p.container).map(p => ({
-        host: p.host,
-        container: p.container
-      })),
-      volumes: volumes.filter(v => v.host && v.container).map(v => ({
-        host: v.host,
-        container: v.container
-      })),
-      envs: envs.filter(e => e.key && e.value).map(e => ({
-        key: e.key,
-        value: e.value
-      }))
+      tag: 'latest',
+      name: name || undefined,
+      ports: portsObj,
+      volumes: volumesArray,
+      env: envArray,
+      restartPolicy: 'unless-stopped',
+      networkMode: 'bridge',
     };
 
     try {

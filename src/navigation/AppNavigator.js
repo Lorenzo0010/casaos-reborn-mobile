@@ -2,7 +2,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Home, Server, LogOut } from 'lucide-react-native';
-import { TouchableOpacity, Alert } from 'react-native';
+import { TouchableOpacity, Alert, View } from 'react-native';
 import { logout } from '../api/client';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../theme';
