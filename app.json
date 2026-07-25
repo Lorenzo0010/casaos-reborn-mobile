@@ -20,7 +20,8 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#1e1e1e"
+        "backgroundColor": "#1e1e1e",
+        "monochromeImage": "./assets/monochrome-icon.png"
       },
       "package": "com.casaos.reborn.mobile",
       "permissions": [
