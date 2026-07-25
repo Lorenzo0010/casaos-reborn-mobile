@@ -183,9 +183,17 @@ export default function DashboardScreen() {
           </View>
 
           {/* SYSTEM INFO Card */}
-          <View style={[styles.card, cardStyle, styles.systemCard]}>
+          <View style={[styles.card, cardStyle]}>
+            <View style={styles.cardHeader}>
+              <View style={[styles.iconBox, { backgroundColor: 'rgba(139, 92, 246, 0.2)' }]}>
+                <Server color="#8b5cf6" size={24} />
+              </View>
+              <View style={styles.headerText}>
+                <Text style={styles.cardTitle}>Sistema Operativo</Text>
+              </View>
+            </View>
             <View style={styles.systemRow}>
-              <Server color={colors.textSecondary} size={20} />
+              <Smartphone color={colors.textSecondary} size={20} />
               <Text style={styles.systemText}>{stats.os?.distro} {stats.os?.release}</Text>
             </View>
             <View style={styles.systemRow}>
@@ -329,9 +337,6 @@ const createStyles = (colors) => StyleSheet.create({
     color: colors.text,
     fontSize: 16,
     fontWeight: 'bold',
-  },
-  systemCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.02)',
   },
   systemRow: {
     flexDirection: 'row',

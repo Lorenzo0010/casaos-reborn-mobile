@@ -15,13 +15,13 @@ export const predefinedAccents = [
 ];
 
 export const predefinedBackgrounds = [
-  { id: 'gray', name: 'Grigio Scuro', darkHex: '#1f2937' },
-  { id: 'mediumgray', name: 'Grigio Medio', darkHex: '#374151' },
-  { id: 'anthracite', name: 'Antracite', darkHex: '#18181b' },
-  { id: 'black', name: 'Total Black', darkHex: '#000000' },
-  { id: 'navy', name: 'Blu Scuro', darkHex: '#020617' },
-  { id: 'ocean', name: 'Verde Petrolio', darkHex: '#083344' },
-  { id: 'red', name: 'Rosso Scuro', darkHex: '#2a040d' },
+  { id: 'gray', name: 'Grigio Scuro', darkHex: '#1f2937', surfaceHex: '#374151' },
+  { id: 'mediumgray', name: 'Grigio Medio', darkHex: '#374151', surfaceHex: '#4b5563' },
+  { id: 'anthracite', name: 'Antracite', darkHex: '#18181b', surfaceHex: '#27272a' },
+  { id: 'black', name: 'Total Black', darkHex: '#000000', surfaceHex: '#111111' },
+  { id: 'navy', name: 'Blu Scuro', darkHex: '#020617', surfaceHex: '#0f172a' },
+  { id: 'ocean', name: 'Verde Petrolio', darkHex: '#083344', surfaceHex: '#164e63' },
+  { id: 'red', name: 'Rosso Scuro', darkHex: '#2a040d', surfaceHex: '#4c0519' },
 ];
 
 const ThemeContext = createContext();
@@ -74,10 +74,15 @@ export function ThemeProvider({ children }) {
     return bg ? bg.darkHex : '#1e1e1e';
   };
 
+  const getSurfaceColor = () => {
+    const bg = predefinedBackgrounds.find(b => b.id === bgTheme);
+    return bg ? bg.surfaceHex : '#2a2a2a';
+  };
+
   // Derive the active theme palette
   const colors = {
     background: getBackgroundColor(),
-    surface: bgTheme === 'black' ? '#111111' : (bgTheme === 'anthracite' ? '#27272a' : '#2a2a2a'),
+    surface: getSurfaceColor(),
     primary: accentColor,
     text: '#ffffff',
     textSecondary: '#aaaaaa',

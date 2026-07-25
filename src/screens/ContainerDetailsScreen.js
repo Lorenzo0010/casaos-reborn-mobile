@@ -207,8 +207,8 @@ export default function ContainerDetailsScreen({ route, navigation }) {
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.navigate('ContainerSettings', { containerId, containerName, details })}>
-              <Settings color={colors.text} size={24} />
-              <Text style={styles.actionText}>Impostazioni</Text>
+              <Settings color={colors.primary} size={24} />
+              <Text style={styles.actionText}>Settings</Text>
             </TouchableOpacity>
 
             {isRunning && webUrl && (
