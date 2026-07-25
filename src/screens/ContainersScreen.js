@@ -97,7 +97,8 @@ export default function ContainersScreen() {
       setContainers(res.data || []);
     } catch (e) {
       console.error(e);
-      Alert.alert('Errore', 'Impossibile recuperare i container');
+      const errorMessage = e.response?.data?.error || e.message || String(e);
+      Alert.alert('Errore Fetch Container', `Impossibile recuperare i container. Dettaglio: ${errorMessage}`);
     } finally {
       setLoading(false);
       setRefreshing(false);
