@@ -53,7 +53,6 @@ const ThemeContext = createContext();
 export function ThemeProvider({ children }) {
   const [activeTheme, setActiveTheme] = useState('navy');
   const [themeMode, setThemeMode] = useState('system');
-  const [showNavLabels, setShowNavLabels] = useState(true);
   const colorScheme = useColorScheme();
 
   useEffect(() => {
@@ -61,10 +60,8 @@ export function ThemeProvider({ children }) {
       try {
         const storedTheme = await AsyncStorage.getItem('activeTheme');
         const storedMode = await AsyncStorage.getItem('themeMode');
-        const storedNavLabels = await AsyncStorage.getItem('showNavLabels');
         if (storedTheme) setActiveTheme(storedTheme);
         if (storedMode) setThemeMode(storedMode);
-        if (storedNavLabels !== null) setShowNavLabels(storedNavLabels === 'true');
         
         // Fetch dal server se siamo loggati (gestiamo in background in modo silente)
         const token = await AsyncStorage.getItem('token');
@@ -98,10 +95,7 @@ export function ThemeProvider({ children }) {
     await AsyncStorage.setItem('themeMode', newMode);
   };
 
-  const toggleNavLabels = async (value) => {
-    setShowNavLabels(value);
-    await AsyncStorage.setItem('showNavLabels', value.toString());
-  };
+
 
   const resolvedMode = themeMode === 'system' ? (colorScheme || 'dark') : themeMode;
   const isDark = resolvedMode === 'dark';
@@ -139,7 +133,7 @@ export function ThemeProvider({ children }) {
   };
 
   return (
-    <ThemeContext.Provider value={{ colors, activeTheme, currentTheme, themeMode, resolvedMode, isDark, changeTheme, showNavLabels, toggleNavLabels }}>
+    <ThemeContext.Provider value={{ colors, activeTheme, currentTheme, themeMode, resolvedMode, isDark, changeTheme }}>
       {children}
     </ThemeContext.Provider>
   );

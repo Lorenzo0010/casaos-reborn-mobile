@@ -2,7 +2,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Home, Server, RefreshCw } from 'lucide-react-native';
-import { Alert, View } from 'react-native';
+import { Alert, View, useWindowDimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
 
@@ -26,7 +26,12 @@ function ContainersStackNavigator() {
   return (
     <Stack.Navigator
       screenOptions={{
-        headerStyle: { backgroundColor: colors.surface },
+        headerStyle: { 
+          backgroundColor: colors.background,
+          borderBottomWidth: 0,
+          elevation: 0,
+          shadowOpacity: 0,
+        },
         headerTintColor: colors.text,
         headerBackTitleVisible: false,
       }}
@@ -63,7 +68,12 @@ function DashboardStackNavigator() {
   return (
     <Stack.Navigator
       screenOptions={{
-        headerStyle: { backgroundColor: colors.surface },
+        headerStyle: { 
+          backgroundColor: colors.background,
+          borderBottomWidth: 0,
+          elevation: 0,
+          shadowOpacity: 0,
+        },
         headerTintColor: colors.text,
         headerBackTitleVisible: false,
       }}
@@ -83,7 +93,13 @@ function DashboardStackNavigator() {
 }
 
 export default function AppNavigator() {
-  const { colors, showNavLabels } = useTheme();
+  const { colors } = useTheme();
+  const { width } = useWindowDimensions();
+  // Un touch target standard è circa 48-64px. Con 4 icone, 260px equivale a 65px ad icona.
+  // È abbastanza compatto da non sprecare spazio ma facile da cliccare!
+  const BAR_WIDTH = Math.min(width - 48, 260);
+  const leftPosition = (width - BAR_WIDTH) / 2;
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -100,18 +116,18 @@ export default function AppNavigator() {
         },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textSecondary,
-        tabBarShowLabel: showNavLabels,
+        tabBarShowLabel: false,
         tabBarStyle: {
           backgroundColor: colors.surface,
           borderTopWidth: 0,
           position: 'absolute',
-          bottom: 24,
-          left: 16,
-          right: 16,
+          bottom: 16,
+          left: leftPosition,
+          width: BAR_WIDTH,
           borderRadius: 32,
-          height: showNavLabels ? 74 : 64,
-          paddingBottom: showNavLabels ? 12 : 0,
-          paddingTop: showNavLabels ? 12 : 0,
+          height: 64,
+          paddingBottom: 0,
+          paddingTop: 0,
           elevation: 8,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 4 },
@@ -129,7 +145,7 @@ export default function AppNavigator() {
           padding: 4,
         },
         headerStyle: {
-          backgroundColor: colors.surface,
+          backgroundColor: colors.background,
           borderBottomWidth: 0,
           elevation: 0,
           shadowOpacity: 0,

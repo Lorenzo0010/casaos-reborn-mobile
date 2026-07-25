@@ -310,38 +310,44 @@ export default function UpdatesScreen() {
         </View>
       </Modal>
 
-      <View style={styles.header}>
-        <Text style={styles.sectionTitle}>Container Server</Text>
-        <TouchableOpacity 
-          style={[styles.checkButton, isChecking && styles.checkButtonDisabled]}
-          onPress={checkUpdates}
-          disabled={isChecking}
-        >
-          {isChecking ? (
-            <ActivityIndicator color="#fff" size="small" style={{ marginRight: 8 }} />
-          ) : (
-            <RefreshCw color="#fff" size={20} style={{ marginRight: 8 }} />
-          )}
-          <Text style={styles.checkButtonText}>
-            {isChecking ? 'Ricerca in corso...' : 'Cerca Aggiornamenti'}
-          </Text>
-        </TouchableOpacity>
+      <View style={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 }}>
+        <Text style={styles.sectionTitle}>Azioni di Sistema</Text>
+        
+        <View style={styles.card}>
+          <View style={styles.cardInfo}>
+            <Text style={styles.containerName}>Container Server</Text>
+            <Text style={styles.imageName}>Ricerca nuove immagini Docker</Text>
+          </View>
+          <TouchableOpacity 
+            style={[styles.updateButton, isChecking && styles.updateButtonDisabled]} 
+            onPress={checkUpdates}
+            disabled={isChecking}
+          >
+            {isChecking ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <RefreshCw color="#fff" size={20} />
+            )}
+          </TouchableOpacity>
+        </View>
 
-        <Text style={[styles.sectionTitle, { marginTop: 24 }]}>CasaOS Mobile App</Text>
-        <TouchableOpacity 
-          style={[styles.checkButton, { backgroundColor: '#8b5cf6' }, isCheckingApp && styles.checkButtonDisabled]}
-          onPress={checkAppUpdate}
-          disabled={isCheckingApp}
-        >
-          {isCheckingApp ? (
-            <ActivityIndicator color="#fff" size="small" style={{ marginRight: 8 }} />
-          ) : (
-            <Smartphone color="#fff" size={20} style={{ marginRight: 8 }} />
-          )}
-          <Text style={styles.checkButtonText}>
-            {isCheckingApp ? 'Controllo...' : 'Verifica Aggiornamento App'}
-          </Text>
-        </TouchableOpacity>
+        <View style={styles.card}>
+          <View style={styles.cardInfo}>
+            <Text style={styles.containerName}>CasaOS Mobile App</Text>
+            <Text style={styles.imageName}>Verifica nuove release su GitHub</Text>
+          </View>
+          <TouchableOpacity 
+            style={[styles.updateButton, isCheckingApp && styles.updateButtonDisabled]} 
+            onPress={checkAppUpdate}
+            disabled={isCheckingApp}
+          >
+            {isCheckingApp ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Smartphone color="#fff" size={20} />
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
 
       {isChecking && checkStatus && checkStatus.container && (
@@ -412,33 +418,15 @@ const createStyles = (colors) => StyleSheet.create({
   },
   header: {
     padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.background,
   },
   sectionTitle: {
     color: colors.textSecondary,
     fontSize: 14,
     fontWeight: 'bold',
-    marginBottom: 8,
+    marginBottom: 12,
     textTransform: 'uppercase',
     letterSpacing: 1,
-  },
-  checkButton: {
-    backgroundColor: colors.primary,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 12,
-    borderRadius: 8,
-  },
-  checkButtonDisabled: {
-    opacity: 0.6,
-  },
-  checkButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
   },
   progressContainer: {
     padding: 12,
@@ -491,7 +479,7 @@ const createStyles = (colors) => StyleSheet.create({
     fontSize: 14,
   },
   updateButton: {
-    backgroundColor: colors.success,
+    backgroundColor: colors.primary,
     padding: 12,
     borderRadius: 8,
     justifyContent: 'center',

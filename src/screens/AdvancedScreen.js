@@ -6,7 +6,7 @@ import { Palette, Trash2, Send, Save, RefreshCcw, LogOut } from 'lucide-react-na
 import { useNavigation } from '@react-navigation/native';
 
 export default function AdvancedScreen() {
-  const { colors, activeTheme, currentTheme, themeMode, changeTheme, showNavLabels, toggleNavLabels } = useTheme();
+  const { colors, activeTheme, currentTheme, themeMode, changeTheme } = useTheme();
   const styles = createStyles(colors);
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
@@ -191,14 +191,6 @@ export default function AdvancedScreen() {
               })}
             </View>
 
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 24 }}>
-              <Text style={[styles.label, { marginBottom: 0 }]}>Mostra testo nella barra in basso</Text>
-              <Switch 
-                value={showNavLabels}
-                onValueChange={toggleNavLabels}
-                trackColor={{ false: colors.border, true: colors.primary }}
-              />
-            </View>
           </View>
 
           {/* Sezione Telegram */}
@@ -238,12 +230,13 @@ export default function AdvancedScreen() {
           </View>
         </View>
 
-        {/* Pulizia Docker */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Trash2 color={colors.text} size={24} />
-            <Text style={styles.sectionTitle}>Pulizia Sistema (Docker Prune)</Text>
-          </View>
+        <View style={isTablet ? styles.tabletGrid : null}>
+          {/* Pulizia Docker */}
+          <View style={[styles.section, isTablet && styles.tabletCard]}>
+            <View style={styles.sectionHeader}>
+              <Trash2 color={colors.text} size={24} />
+              <Text style={styles.sectionTitle}>Pulizia Sistema (Docker Prune)</Text>
+            </View>
           
           <TouchableOpacity style={styles.dangerBtn} onPress={() => handlePrune('images', 'Pulizia Immagini', 'Sei sicuro di voler eliminare tutte le immagini Docker non utilizzate?')}>
             <Text style={styles.dangerBtnText}>Pulisci Immagini Orfane</Text>
@@ -258,9 +251,9 @@ export default function AdvancedScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Log di Sistema */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
+          {/* Log di Sistema */}
+          <View style={[styles.section, isTablet && styles.tabletCard]}>
+            <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Log di Sistema</Text>
             <TouchableOpacity onPress={fetchLogs}>
               <RefreshCcw color={colors.primary} size={20} />
@@ -281,9 +274,10 @@ export default function AdvancedScreen() {
             )}
           </View>
 
-          <TouchableOpacity style={[styles.dangerBtn, { marginTop: 12 }]} onPress={clearLogs}>
-            <Text style={styles.dangerBtnText}>Svuota Log</Text>
-          </TouchableOpacity>
+            <TouchableOpacity style={[styles.dangerBtn, { marginTop: 12 }]} onPress={clearLogs}>
+              <Text style={styles.dangerBtnText}>Svuota Log</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Logout */}
