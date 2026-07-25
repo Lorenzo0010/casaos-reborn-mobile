@@ -1,10 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert, Modal } from 'react-native';
-import { RefreshCw, DownloadCloud, CheckCircle } from 'lucide-react-native';
+import { RefreshCw, DownloadCloud, CheckCircle, Smartphone } from 'lucide-react-native';
 import { apiClient } from '../api/client';
 import { colors } from '../theme';
 import io from 'socket.io-client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
+import * as FileSystem from 'expo-file-system';
+import * as IntentLauncher from 'expo-intent-launcher';
 
 export default function UpdatesScreen() {
   const [updates, setUpdates] = useState([]);
@@ -14,6 +18,42 @@ export default function UpdatesScreen() {
   // Per l'aggiornamento bloccante di casaos-reborn
   const [isSystemUpdating, setIsSystemUpdating] = useState(false);
   const [updatingContainerId, setUpdatingContainerId] = useState(null);
+
+  // App Update State
+  const [isCheckingApp, setIsCheckingApp] = useState(false);
+  const [isAppUpdating, setIsAppUpdating] = useState(false);
+  const [appUpdateProgress, setAppUpdateProgress] = useState(0);
+
+  // Background Tasks State
+  const [tasks, setTasks] = useState({});
+  const prevTasksCount = useRef(0);
+
+  const fetchTasks = async () => {
+    try {
+      const res = await apiClient.get('/api/docker/tasks');
+      const tasksList = res.data || [];
+      const tasksMap = {};
+      tasksList.forEach(t => {
+        if (t.id) tasksMap[t.id] = t;
+      });
+      setTasks(tasksMap);
+
+      if (tasksList.length < prevTasksCount.current) {
+        fetchUpdates();
+      }
+      prevTasksCount.current = tasksList.length;
+    } catch (e) {
+      // Ignora
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchTasks();
+      const interval = setInterval(fetchTasks, 2000);
+      return () => clearInterval(interval);
+    }, [])
+  );
 
   useEffect(() => {
     let socket = null;
@@ -113,8 +153,7 @@ export default function UpdatesScreen() {
       setUpdatingContainerId(item.id);
       try {
         await apiClient.post(`/api/docker/containers/${item.id}/update`, { image: item.image });
-        Alert.alert('Iniziato', `Aggiornamento in corso per ${item.name}. Controlla la dashboard o attendi la notifica.`);
-        setUpdates(prev => prev.filter(u => u.id !== item.id));
+        // The container stays in the list; progress will be shown via fetchTasks
       } catch (err) {
         Alert.alert('Errore', err.response?.data?.error || err.message);
       } finally {
@@ -123,25 +162,118 @@ export default function UpdatesScreen() {
     }
   };
 
-  const renderItem = ({ item }) => (
-    <View style={styles.card}>
-      <View style={styles.cardInfo}>
-        <Text style={styles.containerName}>{item.name}</Text>
-        <Text style={styles.imageName}>{item.image}</Text>
+  const downloadAndInstallApp = async (url, tag) => {
+    setIsAppUpdating(true);
+    setAppUpdateProgress(0);
+    try {
+      const fileUri = FileSystem.cacheDirectory + 'app-release.apk';
+      
+      const fileInfo = await FileSystem.getInfoAsync(fileUri);
+      if (fileInfo.exists) {
+        await FileSystem.deleteAsync(fileUri);
+      }
+
+      const downloadResumable = FileSystem.createDownloadResumable(
+        url,
+        fileUri,
+        {},
+        (downloadProgress) => {
+          const progress = downloadProgress.totalBytesWritten / downloadProgress.totalBytesExpectedToWrite;
+          setAppUpdateProgress(progress);
+        }
+      );
+
+      const { uri } = await downloadResumable.downloadAsync();
+      
+      await AsyncStorage.setItem('latest_installed_tag', tag);
+      
+      const contentUri = await FileSystem.getContentUriAsync(uri);
+      await IntentLauncher.startActivityAsync('android.intent.action.VIEW', {
+        data: contentUri,
+        flags: 1, 
+        type: 'application/vnd.android.package-archive'
+      });
+      
+    } catch (e) {
+      Alert.alert('Errore di Aggiornamento', e.message);
+    } finally {
+      setIsAppUpdating(false);
+    }
+  };
+
+  const checkAppUpdate = async () => {
+    setIsCheckingApp(true);
+    try {
+      const repo = 'Lorenzo0010/casaos-reborn-mobile';
+      const res = await axios.get(`https://api.github.com/repos/${repo}/releases`, {
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
+      if (!res.data || res.data.length === 0) {
+        Alert.alert('Nessun aggiornamento', 'Non ci sono release dell\'app su GitHub.');
+        return;
+      }
+      
+      const latestRelease = res.data[0];
+      const latestTag = latestRelease.tag_name;
+      const storedLatest = await AsyncStorage.getItem('latest_installed_tag');
+
+      if (latestTag && latestTag !== storedLatest) {
+        const apkAsset = latestRelease.assets.find(a => a.name.endsWith('.apk'));
+        if (apkAsset) {
+          Alert.alert(
+            'Aggiornamento App',
+            `Nuova versione ${latestTag} disponibile. Vuoi scaricarla e installarla?`,
+            [
+              { text: 'Annulla', style: 'cancel' },
+              { text: 'Installa', onPress: () => downloadAndInstallApp(apkAsset.browser_download_url, latestTag) }
+            ]
+          );
+        } else {
+            Alert.alert('Nessun APK', 'La release trovata non contiene un file APK valido.');
+        }
+      } else {
+        Alert.alert('App Aggiornata', 'Hai già l\'ultima versione installata.');
+      }
+    } catch (e) {
+      Alert.alert('Errore', 'Impossibile controllare aggiornamenti app: ' + e.message);
+    } finally {
+      setIsCheckingApp(false);
+    }
+  };
+
+  const renderItem = ({ item }) => {
+    const task = tasks[item.id];
+    const isRecreating = !!task;
+    
+    return (
+      <View style={styles.card}>
+        <View style={styles.cardInfo}>
+          <Text style={styles.containerName}>{item.name}</Text>
+          <Text style={styles.imageName}>{item.image}</Text>
+          {isRecreating && (
+            <Text style={[styles.imageName, { color: colors.primary, marginTop: 4, fontWeight: 'bold' }]}>
+              {task.status || 'Aggiornamento in corso...'}
+            </Text>
+          )}
+        </View>
+        <TouchableOpacity 
+          style={[styles.updateButton, (updatingContainerId === item.id || isRecreating) && styles.updateButtonDisabled]} 
+          onPress={() => handleUpdate(item)}
+          disabled={updatingContainerId === item.id || isRecreating}
+        >
+          {updatingContainerId === item.id || isRecreating ? (
+            <ActivityIndicator color="#fff" size="small" />
+          ) : (
+            <DownloadCloud color="#fff" size={20} />
+          )}
+        </TouchableOpacity>
       </View>
-      <TouchableOpacity 
-        style={[styles.updateButton, updatingContainerId === item.id && styles.updateButtonDisabled]} 
-        onPress={() => handleUpdate(item)}
-        disabled={updatingContainerId === item.id}
-      >
-        {updatingContainerId === item.id ? (
-          <ActivityIndicator color="#fff" size="small" />
-        ) : (
-          <DownloadCloud color="#fff" size={20} />
-        )}
-      </TouchableOpacity>
-    </View>
-  );
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -157,6 +289,7 @@ export default function UpdatesScreen() {
       </Modal>
 
       <View style={styles.header}>
+        <Text style={styles.sectionTitle}>Container Server</Text>
         <TouchableOpacity 
           style={[styles.checkButton, isChecking && styles.checkButtonDisabled]}
           onPress={checkUpdates}
@@ -169,6 +302,22 @@ export default function UpdatesScreen() {
           )}
           <Text style={styles.checkButtonText}>
             {isChecking ? 'Ricerca in corso...' : 'Cerca Aggiornamenti'}
+          </Text>
+        </TouchableOpacity>
+
+        <Text style={[styles.sectionTitle, { marginTop: 24 }]}>CasaOS Mobile App</Text>
+        <TouchableOpacity 
+          style={[styles.checkButton, { backgroundColor: '#8b5cf6' }, isCheckingApp && styles.checkButtonDisabled]}
+          onPress={checkAppUpdate}
+          disabled={isCheckingApp}
+        >
+          {isCheckingApp ? (
+            <ActivityIndicator color="#fff" size="small" style={{ marginRight: 8 }} />
+          ) : (
+            <Smartphone color="#fff" size={20} style={{ marginRight: 8 }} />
+          )}
+          <Text style={styles.checkButtonText}>
+            {isCheckingApp ? 'Controllo...' : 'Verifica Aggiornamento App'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -192,6 +341,17 @@ export default function UpdatesScreen() {
           contentContainerStyle={styles.list}
         />
       )}
+
+      {/* Modal di download aggiornamento App */}
+      <Modal visible={isAppUpdating} transparent={true} animationType="fade">
+        <View style={styles.modalBackground}>
+          <View style={styles.modalContent}>
+            <ActivityIndicator size="large" color="#3b82f6" />
+            <Text style={styles.modalText}>Download App in corso...</Text>
+            <Text style={styles.modalSubtext}>{Math.round(appUpdateProgress * 100)}%</Text>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -206,6 +366,14 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
     backgroundColor: colors.surface,
+  },
+  sectionTitle: {
+    color: colors.textSecondary,
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   checkButton: {
     backgroundColor: colors.primary,

@@ -35,17 +35,7 @@ const LogoutButton = () => {
   );
 };
 
-const ContainersHeaderRight = () => {
-  const navigation = useNavigation();
-  return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}>
-      <TouchableOpacity onPress={() => navigation.navigate('ContainerCreate')} style={{ marginRight: 16 }}>
-        <PlusCircle color={colors.primary} size={24} />
-      </TouchableOpacity>
-      <LogoutButton />
-    </View>
-  );
-};
+
 
 function ContainersStackNavigator() {
   return (
@@ -59,7 +49,10 @@ function ContainersStackNavigator() {
       <Stack.Screen 
         name="ContainersList" 
         component={ContainersScreen} 
-        options={{ title: 'Containers', headerRight: () => <ContainersHeaderRight /> }} 
+        options={{ 
+          title: 'Containers',
+          headerTitleStyle: { fontSize: 28, fontWeight: 'bold' }
+        }} 
       />
       <Stack.Screen 
         name="ContainerDetails" 

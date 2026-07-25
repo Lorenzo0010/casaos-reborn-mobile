@@ -131,9 +131,7 @@ export default function ContainerSettingsScreen({ route, navigation }) {
 
     try {
       await apiClient.post(`/api/docker/containers/${containerId}/recreate`, payload);
-      Alert.alert('Successo', 'Container in fase di ricreazione!', [
-        { text: 'OK', onPress: () => navigation.navigate('ContainersList') }
-      ]);
+      navigation.navigate('ContainersList');
     } catch (e) {
       console.error(e);
       Alert.alert('Errore', 'Aggiornamento fallito: ' + (e.response?.data?.error || e.message));
@@ -155,9 +153,7 @@ export default function ContainerSettingsScreen({ route, navigation }) {
             setDeleteLoading(true);
             try {
               await apiClient.post(`/api/docker/containers/${containerId}/delete`, {});
-              Alert.alert('Successo', 'Container eliminato.', [
-                { text: 'OK', onPress: () => navigation.navigate('ContainersList') }
-              ]);
+              navigation.navigate('ContainersList');
             } catch (e) {
               console.error(e);
               Alert.alert('Errore', 'Eliminazione fallita: ' + (e.response?.data?.error || e.message));

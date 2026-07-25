@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { StyleSheet, Text, View, FlatList, ActivityIndicator, RefreshControl, TouchableOpacity, Alert, Image, Linking } from 'react-native';
-import { Play, Square, RotateCw, Edit, Check, CheckSquare, Pin, ChevronUp, ChevronDown, Globe } from 'lucide-react-native';
+import { Play, Square, RotateCw, Edit, Check, CheckSquare, Pin, ChevronUp, ChevronDown, Globe, PlusCircle, LogOut } from 'lucide-react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import { apiClient } from '../api/client';
+import { apiClient, logout } from '../api/client';
 import { colors } from '../theme';
 
 const getContainerColor = (name) => {
@@ -22,6 +22,29 @@ export default function ContainersScreen() {
   const [tasks, setTasks] = useState({});
   const prevTasksCount = useRef(0);
   const navigation = useNavigation();
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TouchableOpacity onPress={() => setEditMode(!editMode)} style={{ marginRight: 16 }}>
+            {editMode ? <Check color={colors.success} size={24} /> : <Edit color={colors.text} size={24} />}
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('ContainerCreate')} style={{ marginRight: 16 }}>
+            <PlusCircle color={colors.primary} size={24} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => {
+            Alert.alert('Logout', 'Vuoi davvero disconnetterti?', [
+              { text: 'Annulla', style: 'cancel' },
+              { text: 'Sì, Esci', style: 'destructive', onPress: () => logout(navigation) },
+            ]);
+          }}>
+            <LogOut color="#ff4d4f" size={24} />
+          </TouchableOpacity>
+        </View>
+      ),
+    });
+  }, [navigation, editMode]);
 
   // Preferences State
   const [sortMode, setSortMode] = useState('date');
@@ -349,44 +372,37 @@ export default function ContainersScreen() {
   }
 
   // Header UI with Edit options
-  const renderHeader = () => (
-    <View style={styles.header}>
-      <View style={[styles.headerRow, { justifyContent: 'flex-end' }]}>
-        <TouchableOpacity style={styles.editBtn} onPress={() => setEditMode(!editMode)}>
-          {editMode ? <Check color={colors.success} size={24} /> : <Edit color={colors.text} size={24} />}
+  const renderHeader = () => {
+    if (!editMode) return null;
+    return (
+      <View style={[styles.header, styles.editOptions]}>
+        <TouchableOpacity 
+          style={styles.systemToggle} 
+          onPress={() => setShowSystemContainers(!showSystemContainers)}
+        >
+          {showSystemContainers ? <CheckSquare color={colors.primary} size={20} /> : <Square color={colors.textSecondary} size={20} />}
+          <Text style={styles.systemToggleText}>Mostra container di sistema</Text>
         </TouchableOpacity>
-      </View>
-      
-      {editMode && (
-        <View style={styles.editOptions}>
-          <TouchableOpacity 
-            style={styles.systemToggle} 
-            onPress={() => setShowSystemContainers(!showSystemContainers)}
-          >
-            {showSystemContainers ? <CheckSquare color={colors.primary} size={20} /> : <Square color={colors.textSecondary} size={20} />}
-            <Text style={styles.systemToggleText}>Mostra container di sistema</Text>
-          </TouchableOpacity>
-          
-          <View style={styles.sortSelectorContainer}>
-            <Text style={{ color: colors.textSecondary, marginBottom: 4 }}>Ordina per:</Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              {['date', 'alphabetical', 'status', 'custom'].map(mode => (
-                <TouchableOpacity 
-                  key={mode} 
-                  style={[styles.sortPill, sortMode === mode && styles.sortPillActive]}
-                  onPress={() => setSortMode(mode)}
-                >
-                  <Text style={[styles.sortPillText, sortMode === mode && styles.sortPillTextActive]}>
-                    {mode === 'date' ? 'Data' : mode === 'alphabetical' ? 'Alfabetico' : mode === 'status' ? 'Stato' : 'Custom'}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+        
+        <View style={styles.sortSelectorContainer}>
+          <Text style={{ color: colors.textSecondary, marginBottom: 4 }}>Ordina per:</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {['date', 'alphabetical', 'status', 'custom'].map(mode => (
+              <TouchableOpacity 
+                key={mode} 
+                style={[styles.sortPill, sortMode === mode && styles.sortPillActive]}
+                onPress={() => setSortMode(mode)}
+              >
+                <Text style={[styles.sortPillText, sortMode === mode && styles.sortPillTextActive]}>
+                  {mode === 'date' ? 'Data' : mode === 'alphabetical' ? 'Alfabetico' : mode === 'status' ? 'Stato' : 'Custom'}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
         </View>
-      )}
-    </View>
-  );
+      </View>
+    );
+  };
 
   return (
     <View style={styles.container}>

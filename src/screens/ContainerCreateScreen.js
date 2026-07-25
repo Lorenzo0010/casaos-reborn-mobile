@@ -72,9 +72,7 @@ export default function ContainerCreateScreen({ navigation }) {
 
     try {
       await apiClient.post('/api/docker/containers/create', payload);
-      Alert.alert('Successo', 'Container creato con successo!', [
-        { text: 'OK', onPress: () => navigation.goBack() }
-      ]);
+      navigation.goBack();
     } catch (e) {
       console.error(e);
       Alert.alert('Errore', 'Creazione fallita: ' + (e.response?.data?.error || e.message));
