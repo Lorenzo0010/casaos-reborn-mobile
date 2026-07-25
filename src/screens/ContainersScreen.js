@@ -39,14 +39,6 @@ export default function ContainersScreen() {
           <TouchableOpacity onPress={() => navigation.navigate('ContainerCreate')} style={{ marginRight: 16 }}>
             <PlusCircle color="#ffffff" size={24} />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => {
-            Alert.alert('Logout', 'Vuoi davvero disconnetterti?', [
-              { text: 'Annulla', style: 'cancel' },
-              { text: 'Sì, Esci', style: 'destructive', onPress: () => logout(navigation) },
-            ]);
-          }}>
-            <LogOut color="#ffffff" size={24} />
-          </TouchableOpacity>
         </View>
       ),
     });
