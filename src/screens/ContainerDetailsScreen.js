@@ -166,6 +166,21 @@ export default function ContainerDetailsScreen({ route, navigation }) {
         </View>
       </View>
 
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Info Generali</Text>
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>Immagine</Text>
+          <Text style={styles.value} numberOfLines={1} ellipsizeMode="middle">{details.Config?.Image}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>ID</Text>
+          <Text style={styles.value} numberOfLines={1} ellipsizeMode="tail">{details.Id?.substring(0, 12)}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>Creato il</Text>
+          <Text style={styles.value}>{new Date(details.Created).toLocaleString()}</Text>
+        </View>
+      </View>
       <View style={styles.actionRow}>
         {actionLoading ? (
           <ActivityIndicator color={colors.primary} size="small" />
@@ -221,22 +236,6 @@ export default function ContainerDetailsScreen({ route, navigation }) {
         )}
       </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Info Generali</Text>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Immagine</Text>
-          <Text style={styles.value} numberOfLines={1} ellipsizeMode="middle">{details.Config?.Image}</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>ID</Text>
-          <Text style={styles.value} numberOfLines={1} ellipsizeMode="tail">{details.Id?.substring(0, 12)}</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Creato il</Text>
-          <Text style={styles.value}>{new Date(details.Created).toLocaleString()}</Text>
-        </View>
-      </View>
-
     </ScrollView>
   );
 }
@@ -287,11 +286,13 @@ const createStyles = (colors) => StyleSheet.create({
     padding: 12,
     backgroundColor: colors.surface,
     borderRadius: 12,
-    width: '30%',
+    flexGrow: 1,
+    flexBasis: '30%',
+    minWidth: 100,
     marginBottom: 4,
   },
   actionText: {
-    color: colors.primary,
+    color: '#ffffff',
     marginTop: 8,
     fontSize: 14,
     fontWeight: '500',

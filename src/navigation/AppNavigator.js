@@ -5,7 +5,7 @@ import { Home, Server, LogOut, RefreshCw } from 'lucide-react-native';
 import { TouchableOpacity, Alert, View } from 'react-native';
 import { logout } from '../api/client';
 import { useNavigation } from '@react-navigation/native';
-import { colors } from '../theme';
+import { useTheme } from '../contexts/ThemeContext';
 
 import DashboardScreen from '../screens/DashboardScreen';
 import ContainersScreen from '../screens/ContainersScreen';
@@ -39,6 +39,7 @@ const LogoutButton = () => {
 
 
 function ContainersStackNavigator() {
+  const { colors } = useTheme();
   return (
     <Stack.Navigator
       screenOptions={{
@@ -75,6 +76,7 @@ function ContainersStackNavigator() {
 }
 
 function DashboardStackNavigator() {
+  const { colors } = useTheme();
   return (
     <Stack.Navigator
       screenOptions={{
@@ -98,6 +100,7 @@ function DashboardStackNavigator() {
 }
 
 export default function AppNavigator() {
+  const { colors } = useTheme();
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({

@@ -34,10 +34,10 @@ export default function ContainersScreen() {
       headerRight: () => (
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <TouchableOpacity onPress={() => setEditMode(prev => !prev)} style={{ marginRight: 16 }}>
-            {editMode ? <Check color={colors.success} size={24} /> : <Edit color={colors.text} size={24} />}
+            {editMode ? <Check color="#ffffff" size={24} /> : <Edit color="#ffffff" size={24} />}
           </TouchableOpacity>
           <TouchableOpacity onPress={() => navigation.navigate('ContainerCreate')} style={{ marginRight: 16 }}>
-            <PlusCircle color={colors.primary} size={24} />
+            <PlusCircle color="#ffffff" size={24} />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => {
             Alert.alert('Logout', 'Vuoi davvero disconnetterti?', [
@@ -45,7 +45,7 @@ export default function ContainersScreen() {
               { text: 'Sì, Esci', style: 'destructive', onPress: () => logout(navigation) },
             ]);
           }}>
-            <LogOut color="#ff4d4f" size={24} />
+            <LogOut color="#ffffff" size={24} />
           </TouchableOpacity>
         </View>
       ),
