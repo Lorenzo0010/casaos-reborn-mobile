@@ -1,78 +1,292 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
-import { Plus, Trash2, Server } from 'lucide-react-native';
+import { StyleSheet, Text, View, TextInput, ScrollView, TouchableOpacity, ActivityIndicator, Switch, Alert } from 'react-native';
+import { Plus, Trash2, Server, FileText, Code, Upload, Save, Check } from 'lucide-react-native';
 import { apiClient } from '../api/client';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAlert } from '../contexts/AlertContext';
+import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system';
+import yaml from 'js-yaml';
 
 export default function ContainerCreateScreen({ navigation }) {
   const { colors, typography } = useTheme();
   const styles = createStyles(colors, typography);
   const { showAlert } = useAlert();
 
+  const [activeTab, setActiveTab] = useState('manual');
+  const [yamlInput, setYamlInput] = useState('');
+
   const [image, setImage] = useState('');
+  const [tag, setTag] = useState('latest');
   const [name, setName] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [icon, setIcon] = useState('');
+  const [webUIScheme, setWebUIScheme] = useState('http');
+  const [webUIPort, setWebUIPort] = useState('');
+  const [webUIPath, setWebUIPath] = useState('/');
   
-  const [ports, setPorts] = useState([{ host: '', container: '' }]);
+  const [networkMode, setNetworkMode] = useState('bridge');
+  const [pidMode, setPidMode] = useState('');
+  const [hostname, setHostname] = useState('');
+  const [restartPolicy, setRestartPolicy] = useState('unless-stopped');
+  const [privileged, setPrivileged] = useState(false);
+  const [memory, setMemory] = useState('0');
+  const [cpuQuota, setCpuQuota] = useState(0);
+  
+  const [ports, setPorts] = useState([{ host: '', container: '', protocol: 'tcp' }]);
   const [volumes, setVolumes] = useState([{ host: '', container: '' }]);
   const [envs, setEnvs] = useState([{ key: '', value: '' }]);
+  const [devices, setDevices] = useState([{ host: '', container: '' }]);
+  const [commands, setCommands] = useState([{ value: '' }]);
+  const [capAdd, setCapAdd] = useState('');
   
   const [loading, setLoading] = useState(false);
 
-  const handleAddPort = () => setPorts([...ports, { host: '', container: '' }]);
-  const handleRemovePort = (index) => setPorts(ports.filter((_, i) => i !== index));
-  const handlePortChange = (index, field, value) => {
-    const newPorts = [...ports];
-    newPorts[index][field] = value;
-    setPorts(newPorts);
+  const handlePickDocument = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['application/x-yaml', 'text/yaml', 'text/plain', '*/*'],
+        copyToCacheDirectory: true,
+      });
+      if (result.canceled) return;
+      
+      const fileUri = result.assets[0].uri;
+      const fileContent = await FileSystem.readAsStringAsync(fileUri);
+      setYamlInput(fileContent);
+      handleImportYaml(fileContent);
+    } catch (err) {
+      showAlert('Errore', 'Impossibile leggere il file: ' + err.message);
+    }
   };
 
-  const handleAddVolume = () => setVolumes([...volumes, { host: '', container: '' }]);
-  const handleRemoveVolume = (index) => setVolumes(volumes.filter((_, i) => i !== index));
-  const handleVolumeChange = (index, field, value) => {
-    const newVols = [...volumes];
-    newVols[index][field] = value;
-    setVolumes(newVols);
+  const handleImportYaml = (yamlString) => {
+    try {
+      const parsed = yaml.load(yamlString);
+      if (!parsed || typeof parsed !== 'object') throw new Error('YAML non valido');
+      
+      let service = parsed;
+      if (parsed.services) {
+        const serviceName = Object.keys(parsed.services)[0];
+        service = parsed.services[serviceName];
+        if (!service.container_name) service.container_name = serviceName;
+      }
+
+      if (!service.image) throw new Error('Nessuna immagine specificata nel YAML');
+
+      let imageName = service.image;
+      let imageTag = 'latest';
+      const colonIdx = service.image.lastIndexOf(':');
+      if (colonIdx > 0 && !service.image.substring(colonIdx).includes('/')) {
+        imageName = service.image.substring(0, colonIdx);
+        imageTag = service.image.substring(colonIdx + 1);
+      }
+
+      const normalizeScheme = (s) => {
+        if (!s) return 'http';
+        return s.replace('://', '').toLowerCase();
+      };
+
+      const getCasaOSData = (xCasaos) => {
+        if (!xCasaos) return {};
+        const res = {};
+        if (xCasaos.icon) res.icon = xCasaos.icon;
+        if (xCasaos.title) {
+          if (typeof xCasaos.title === 'string') res.title = xCasaos.title;
+          else if (xCasaos.title.custom) res.title = xCasaos.title.custom;
+          else if (xCasaos.title.en_us) res.title = xCasaos.title.en_us;
+        }
+        if (xCasaos.port_map) res.port = String(xCasaos.port_map);
+        if (xCasaos.scheme) res.scheme = normalizeScheme(xCasaos.scheme);
+        if (xCasaos.index) res.path = xCasaos.index;
+
+        if (xCasaos.ports) {
+            const uiPort = xCasaos.ports.find(p => p.ui || p.web);
+            if (uiPort) {
+                res.scheme = normalizeScheme(uiPort.scheme) || res.scheme || 'http';
+                res.port = uiPort.target || uiPort.published || res.port || '';
+                res.path = uiPort.path || res.path || '/';
+            }
+        }
+        return res;
+      };
+
+      const rootCasaosData = getCasaOSData(parsed['x-casaos']);
+      const serviceCasaosData = getCasaOSData(service['x-casaos']);
+
+      setImage(imageName);
+      setTag(imageTag);
+      setName(parsed.name || service.container_name || Object.keys(parsed.services)[0] || '');
+      setDisplayName(serviceCasaosData.title || rootCasaosData.title || '');
+      setIcon(serviceCasaosData.icon || rootCasaosData.icon || (service.labels && service.labels.icon) || '');
+      setRestartPolicy(service.restart || 'unless-stopped');
+      setPrivileged(!!service.privileged);
+      setNetworkMode(service.network_mode || 'bridge');
+      setPidMode(service.pid || '');
+      setHostname(service.hostname || '');
+      
+      const memStr = service.deploy?.resources?.limits?.memory || service.mem_limit || '';
+      if (memStr) {
+        const memMatch = String(memStr).match(/^(\d+)\s*([kmgt]?)b?$/i);
+        if (memMatch) {
+          let memMB = parseInt(memMatch[1]);
+          const unit = (memMatch[2] || '').toLowerCase();
+          if (unit === 'k') memMB = Math.round(memMB / 1024);
+          else if (unit === 'g') memMB = memMB * 1024;
+          else if (unit === 't') memMB = memMB * 1024 * 1024;
+          setMemory(String(memMB));
+        }
+      }
+
+      if (serviceCasaosData.port || rootCasaosData.port) {
+          setWebUIScheme(serviceCasaosData.scheme || rootCasaosData.scheme || 'http');
+          setWebUIPort(serviceCasaosData.port || rootCasaosData.port || '');
+          setWebUIPath(serviceCasaosData.path || rootCasaosData.path || '/');
+      }
+
+      if (service.ports) {
+        const p = service.ports.map(pt => {
+          if (typeof pt === 'string') {
+            const parts = pt.split(':');
+            let protocol = 'tcp';
+            let host = '';
+            let container = '';
+            if (parts.length === 2) { host = parts[0]; container = parts[1]; }
+            if (parts.length === 3) { host = parts[1]; container = parts[2]; }
+            if (container.includes('/')) {
+                const cParts = container.split('/');
+                container = cParts[0];
+                protocol = cParts[1].toLowerCase();
+            }
+            return { host, container, protocol };
+          } else if (typeof pt === 'object') {
+              return {
+                  host: String(pt.published || ''),
+                  container: String(pt.target || ''),
+                  protocol: (pt.protocol || 'tcp').toLowerCase()
+              };
+          }
+          return { host: '', container: '', protocol: 'tcp' };
+        }).filter(pt => pt.host && pt.container);
+        setPorts(p.length ? p : [{ host: '', container: '', protocol: 'tcp' }]);
+      }
+
+      if (service.volumes && service.volumes.length > 0) {
+        const v = service.volumes.map(vol => {
+          if (typeof vol === 'string') {
+            const parts = vol.split(':');
+            if (parts.length >= 2) return { host: parts[0], container: parts[1] };
+          } else if (typeof vol === 'object') {
+              return { host: vol.source || '', container: vol.target || '' };
+          }
+          return { host: '', container: '' };
+        }).filter(vol => vol.host && vol.container);
+        setVolumes(v.length ? v : [{ host: '', container: '' }]);
+      }
+
+      if (service.environment) {
+        let e = [];
+        if (Array.isArray(service.environment)) {
+          e = service.environment.map(env => {
+            const [k, ...v] = env.split('=');
+            return { key: k, value: v.join('=') };
+          });
+        } else {
+          e = Object.entries(service.environment).map(([k, v]) => ({ key: k, value: String(v) }));
+        }
+        setEnvs(e.length ? e : [{ key: '', value: '' }]);
+      }
+
+      if (service.devices && service.devices.length > 0) {
+          const d = service.devices.map(dev => {
+              if (typeof dev === 'string') {
+                  const parts = dev.split(':');
+                  if (parts.length >= 2) return { host: parts[0], container: parts[1] };
+              }
+              return { host: '', container: '' };
+          }).filter(dev => dev.host && dev.container);
+          setDevices(d.length ? d : [{ host: '', container: '' }]);
+      }
+
+      if (service.command && (typeof service.command === 'string' || service.command.length > 0)) {
+          if (Array.isArray(service.command)) {
+              setCommands(service.command.map(c => ({ value: c })));
+          } else {
+              setCommands(service.command.split(' ').map(c => ({ value: c })));
+          }
+      }
+      
+      if (service.cap_add && service.cap_add.length > 0) {
+          setCapAdd(service.cap_add.join(', '));
+      }
+
+      setActiveTab('manual');
+      showAlert('Successo', 'YAML analizzato e importato correttamente.');
+    } catch (err) {
+      showAlert('Errore YAML', err.message);
+    }
   };
 
-  const handleAddEnv = () => setEnvs([...envs, { key: '', value: '' }]);
-  const handleRemoveEnv = (index) => setEnvs(envs.filter((_, i) => i !== index));
-  const handleEnvChange = (index, field, value) => {
-    const newEnvs = [...envs];
-    newEnvs[index][field] = value;
-    setEnvs(newEnvs);
+  const handleDynamicListChange = (setter, items, index, field, value) => {
+    const newItems = [...items];
+    newItems[index][field] = value;
+    setter(newItems);
   };
+  const addDynamicItem = (setter, items, emptyObj) => setter([...items, emptyObj]);
+  const removeDynamicItem = (setter, items, index) => setter(items.filter((_, i) => i !== index));
 
   const handleCreate = async () => {
     if (!image) {
-      showAlert('Errore', 'Inserisci un nome immagine (es. nginx:latest)');
+      showAlert('Errore', 'Inserisci un nome immagine (es. nginx)');
       return;
     }
 
     setLoading(true);
     
-    // Preparazione Payload
     const portsObj = {};
     ports.forEach(p => {
       if (p.host && p.container) {
-          const key = `${p.container}/tcp`;
+          const key = `${p.container}/${p.protocol}`;
           if (!portsObj[key]) portsObj[key] = [];
           portsObj[key].push({ HostPort: p.host });
       }
     });
 
-    const envArray = envs.filter(e => e.key && e.value).map(e => `${e.key}=${e.value}`);
+    const envArray = envs.filter(e => e.key).map(e => `${e.key}=${e.value}`);
     const volumesArray = volumes.filter(v => v.host && v.container).map(v => `${v.host}:${v.container}`);
+    const devicesArray = devices.filter(d => d.host && d.container).map(d => ({
+        PathOnHost: d.host,
+        PathInContainer: d.container,
+        CgroupPermissions: 'rwm'
+    }));
+    const commandsArray = commands.filter(c => c.value).map(c => c.value);
+
+    let cpuQuotaObj = 0;
+    if (cpuQuota === 1) cpuQuotaObj = 25000;
+    else if (cpuQuota === 2) cpuQuotaObj = 50000;
+    else if (cpuQuota === 3) cpuQuotaObj = 75000;
+
+    let parsedCapAdd = capAdd.split(',').map(c => c.trim().toUpperCase()).filter(c => c);
 
     const payload = {
       image,
-      tag: 'latest',
+      tag: tag || 'latest',
       name: name || undefined,
+      displayName: displayName,
+      icon: icon,
+      webUI: webUIPort ? { scheme: webUIScheme, port: webUIPort, path: webUIPath } : null,
+      networkMode: networkMode,
+      pidMode: pidMode,
+      hostname: hostname,
+      restartPolicy: restartPolicy,
+      privileged: privileged,
+      memory: memory && parseInt(memory) > 0 ? parseInt(memory) * 1024 * 1024 : 0,
+      cpuQuota: cpuQuotaObj,
       ports: portsObj,
       volumes: volumesArray,
       env: envArray,
-      restartPolicy: 'unless-stopped',
-      networkMode: 'bridge',
+      devices: devicesArray,
+      cmd: commandsArray,
+      capAdd: parsedCapAdd
     };
 
     try {
@@ -86,37 +300,76 @@ export default function ContainerCreateScreen({ navigation }) {
     }
   };
 
-  const renderDynamicList = (title, items, handleAdd, handleRemove, handleChange, field1, field2, placeholder1, placeholder2) => (
+  const renderDynamicList = (title, items, setter, emptyObj, field1, field2, placeholder1, placeholder2, isPorts = false, isCommands = false) => (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>{title}</Text>
-        <TouchableOpacity onPress={handleAdd} style={styles.addBtn}>
+        <TouchableOpacity onPress={() => addDynamicItem(setter, items, emptyObj)} style={styles.addBtn}>
           <Plus color={colors.primary} size={20} />
         </TouchableOpacity>
       </View>
       {items.map((item, index) => (
         <View key={index} style={styles.dynamicRow}>
-          <TextInput
-            style={[styles.input, { flex: 1, marginRight: 8, marginBottom: 0 }]}
-            placeholder={placeholder1}
-            placeholderTextColor={colors.textSecondary}
-            value={item[field1]}
-            onChangeText={(val) => handleChange(index, field1, val)}
-          />
-          <TextInput
-            style={[styles.input, { flex: 1, marginRight: 8, marginBottom: 0 }]}
-            placeholder={placeholder2}
-            placeholderTextColor={colors.textSecondary}
-            value={item[field2]}
-            onChangeText={(val) => handleChange(index, field2, val)}
-          />
-          <TouchableOpacity onPress={() => handleRemove(index)} style={styles.removeBtn}>
+          {isCommands ? (
+            <TextInput
+              style={[styles.input, { flex: 1, marginRight: 8, marginBottom: 0 }]}
+              placeholder={placeholder1}
+              placeholderTextColor={colors.textSecondary}
+              value={item[field1]}
+              onChangeText={(val) => handleDynamicListChange(setter, items, index, field1, val)}
+            />
+          ) : (
+            <>
+              <TextInput
+                style={[styles.input, { flex: 1, marginRight: 8, marginBottom: 0 }]}
+                placeholder={placeholder1}
+                placeholderTextColor={colors.textSecondary}
+                value={item[field1]}
+                onChangeText={(val) => handleDynamicListChange(setter, items, index, field1, val)}
+              />
+              <TextInput
+                style={[styles.input, { flex: 1, marginRight: 8, marginBottom: 0 }]}
+                placeholder={placeholder2}
+                placeholderTextColor={colors.textSecondary}
+                value={item[field2]}
+                onChangeText={(val) => handleDynamicListChange(setter, items, index, field2, val)}
+              />
+              {isPorts && (
+                <TouchableOpacity 
+                  style={[styles.input, { width: 60, marginRight: 8, marginBottom: 0, justifyContent: 'center', alignItems: 'center' }]}
+                  onPress={() => handleDynamicListChange(setter, items, index, 'protocol', item.protocol === 'tcp' ? 'udp' : 'tcp')}
+                >
+                  <Text style={{ color: colors.text, fontSize: 12 }}>{item.protocol.toUpperCase()}</Text>
+                </TouchableOpacity>
+              )}
+            </>
+          )}
+          <TouchableOpacity onPress={() => removeDynamicItem(setter, items, index)} style={styles.removeBtn}>
             <Trash2 color={colors.error} size={20} />
           </TouchableOpacity>
         </View>
       ))}
+      {items.length === 0 && (
+        <Text style={{ color: colors.textSecondary, fontStyle: 'italic' }}>Nessun elemento configurato.</Text>
+      )}
     </View>
   );
+
+  const renderOptionCycler = (label, value, setter, options) => {
+    const currentIndex = options.findIndex(o => o.value === value);
+    const nextIndex = (currentIndex + 1) % options.length;
+    return (
+      <View style={styles.optionRow}>
+        <Text style={styles.label}>{label}</Text>
+        <TouchableOpacity 
+          style={styles.cycleBtn}
+          onPress={() => setter(options[nextIndex].value)}
+        >
+          <Text style={styles.cycleBtnText}>{options[currentIndex]?.label || value}</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ padding: 16 }}>
@@ -126,114 +379,179 @@ export default function ContainerCreateScreen({ navigation }) {
         <Text style={styles.title}>Nuovo Container</Text>
       </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Impostazioni Base</Text>
-        <Text style={styles.label}>Immagine *</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="es. nginx:latest"
-          placeholderTextColor={colors.textSecondary}
-          value={image}
-          onChangeText={setImage}
-          autoCapitalize="none"
-        />
-        
-        <Text style={styles.label}>Nome Container (Opzionale)</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="es. my-nginx"
-          placeholderTextColor={colors.textSecondary}
-          value={name}
-          onChangeText={setName}
-          autoCapitalize="none"
-        />
+      <View style={styles.tabContainer}>
+        <TouchableOpacity 
+          style={[styles.tabBtn, activeTab === 'manual' && styles.tabBtnActive]} 
+          onPress={() => setActiveTab('manual')}
+        >
+          <FileText size={18} color={activeTab === 'manual' ? '#fff' : colors.textSecondary} />
+          <Text style={[styles.tabText, activeTab === 'manual' && styles.tabTextActive]}>Manuale</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={[styles.tabBtn, activeTab === 'yaml' && styles.tabBtnActive]} 
+          onPress={() => setActiveTab('yaml')}
+        >
+          <Code size={18} color={activeTab === 'yaml' ? '#fff' : colors.textSecondary} />
+          <Text style={[styles.tabText, activeTab === 'yaml' && styles.tabTextActive]}>YAML</Text>
+        </TouchableOpacity>
       </View>
 
-      {renderDynamicList('Porte', ports, handleAddPort, handleRemovePort, handlePortChange, 'host', 'container', 'Host (es. 8080)', 'Container (es. 80)')}
-      {renderDynamicList('Volumi', volumes, handleAddVolume, handleRemoveVolume, handleVolumeChange, 'host', 'container', 'Host (es. /dati)', 'Container (es. /app)')}
-      {renderDynamicList('Variabili d\'Ambiente', envs, handleAddEnv, handleRemoveEnv, handleEnvChange, 'key', 'value', 'Chiave (es. PUID)', 'Valore (es. 1000)')}
+      {activeTab === 'yaml' ? (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Importa Compose YAML</Text>
+          <Text style={[styles.label, { marginBottom: 12, marginTop: 8 }]}>Puoi incollare il testo qui sotto oppure caricare un file dal dispositivo.</Text>
+          <TouchableOpacity style={styles.uploadBtn} onPress={handlePickDocument}>
+            <Upload color="#fff" size={20} style={{ marginRight: 8 }} />
+            <Text style={styles.uploadBtnText}>CARICA FILE YAML</Text>
+          </TouchableOpacity>
+          <TextInput
+            style={[styles.input, { height: 250, textAlignVertical: 'top', fontFamily: 'monospace' }]}
+            placeholder={"version: '3'\nservices:\n  app:\n    image: nginx"}
+            placeholderTextColor={colors.textSecondary}
+            value={yamlInput}
+            onChangeText={setYamlInput}
+            multiline
+            autoCapitalize="none"
+          />
+          <TouchableOpacity style={styles.createBtn} onPress={() => handleImportYaml(yamlInput)}>
+            <Check color="#fff" size={20} style={{ marginRight: 8 }} />
+            <Text style={styles.createBtnText}>ANALIZZA E COMPILA</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Impostazioni Base</Text>
+            
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+              <View style={{ flex: 2 }}>
+                <Text style={styles.label}>Immagine *</Text>
+                <TextInput style={styles.input} placeholder="es. nginx" placeholderTextColor={colors.textSecondary} value={image} onChangeText={setImage} autoCapitalize="none" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.label}>Tag</Text>
+                <TextInput style={styles.input} placeholder="latest" placeholderTextColor={colors.textSecondary} value={tag} onChangeText={setTag} autoCapitalize="none" />
+              </View>
+            </View>
+            
+            <Text style={styles.label}>Nome Container (Opzionale)</Text>
+            <TextInput style={styles.input} placeholder="es. my-nginx" placeholderTextColor={colors.textSecondary} value={name} onChangeText={setName} autoCapitalize="none" />
 
-      <TouchableOpacity style={styles.createBtn} onPress={handleCreate} disabled={loading}>
-        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.createBtnText}>CREA CONTAINER</Text>}
-      </TouchableOpacity>
-      
-      <View style={{ height: 40 }} />
+            <Text style={styles.label}>Nome Visualizzato (Dashboard)</Text>
+            <TextInput style={styles.input} placeholder={name || "es. Nginx"} placeholderTextColor={colors.textSecondary} value={displayName} onChangeText={setDisplayName} />
+
+            <Text style={styles.label}>URL Icona (Opzionale)</Text>
+            <TextInput style={styles.input} placeholder="https://..." placeholderTextColor={colors.textSecondary} value={icon} onChangeText={setIcon} autoCapitalize="none" />
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Interfaccia Web (Opzionale)</Text>
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.label}>Porta WebUI</Text>
+                <TextInput style={styles.input} placeholder="8080" placeholderTextColor={colors.textSecondary} value={webUIPort} onChangeText={setWebUIPort} keyboardType="numeric" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.label}>Scheme</Text>
+                <TouchableOpacity style={[styles.input, { justifyContent: 'center' }]} onPress={() => setWebUIScheme(webUIScheme === 'http' ? 'https' : 'http')}>
+                  <Text style={{ color: colors.text }}>{webUIScheme}://</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+            <Text style={styles.label}>Percorso (Path)</Text>
+            <TextInput style={styles.input} placeholder="/" placeholderTextColor={colors.textSecondary} value={webUIPath} onChangeText={setWebUIPath} autoCapitalize="none" />
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Risorse & Privilegi</Text>
+            <Text style={[styles.label, { marginTop: 8 }]}>Limite Memoria (MB, 0=illimitato)</Text>
+            <TextInput style={styles.input} placeholder="0" placeholderTextColor={colors.textSecondary} value={memory} onChangeText={setMemory} keyboardType="numeric" />
+            
+            {renderOptionCycler('CPU Quota', cpuQuota, setCpuQuota, [
+              { label: 'Illimitato', value: 0 },
+              { label: 'Basso (25%)', value: 1 },
+              { label: 'Medio (50%)', value: 2 },
+              { label: 'Alto (75%)', value: 3 },
+            ])}
+            
+            <View style={[styles.optionRow, { borderBottomWidth: 0, marginTop: 8, paddingVertical: 0 }]}>
+              <Text style={styles.label}>Modalità Privilegiata</Text>
+              <Switch value={privileged} onValueChange={setPrivileged} trackColor={{ true: colors.primary, false: colors.border }} />
+            </View>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Sistema & Rete</Text>
+            {renderOptionCycler('Network Mode', networkMode, setNetworkMode, [
+              { label: 'bridge', value: 'bridge' },
+              { label: 'host', value: 'host' },
+              { label: 'none', value: 'none' },
+            ])}
+            
+            {renderOptionCycler('Restart Policy', restartPolicy, setRestartPolicy, [
+              { label: 'Unless Stopped', value: 'unless-stopped' },
+              { label: 'Always', value: 'always' },
+              { label: 'On Failure', value: 'on-failure' },
+              { label: 'No', value: 'no' },
+            ])}
+
+            <Text style={[styles.label, { marginTop: 8 }]}>Hostname (Opzionale)</Text>
+            <TextInput style={styles.input} placeholder="es. my-host" placeholderTextColor={colors.textSecondary} value={hostname} onChangeText={setHostname} autoCapitalize="none" />
+
+            <Text style={styles.label}>PID Mode (Opzionale, es. host)</Text>
+            <TextInput style={styles.input} placeholder="" placeholderTextColor={colors.textSecondary} value={pidMode} onChangeText={setPidMode} autoCapitalize="none" />
+            
+            <Text style={styles.label}>Cap Add (separati da virgola)</Text>
+            <TextInput style={styles.input} placeholder="es. NET_ADMIN, SYS_ADMIN" placeholderTextColor={colors.textSecondary} value={capAdd} onChangeText={setCapAdd} autoCapitalize="characters" />
+          </View>
+
+          {renderDynamicList('Porte', ports, setPorts, { host: '', container: '', protocol: 'tcp' }, 'host', 'container', 'Host (es. 8080)', 'Container (es. 80)', true)}
+          {renderDynamicList('Volumi', volumes, setVolumes, { host: '', container: '' }, 'host', 'container', 'Host (es. /dati)', 'Container (es. /app)')}
+          {renderDynamicList('Variabili d\'Ambiente', envs, setEnvs, { key: '', value: '' }, 'key', 'value', 'Chiave (es. PUID)', 'Valore (es. 1000)')}
+          {renderDynamicList('Dispositivi (Devices)', devices, setDevices, { host: '', container: '' }, 'host', 'container', 'Host (es. /dev/dri)', 'Container (es. /dev/dri)')}
+          {renderDynamicList('Comandi', commands, setCommands, { value: '' }, 'value', null, 'Comando (es. --appendonly=yes)', null, false, true)}
+
+          <TouchableOpacity style={styles.createBtn} onPress={handleCreate} disabled={loading}>
+            {loading ? <ActivityIndicator color="#fff" /> : (
+              <>
+                <Save color="#fff" size={20} style={{ marginRight: 8 }} />
+                <Text style={styles.createBtnText}>CREA CONTAINER</Text>
+              </>
+            )}
+          </TouchableOpacity>
+          
+          <View style={{ height: 40 }} />
+        </>
+      )}
     </ScrollView>
   );
 }
 
 const createStyles = (colors, typography) => StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  headerCard: {
-    backgroundColor: colors.surface,
-    padding: 24,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  title: {
-    ...typography.h3,
-    color: colors.text,
-  },
-  section: {
-    backgroundColor: colors.surface,
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 16,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    ...typography.h3,
-    color: colors.text,
-  },
-  label: {
-    ...typography.body,
-    color: colors.textSecondary,
-    marginBottom: 8,
-  },
+  container: { flex: 1, backgroundColor: colors.background },
+  headerCard: { backgroundColor: colors.surface, padding: 24, borderRadius: 12, alignItems: 'center', marginBottom: 16 },
+  title: { ...typography.h3, color: colors.text },
+  tabContainer: { flexDirection: 'row', backgroundColor: colors.surface, borderRadius: 12, padding: 4, marginBottom: 16 },
+  tabBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 12, borderRadius: 8 },
+  tabBtnActive: { backgroundColor: colors.primary },
+  tabText: { ...typography.button, color: colors.textSecondary, marginLeft: 8 },
+  tabTextActive: { color: '#fff' },
+  section: { backgroundColor: colors.surface, padding: 16, borderRadius: 12, marginBottom: 16 },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  sectionTitle: { ...typography.h3, color: colors.text },
+  label: { ...typography.body, color: colors.textSecondary, marginBottom: 8 },
   input: {
-    ...typography.subtitle,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    color: colors.text,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginBottom: 16,
+    ...typography.subtitle, backgroundColor: 'rgba(255,255,255,0.05)', borderWidth: 1, borderColor: colors.border,
+    borderRadius: 8, color: colors.text, paddingHorizontal: 12, paddingVertical: 10, marginBottom: 16
   },
-  dynamicRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  addBtn: {
-    padding: 8,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 8,
-  },
-  removeBtn: {
-    padding: 10,
-    backgroundColor: 'rgba(255,0,0,0.1)',
-    borderRadius: 8,
-  },
-  createBtn: {
-    backgroundColor: colors.primary,
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  createBtnText: {
-    ...typography.button,
-    color: '#fff',
-  }
+  dynamicRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  addBtn: { padding: 8, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 8 },
+  removeBtn: { padding: 10, backgroundColor: 'rgba(255,0,0,0.1)', borderRadius: 8 },
+  createBtn: { backgroundColor: colors.primary, padding: 16, borderRadius: 12, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', marginTop: 8 },
+  createBtnText: { ...typography.button, color: '#fff' },
+  uploadBtn: { backgroundColor: colors.border, padding: 14, borderRadius: 12, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', marginBottom: 16 },
+  uploadBtnText: { ...typography.button, color: '#fff' },
+  optionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border, marginBottom: 12 },
+  cycleBtn: { backgroundColor: 'rgba(255,255,255,0.05)', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
+  cycleBtnText: { ...typography.body, color: colors.text, fontWeight: 'bold' }
 });

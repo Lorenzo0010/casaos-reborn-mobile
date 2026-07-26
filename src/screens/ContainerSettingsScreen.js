@@ -28,6 +28,8 @@ export default function ContainerSettingsScreen({ route, navigation }) {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [imageName, setImageName] = useState('');
   const [imageTag, setImageTag] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [icon, setIcon] = useState('');
 
   useEffect(() => {
     if (details) {
@@ -42,6 +44,10 @@ export default function ContainerSettingsScreen({ route, navigation }) {
       }
       setImageName(imgName);
       setImageTag(imgTag);
+      
+      setDisplayName(details.Config?.Labels?.['casaos.reborn.name'] || '');
+      setIcon(details.Config?.Labels?.['casaos.reborn.icon'] || details.Config?.Labels?.['casaos.app.icon'] || details.Config?.Labels?.['icon'] || '');
+
       // Parse Ports
       const parsedPorts = [];
       if (details.HostConfig?.PortBindings) {
@@ -123,8 +129,8 @@ export default function ContainerSettingsScreen({ route, navigation }) {
       image: imageName,
       tag: imageTag,
       name: details.Name?.replace(/^\//, ''),
-      displayName: details.Config?.Labels?.['casaos.reborn.name'] || '',
-      icon: details.Config?.Labels?.['casaos.reborn.icon'] || details.Config?.Labels?.['casaos.app.icon'] || details.Config?.Labels?.['icon'] || '',
+      displayName: displayName,
+      icon: icon,
       restartPolicy: details.HostConfig?.RestartPolicy?.Name || 'unless-stopped',
       privileged: !!details.HostConfig?.Privileged,
       networkMode: details.HostConfig?.NetworkMode || 'bridge',
@@ -216,10 +222,10 @@ export default function ContainerSettingsScreen({ route, navigation }) {
   );
 
   const stableId = details?.Name?.replace(/^\//, '') || containerName;
-  let iconUrl = details?.Config?.Labels?.['casaos.reborn.icon'] || details?.Config?.Labels?.['casaos.app.icon'] || details?.Config?.Labels?.['icon'];
+  let displayIconUrl = icon;
   
-  if (iconUrl && iconUrl.startsWith('/')) {
-      iconUrl = `${apiClient.defaults.baseURL}${iconUrl}`;
+  if (displayIconUrl && displayIconUrl.startsWith('/')) {
+      displayIconUrl = `${apiClient.defaults.baseURL}${displayIconUrl}`;
   }
 
   const initial = stableId ? stableId.charAt(0).toUpperCase() : '?';
@@ -229,9 +235,9 @@ export default function ContainerSettingsScreen({ route, navigation }) {
     <ScrollView style={styles.container} contentContainerStyle={{ padding: 16 }}>
       
       <View style={[styles.headerCard, { flexDirection: 'row', alignItems: 'center' }]}>
-        {iconUrl ? (
+        {displayIconUrl ? (
           <Image 
-            source={{ uri: iconUrl }} 
+            source={{ uri: displayIconUrl }} 
             style={{ width: 64, height: 64, borderRadius: 12, marginRight: 16 }} 
             resizeMode="contain"
           />
@@ -241,9 +247,28 @@ export default function ContainerSettingsScreen({ route, navigation }) {
           </View>
         )}
         <View style={{ flex: 1, justifyContent: 'center' }}>
-          <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit>{stableId}</Text>
+          <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit>{displayName || stableId}</Text>
           <Text style={styles.subtitle}>Impostazioni</Text>
         </View>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { marginBottom: 16 }]}>Generali</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Nome Visualizzato (es. AdGuard)"
+          placeholderTextColor={colors.textSecondary}
+          value={displayName}
+          onChangeText={setDisplayName}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="URL Icona"
+          placeholderTextColor={colors.textSecondary}
+          value={icon}
+          onChangeText={setIcon}
+          autoCapitalize="none"
+        />
       </View>
 
       {renderDynamicList('Porte', ports, handleAddPort, handleRemovePort, handlePortChange, 'host', 'container', 'Host (es. 8080)', 'Container (es. 80)')}
