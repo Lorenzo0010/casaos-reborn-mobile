@@ -158,7 +158,7 @@ const createStyles = (colors, typography) => StyleSheet.create({
   },
   scrollContent: {
     padding: 16,
-    paddingBottom: 40,
+    paddingBottom: 120,
   },
   center: {
     flex: 1,

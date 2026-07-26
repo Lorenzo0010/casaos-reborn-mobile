@@ -372,7 +372,7 @@ export default function ContainerCreateScreen({ navigation }) {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ padding: 16 }}>
+    <ScrollView style={styles.container} contentContainerStyle={{ padding: 16, paddingBottom: 120 }}>
       
       <View style={styles.headerCard}>
         <Server color={colors.primary} size={48} style={{ marginBottom: 16 }} />

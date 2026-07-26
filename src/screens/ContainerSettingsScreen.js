@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Alert, Image } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { Image } from 'expo-image';
 import { Plus, Trash2, Settings, AlertTriangle } from 'lucide-react-native';
 import { apiClient } from '../api/client';
 import { useTheme } from '../contexts/ThemeContext';
@@ -46,7 +47,7 @@ export default function ContainerSettingsScreen({ route, navigation }) {
       setImageTag(imgTag);
       
       setDisplayName(details.Config?.Labels?.['casaos.reborn.name'] || '');
-      setIcon(details.Config?.Labels?.['casaos.reborn.icon'] || details.Config?.Labels?.['casaos.app.icon'] || details.Config?.Labels?.['icon'] || '');
+      setIcon(details.Config?.Labels?.['casaos.reborn.icon'] || '');
 
       // Parse Ports
       const parsedPorts = [];
@@ -150,6 +151,27 @@ export default function ContainerSettingsScreen({ route, navigation }) {
     };
 
     try {
+      // Sync overrides to preferences for Web UI and instant update
+      try {
+        const prefsRes = await apiClient.get('/api/system/preferences');
+        const currentPrefs = prefsRes.data || {};
+        const overrides = currentPrefs.containerOverrides || {};
+        const stableId = details.Name?.replace(/^\//, '') || containerId;
+        
+        overrides[stableId] = {
+          ...(overrides[stableId] || {}),
+          displayName: displayName,
+          icon: icon
+        };
+        
+        await apiClient.post('/api/system/preferences', {
+          ...currentPrefs,
+          containerOverrides: overrides
+        });
+      } catch (prefErr) {
+        console.warn('Failed to sync preferences:', prefErr);
+      }
+
       await apiClient.post(`/api/docker/containers/${containerId}/recreate`, payload);
       navigation.navigate('ContainersList');
     } catch (e) {
@@ -224,22 +246,30 @@ export default function ContainerSettingsScreen({ route, navigation }) {
   const stableId = details?.Name?.replace(/^\//, '') || containerName;
   let displayIconUrl = icon;
   
-  if (displayIconUrl && displayIconUrl.startsWith('/')) {
-      displayIconUrl = `${apiClient.defaults.baseURL}${displayIconUrl}`;
+  if (displayIconUrl && typeof displayIconUrl === 'string') {
+      displayIconUrl = displayIconUrl.trim();
+      if (!displayIconUrl.startsWith('http') && !displayIconUrl.startsWith('data:')) {
+          if (!displayIconUrl.startsWith('/')) displayIconUrl = '/' + displayIconUrl;
+          displayIconUrl = `${apiClient.defaults.baseURL}${displayIconUrl}`;
+      }
   }
 
   const initial = stableId ? stableId.charAt(0).toUpperCase() : '?';
   const bgColor = stableId ? getContainerColor(stableId) : colors.primary;
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ padding: 16 }}>
+    <ScrollView style={styles.container} contentContainerStyle={{ padding: 16, paddingBottom: 120 }}>
       
       <View style={[styles.headerCard, { flexDirection: 'row', alignItems: 'center' }]}>
         {displayIconUrl ? (
           <Image 
-            source={{ uri: displayIconUrl }} 
+            source={{ 
+              uri: displayIconUrl,
+              headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' }
+            }} 
             style={{ width: 64, height: 64, borderRadius: 12, marginRight: 16 }} 
-            resizeMode="contain"
+            contentFit="contain"
+            transition={200}
           />
         ) : (
           <View style={{ width: 64, height: 64, borderRadius: 12, backgroundColor: bgColor, justifyContent: 'center', alignItems: 'center', marginRight: 16 }}>

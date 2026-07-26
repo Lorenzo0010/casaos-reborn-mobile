@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, Text, View, ScrollView, ActivityIndicator, TouchableOpacity, Alert, RefreshControl, Linking, Image } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, ActivityIndicator, TouchableOpacity, Alert, RefreshControl, Linking } from 'react-native';
+import { Image } from 'expo-image';
 import { Settings, Play, Square, RotateCw, Globe, RefreshCcw, Github } from 'lucide-react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { apiClient } from '../api/client';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAlert } from '../contexts/AlertContext';
@@ -49,18 +51,25 @@ export default function ContainerDetailsScreen({ route, navigation }) {
   };
 
   useEffect(() => {
+    const stableId = details?.Name?.replace(/^\//, '') || containerId;
+    const override = containerOverrides[stableId];
+    const actualName = (override && override.displayName) || details?.Config?.Labels?.['casaos.reborn.name'] || containerName || 'Dettagli Container';
+    
     navigation.setOptions({
-      title: containerName || 'Dettagli Container'
+      title: actualName
     });
-  }, [containerId, containerName, navigation, details]);
+  }, [containerId, containerName, navigation, details, containerOverrides]);
 
-  useEffect(() => {
-    fetchPreferences();
-    fetchDetails();
-  }, [containerId]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchPreferences();
+      fetchDetails();
+    }, [containerId])
+  );
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
+    fetchPreferences();
     fetchDetails();
   }, [containerId]);
 
@@ -133,10 +142,14 @@ export default function ContainerDetailsScreen({ route, navigation }) {
 
   const stableId = details.Name?.replace(/^\//, '') || containerId;
   const override = containerOverrides[stableId];
-  let iconUrl = (override && override.icon) || (details.Config?.Labels && (details.Config.Labels['casaos.reborn.icon'] || details.Config.Labels['casaos.app.icon'] || details.Config.Labels['icon']));
+  let iconUrl = (override && override.icon) || (details.Config?.Labels && details.Config.Labels['casaos.reborn.icon']);
   
-  if (iconUrl && typeof iconUrl === 'string' && iconUrl.startsWith('/')) {
-      iconUrl = `${apiClient.defaults.baseURL}${iconUrl}`;
+  if (iconUrl && typeof iconUrl === 'string') {
+      iconUrl = iconUrl.trim();
+      if (!iconUrl.startsWith('http') && !iconUrl.startsWith('data:')) {
+          if (!iconUrl.startsWith('/')) iconUrl = '/' + iconUrl;
+          iconUrl = `${apiClient.defaults.baseURL}${iconUrl}`;
+      }
   }
 
   const initial = stableId.charAt(0).toUpperCase();
@@ -145,15 +158,19 @@ export default function ContainerDetailsScreen({ route, navigation }) {
   return (
     <ScrollView 
       style={styles.container}
-      contentContainerStyle={{ padding: 16 }}
+      contentContainerStyle={{ padding: 16, paddingBottom: 120 }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
     >
       <View style={styles.headerCard}>
         {iconUrl ? (
           <Image 
-            source={{ uri: iconUrl }} 
+            source={{ 
+              uri: iconUrl,
+              headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' }
+            }} 
             style={{ width: 64, height: 64, borderRadius: 12, marginRight: 16 }} 
-            resizeMode="contain"
+            contentFit="contain"
+            transition={200}
           />
         ) : (
           <View style={{ width: 64, height: 64, borderRadius: 12, backgroundColor: bgColor, justifyContent: 'center', alignItems: 'center', marginRight: 16 }}>
@@ -161,7 +178,9 @@ export default function ContainerDetailsScreen({ route, navigation }) {
           </View>
         )}
         <View style={{ flex: 1, justifyContent: 'center' }}>
-          <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit>{stableId || containerName}</Text>
+          <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit>
+            {(override && override.displayName) || details.Config?.Labels?.['casaos.reborn.name'] || stableId}
+          </Text>
           <Text style={[styles.status, { color: statusColor }]}>
             {details.State?.Status?.toUpperCase()}
           </Text>

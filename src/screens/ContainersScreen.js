@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { StyleSheet, Text, View, FlatList, ActivityIndicator, RefreshControl, TouchableOpacity, Alert, Image, Linking, useWindowDimensions } from 'react-native';
+import { StyleSheet, Text, View, FlatList, ActivityIndicator, RefreshControl, TouchableOpacity, Alert, Linking, useWindowDimensions } from 'react-native';
+import { Image } from 'expo-image';
 import { Play, Square, RotateCw, Edit, Check, CheckSquare, Pin, ChevronUp, ChevronDown, Globe, PlusCircle, LogOut, Info } from 'lucide-react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { apiClient, logout } from '../api/client';
@@ -7,12 +8,12 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useAlert } from '../contexts/AlertContext';
 
 const getContainerColor = (name) => {
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) {
-        hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const h = Math.abs(hash) % 360;
-    return `hsl(${h}, 60%, 50%)`;
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const h = Math.abs(hash) % 360;
+  return `hsl(${h}, 60%, 50%)`;
 };
 
 export default function ContainersScreen() {
@@ -128,6 +129,7 @@ export default function ContainersScreen() {
 
   useFocusEffect(
     useCallback(() => {
+      fetchPreferences();
       fetchTasks();
       const interval = setInterval(fetchTasks, 2000);
       return () => clearInterval(interval);
@@ -156,13 +158,15 @@ export default function ContainersScreen() {
 
   const getContainerName = (c) => {
     const stableId = c.Names ? c.Names[0].replace('/', '') : c.Id;
+    const override = containerOverrides[stableId];
+    if (override && override.displayName) return override.displayName;
     return c.Labels?.['casaos.reborn.name'] || stableId;
   };
 
   const getContainerUrl = (container) => {
     const stableId = container.Names ? container.Names[0].replace('/', '') : container.Id;
     const override = containerOverrides[stableId];
-    
+
     const baseUrl = apiClient.defaults.baseURL || '';
     const hostname = baseUrl.replace(/^https?:\/\//, '').split(':')[0].split('/')[0];
     if (!hostname) return null;
@@ -174,18 +178,18 @@ export default function ContainersScreen() {
 
     const labels = container.Labels || {};
     let port = labels['casaos.reborn.webport'] || labels['casaos.reborn.port'];
-    
+
     if (!port && container.Ports) {
       const publicPort = container.Ports.find(p => p.PublicPort);
       if (publicPort) {
         port = publicPort.PublicPort;
       }
     }
-    
+
     if (port) {
       return `http://${hostname}:${port}`;
     }
-    
+
     return null;
   };
 
@@ -231,7 +235,7 @@ export default function ContainersScreen() {
     });
 
     return [...pinned, ...unpinned];
-  }, [containers, sortMode, pinnedContainers, customOrder, showSystemContainers]);
+  }, [containers, sortMode, pinnedContainers, customOrder, showSystemContainers, containerOverrides]);
 
   const togglePin = (id) => {
     if (pinnedContainers.includes(id)) {
@@ -283,7 +287,7 @@ export default function ContainersScreen() {
     return (
       <TouchableOpacity
         style={[
-          styles.card, 
+          styles.card,
           (editMode || isPinned) && { borderColor: isPinned ? colors.primary : colors.border, borderWidth: 1 },
           isTablet && { flex: 1 }
         ]}
@@ -306,28 +310,34 @@ export default function ContainersScreen() {
 
           {(() => {
             const override = containerOverrides[stableId];
-            let iconUrl = (override && override.icon) || (item.Labels && (item.Labels['casaos.reborn.icon'] || item.Labels['casaos.app.icon'] || item.Labels['icon']));
+            let iconUrl = (override && override.icon) || (item.Labels && item.Labels['casaos.reborn.icon']);
             if (iconUrl && typeof iconUrl === 'string') {
-                if (iconUrl.startsWith('/')) {
-                    iconUrl = `${apiClient.defaults.baseURL}${iconUrl}`;
-                }
-                return (
-                    <Image 
-                        source={{ uri: iconUrl }} 
-                        style={{ width: 40, height: 40, borderRadius: 8, marginRight: 12 }} 
-                        resizeMode="contain"
-                    />
-                );
+              iconUrl = iconUrl.trim();
+              if (!iconUrl.startsWith('http') && !iconUrl.startsWith('data:')) {
+                if (!iconUrl.startsWith('/')) iconUrl = '/' + iconUrl;
+                iconUrl = `${apiClient.defaults.baseURL}${iconUrl}`;
+              }
+              return (
+                <Image
+                  source={{ 
+                    uri: iconUrl,
+                    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' }
+                  }}
+                  style={{ width: 40, height: 40, borderRadius: 8, marginRight: 12 }}
+                  contentFit="contain"
+                  transition={200}
+                />
+              );
             }
             const initial = stableId.charAt(0).toUpperCase();
             const bgColor = getContainerColor(stableId);
             return (
-                <View style={{ width: 40, height: 40, borderRadius: 8, backgroundColor: bgColor, justifyContent: 'center', alignItems: 'center', marginRight: 12 }}>
-                    <Text style={[{ color: 'white' }, typography.h2]}>{initial}</Text>
-                </View>
+              <View style={{ width: 40, height: 40, borderRadius: 8, backgroundColor: bgColor, justifyContent: 'center', alignItems: 'center', marginRight: 12 }}>
+                <Text style={[{ color: 'white' }, typography.h2]}>{initial}</Text>
+              </View>
             );
           })()}
-          
+
           <View style={styles.cardInfo}>
             <Text style={styles.name}>{casaosName}</Text>
             <Text style={[styles.status, { color: isRecreating ? colors.primary : (isRunning ? colors.success : colors.error) }]}>
@@ -384,20 +394,20 @@ export default function ContainersScreen() {
     if (!editMode) return null;
     return (
       <View style={[styles.header, styles.editOptions]}>
-        <TouchableOpacity 
-          style={styles.systemToggle} 
+        <TouchableOpacity
+          style={styles.systemToggle}
           onPress={() => setShowSystemContainers(!showSystemContainers)}
         >
           {showSystemContainers ? <CheckSquare color={colors.primary} size={20} /> : <Square color={colors.textSecondary} size={20} />}
           <Text style={styles.systemToggleText}>Mostra container di sistema</Text>
         </TouchableOpacity>
-        
+
         <View style={styles.sortSelectorContainer}>
           <Text style={{ color: colors.textSecondary, marginBottom: 4 }}>Ordina per:</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {['date', 'alphabetical', 'status', 'custom'].map(mode => (
-              <TouchableOpacity 
-                key={mode} 
+              <TouchableOpacity
+                key={mode}
                 style={[styles.sortPill, sortMode === mode && styles.sortPillActive]}
                 onPress={() => setSortMode(mode)}
               >
@@ -423,8 +433,9 @@ export default function ContainersScreen() {
         columnWrapperStyle={isTablet ? { gap: 16 } : undefined}
         ListHeaderComponent={renderHeader}
         contentContainerStyle={{ padding: 16, paddingBottom: 120 }}
+        extraData={containerOverrides}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={fetchContainers} tintColor={colors.primary} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
         }
         ListEmptyComponent={
           !loading && <Text style={styles.emptyText}>Nessun container trovato</Text>
@@ -478,7 +489,7 @@ const createStyles = (colors, typography) => StyleSheet.create({
     marginLeft: 8,
   },
   sortSelectorContainer: {
-    
+
   },
   sortPill: {
     paddingVertical: 6,
