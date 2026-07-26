@@ -14,8 +14,8 @@ const getContainerColor = (name) => {
 };
 
 export default function ContainerSettingsScreen({ route, navigation }) {
-  const { colors } = useTheme();
-  const styles = createStyles(colors);
+  const { colors, typography } = useTheme();
+  const styles = createStyles(colors, typography);
 
   const { containerId, containerName, details } = route.params;
 
@@ -235,7 +235,7 @@ export default function ContainerSettingsScreen({ route, navigation }) {
           />
         ) : (
           <View style={{ width: 64, height: 64, borderRadius: 12, backgroundColor: bgColor, justifyContent: 'center', alignItems: 'center', marginRight: 16 }}>
-            <Text style={{ color: 'white', fontSize: 32, fontWeight: 'bold' }}>{initial}</Text>
+            <Text style={[{ color: 'white' }, typography.h1]}>{initial}</Text>
           </View>
         )}
         <View style={{ flex: 1, justifyContent: 'center' }}>
@@ -266,7 +266,7 @@ export default function ContainerSettingsScreen({ route, navigation }) {
   );
 }
 
-const createStyles = (colors) => StyleSheet.create({
+const createStyles = (colors, typography) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -278,16 +278,15 @@ const createStyles = (colors) => StyleSheet.create({
     marginBottom: 16,
   },
   title: {
+    ...typography.h2,
     color: colors.text,
-    fontSize: 22,
-    fontWeight: 'bold',
   },
   subtitle: {
+    ...typography.caption,
     color: colors.textSecondary,
-    fontSize: 14,
     marginTop: 4,
     textTransform: 'uppercase',
-    fontWeight: '600',
+    fontFamily: 'Inter_600SemiBold',
   },
   section: {
     backgroundColor: colors.surface,
@@ -302,11 +301,11 @@ const createStyles = (colors) => StyleSheet.create({
     marginBottom: 16,
   },
   sectionTitle: {
+    ...typography.h3,
     color: colors.text,
-    fontSize: 18,
-    fontWeight: '600',
   },
   input: {
+    ...typography.subtitle,
     backgroundColor: 'rgba(255,255,255,0.05)',
     borderWidth: 1,
     borderColor: colors.border,
@@ -315,7 +314,6 @@ const createStyles = (colors) => StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     marginBottom: 16,
-    fontSize: 16,
   },
   dynamicRow: {
     flexDirection: 'row',
@@ -340,9 +338,8 @@ const createStyles = (colors) => StyleSheet.create({
     marginTop: 8,
   },
   createBtnText: {
+    ...typography.button,
     color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
   },
   deleteBtn: {
     backgroundColor: colors.error,
@@ -354,8 +351,7 @@ const createStyles = (colors) => StyleSheet.create({
     marginTop: 16,
   },
   deleteBtnText: {
+    ...typography.button,
     color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
   }
 });

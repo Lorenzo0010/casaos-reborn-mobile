@@ -15,8 +15,8 @@ const getContainerColor = (name) => {
 };
 
 export default function ContainersScreen() {
-  const { colors } = useTheme();
-  const styles = createStyles(colors);
+  const { colors, typography } = useTheme();
+  const styles = createStyles(colors, typography);
 
   const [containers, setContainers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -321,7 +321,7 @@ export default function ContainersScreen() {
             const bgColor = getContainerColor(stableId);
             return (
                 <View style={{ width: 40, height: 40, borderRadius: 8, backgroundColor: bgColor, justifyContent: 'center', alignItems: 'center', marginRight: 12 }}>
-                    <Text style={{ color: 'white', fontSize: 20, fontWeight: 'bold' }}>{initial}</Text>
+                    <Text style={[{ color: 'white' }, typography.h2]}>{initial}</Text>
                 </View>
             );
           })()}
@@ -432,7 +432,7 @@ export default function ContainersScreen() {
   );
 }
 
-const createStyles = (colors) => StyleSheet.create({
+const createStyles = (colors, typography) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -453,8 +453,7 @@ const createStyles = (colors) => StyleSheet.create({
     marginBottom: 8,
   },
   headerTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
+    ...typography.h2,
     color: colors.text,
   },
   editBtn: {
@@ -472,9 +471,9 @@ const createStyles = (colors) => StyleSheet.create({
     marginBottom: 16,
   },
   systemToggleText: {
+    ...typography.subtitle,
     color: colors.text,
     marginLeft: 8,
-    fontSize: 16,
   },
   sortSelectorContainer: {
     
@@ -492,18 +491,18 @@ const createStyles = (colors) => StyleSheet.create({
     borderColor: colors.primary,
   },
   sortPillText: {
+    ...typography.body,
     color: colors.textSecondary,
-    fontSize: 14,
   },
   sortPillTextActive: {
+    fontFamily: 'Inter_700Bold',
     color: colors.primary,
-    fontWeight: 'bold',
   },
   emptyText: {
+    ...typography.subtitle,
     color: colors.textSecondary,
     textAlign: 'center',
     marginTop: 40,
-    fontSize: 16,
   },
   card: {
     backgroundColor: colors.surface,
@@ -518,14 +517,13 @@ const createStyles = (colors) => StyleSheet.create({
     flex: 1,
   },
   name: {
+    ...typography.h3,
     color: colors.text,
-    fontSize: 18,
-    fontWeight: '600',
     marginBottom: 4,
   },
   status: {
-    fontSize: 12,
-    fontWeight: 'bold',
+    ...typography.caption,
+    fontFamily: 'Inter_700Bold',
   },
   actions: {
     flexDirection: 'row',

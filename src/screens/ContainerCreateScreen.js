@@ -5,8 +5,8 @@ import { apiClient } from '../api/client';
 import { useTheme } from '../contexts/ThemeContext';
 
 export default function ContainerCreateScreen({ navigation }) {
-  const { colors } = useTheme();
-  const styles = createStyles(colors);
+  const { colors, typography } = useTheme();
+  const styles = createStyles(colors, typography);
 
   const [image, setImage] = useState('');
   const [name, setName] = useState('');
@@ -160,7 +160,7 @@ export default function ContainerCreateScreen({ navigation }) {
   );
 }
 
-const createStyles = (colors) => StyleSheet.create({
+const createStyles = (colors, typography) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -173,9 +173,8 @@ const createStyles = (colors) => StyleSheet.create({
     marginBottom: 16,
   },
   title: {
+    ...typography.h1,
     color: colors.text,
-    fontSize: 24,
-    fontWeight: 'bold',
   },
   section: {
     backgroundColor: colors.surface,
@@ -190,16 +189,16 @@ const createStyles = (colors) => StyleSheet.create({
     marginBottom: 16,
   },
   sectionTitle: {
+    ...typography.h3,
     color: colors.text,
-    fontSize: 18,
-    fontWeight: '600',
   },
   label: {
+    ...typography.body,
     color: colors.textSecondary,
-    fontSize: 14,
     marginBottom: 8,
   },
   input: {
+    ...typography.subtitle,
     backgroundColor: 'rgba(255,255,255,0.05)',
     borderWidth: 1,
     borderColor: colors.border,
@@ -208,7 +207,6 @@ const createStyles = (colors) => StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     marginBottom: 16,
-    fontSize: 16,
   },
   dynamicRow: {
     flexDirection: 'row',
@@ -233,8 +231,7 @@ const createStyles = (colors) => StyleSheet.create({
     marginTop: 8,
   },
   createBtnText: {
+    ...typography.button,
     color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
   }
 });

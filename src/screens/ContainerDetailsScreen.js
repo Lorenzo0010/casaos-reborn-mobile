@@ -14,8 +14,8 @@ const getContainerColor = (name) => {
 };
 
 export default function ContainerDetailsScreen({ route, navigation }) {
-  const { colors } = useTheme();
-  const styles = createStyles(colors);
+  const { colors, typography } = useTheme();
+  const styles = createStyles(colors, typography);
 
   const { containerId, containerName } = route.params;
   const [details, setDetails] = useState(null);
@@ -155,7 +155,7 @@ export default function ContainerDetailsScreen({ route, navigation }) {
           />
         ) : (
           <View style={{ width: 64, height: 64, borderRadius: 12, backgroundColor: bgColor, justifyContent: 'center', alignItems: 'center', marginRight: 16 }}>
-            <Text style={{ color: 'white', fontSize: 32, fontWeight: 'bold' }}>{initial}</Text>
+            <Text style={[{ color: 'white' }, typography.h1]}>{initial}</Text>
           </View>
         )}
         <View style={{ flex: 1, justifyContent: 'center' }}>
@@ -257,7 +257,7 @@ export default function ContainerDetailsScreen({ route, navigation }) {
   );
 }
 
-const createStyles = (colors) => StyleSheet.create({
+const createStyles = (colors, typography) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -277,14 +277,13 @@ const createStyles = (colors) => StyleSheet.create({
     marginBottom: 16,
   },
   title: {
+    ...typography.h2,
     color: colors.text,
-    fontSize: 22,
-    fontWeight: 'bold',
     marginBottom: 4,
   },
   status: {
-    fontSize: 14,
-    fontWeight: 'bold',
+    ...typography.caption,
+    fontFamily: 'Inter_700Bold',
   },
   actionRow: {
     flexDirection: 'row',
@@ -309,10 +308,9 @@ const createStyles = (colors) => StyleSheet.create({
     marginBottom: 4,
   },
   actionText: {
+    ...typography.bodyMedium,
     color: '#ffffff',
     marginTop: 8,
-    fontSize: 14,
-    fontWeight: '500',
   },
   section: {
     backgroundColor: colors.surface,
@@ -321,9 +319,8 @@ const createStyles = (colors) => StyleSheet.create({
     marginBottom: 16,
   },
   sectionTitle: {
+    ...typography.h3,
     color: colors.text,
-    fontSize: 18,
-    fontWeight: '600',
     marginBottom: 16,
   },
   infoRow: {
@@ -332,14 +329,13 @@ const createStyles = (colors) => StyleSheet.create({
     marginBottom: 12,
   },
   label: {
+    ...typography.body,
     color: colors.textSecondary,
-    fontSize: 14,
     flex: 1,
   },
   value: {
+    ...typography.bodyMedium,
     color: colors.text,
-    fontSize: 14,
-    fontWeight: '500',
     flex: 2,
     textAlign: 'right',
   },

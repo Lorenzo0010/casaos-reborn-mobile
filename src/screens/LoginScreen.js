@@ -6,8 +6,8 @@ import { LogIn } from 'lucide-react-native';
 import { useTheme } from '../contexts/ThemeContext';
 
 export default function LoginScreen({ navigation }) {
-  const { colors } = useTheme();
-  const styles = createStyles(colors);
+  const { colors, typography } = useTheme();
+  const styles = createStyles(colors, typography);
 
   const [ipAddress, setIpAddress] = useState('');
   const [username, setUsername] = useState('');
@@ -136,7 +136,7 @@ export default function LoginScreen({ navigation }) {
   );
 }
 
-const createStyles = (colors) => StyleSheet.create({
+const createStyles = (colors, typography) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -157,19 +157,19 @@ const createStyles = (colors) => StyleSheet.create({
     elevation: 5,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    ...typography.h1,
     color: colors.text,
     textAlign: 'center',
     marginBottom: 4,
   },
   subtitle: {
-    fontSize: 14,
+    ...typography.body,
     color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: 24,
   },
   errorText: {
+    ...typography.bodyMedium,
     color: colors.error,
     textAlign: 'center',
     marginBottom: 16,
@@ -181,18 +181,18 @@ const createStyles = (colors) => StyleSheet.create({
     marginBottom: 16,
   },
   label: {
+    ...typography.body,
     color: colors.textSecondary,
     marginBottom: 8,
-    fontSize: 14,
   },
   input: {
+    ...typography.subtitle,
     backgroundColor: colors.background,
     color: colors.text,
     padding: 12,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: colors.border,
-    fontSize: 16,
   },
   button: {
     backgroundColor: colors.primary,
@@ -204,8 +204,7 @@ const createStyles = (colors) => StyleSheet.create({
     marginTop: 12,
   },
   buttonText: {
+    ...typography.button,
     color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
   }
 });

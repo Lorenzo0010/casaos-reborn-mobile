@@ -6,8 +6,8 @@ import { Palette, Trash2, Send, Save, RefreshCcw, LogOut } from 'lucide-react-na
 import { useNavigation } from '@react-navigation/native';
 
 export default function AdvancedScreen() {
-  const { colors, activeTheme, currentTheme, themeMode, changeTheme } = useTheme();
-  const styles = createStyles(colors);
+  const { colors, activeTheme, currentTheme, themeMode, changeTheme, typography } = useTheme();
+  const styles = createStyles(colors, typography);
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
   const navigation = useNavigation();
@@ -184,7 +184,7 @@ export default function AdvancedScreen() {
                     onPress={() => handleThemeChange(theme.id)}
                   >
                     {isMonet && (
-                      <Text style={{ color: '#ffffff', fontWeight: 'bold', fontSize: 18 }}>M</Text>
+                      <Text style={{ color: '#ffffff', fontFamily: 'Inter_700Bold', fontSize: 18 }}>M</Text>
                     )}
                   </TouchableOpacity>
                 );
@@ -293,7 +293,7 @@ export default function AdvancedScreen() {
   );
 }
 
-const createStyles = (colors) => StyleSheet.create({
+const createStyles = (colors, typography) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -322,19 +322,19 @@ const createStyles = (colors) => StyleSheet.create({
     marginBottom: 16,
   },
   sectionTitle: {
+    ...typography.h2,
     color: colors.text,
-    fontSize: 20,
-    fontWeight: 'bold',
     marginLeft: 12,
     flex: 1,
   },
   label: {
+    ...typography.body,
+    fontFamily: 'Inter_500Medium',
     color: colors.textSecondary,
-    fontSize: 14,
     marginBottom: 8,
-    fontWeight: '500',
   },
   input: {
+    ...typography.body,
     backgroundColor: colors.background,
     color: colors.text,
     padding: 12,
@@ -369,8 +369,9 @@ const createStyles = (colors) => StyleSheet.create({
     backgroundColor: colors.background,
   },
   modeText: {
+    ...typography.body,
+    fontFamily: 'Inter_700Bold',
     color: colors.textSecondary,
-    fontWeight: 'bold',
   },
   primaryBtn: {
     backgroundColor: colors.primary,
@@ -382,9 +383,8 @@ const createStyles = (colors) => StyleSheet.create({
     marginTop: 8,
   },
   primaryBtnText: {
+    ...typography.button,
     color: '#ffffff',
-    fontSize: 16,
-    fontWeight: 'bold',
   },
   dangerBtn: {
     backgroundColor: 'transparent',
@@ -396,9 +396,8 @@ const createStyles = (colors) => StyleSheet.create({
     marginBottom: 12,
   },
   dangerBtnText: {
+    ...typography.button,
     color: colors.error,
-    fontSize: 16,
-    fontWeight: 'bold',
   },
   logContainer: {
     backgroundColor: colors.background,
@@ -407,9 +406,9 @@ const createStyles = (colors) => StyleSheet.create({
     minHeight: 150,
   },
   logText: {
+    ...typography.caption,
     color: colors.textSecondary,
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
-    fontSize: 12,
     marginBottom: 4,
   },
 });

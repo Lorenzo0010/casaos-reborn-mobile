@@ -8,8 +8,8 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useNavigation } from '@react-navigation/native';
 
 const WidgetCard = ({ title, icon, color, style, onPress, mainValue, percent, subLeft, subRight }) => {
-  const { colors } = useTheme();
-  const styles = createStyles(colors);
+  const { colors, typography } = useTheme();
+  const styles = createStyles(colors, typography);
   
   const CardComponent = onPress ? TouchableOpacity : View;
 
@@ -45,8 +45,8 @@ const WidgetCard = ({ title, icon, color, style, onPress, mainValue, percent, su
   );
 };
 export default function DashboardScreen() {
-  const { colors } = useTheme();
-  const styles = createStyles(colors);
+  const { colors, typography } = useTheme();
+  const styles = createStyles(colors, typography);
 
   const navigation = useNavigation();
   const { width: windowWidth } = useWindowDimensions();
@@ -243,7 +243,7 @@ export default function DashboardScreen() {
   );
 }
 
-const createStyles = (colors) => StyleSheet.create({
+const createStyles = (colors, typography) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -263,12 +263,11 @@ const createStyles = (colors) => StyleSheet.create({
     marginTop: 8,
   },
   header: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    ...typography.h1,
     color: colors.text,
   },
   subHeader: {
-    fontSize: 16,
+    ...typography.subtitle,
     color: colors.textSecondary,
     marginTop: 4,
   },
@@ -281,9 +280,9 @@ const createStyles = (colors) => StyleSheet.create({
     borderColor: 'rgba(248, 113, 113, 0.3)',
   },
   errorText: {
+    ...typography.bodyMedium,
     color: colors.error,
     textAlign: 'center',
-    fontWeight: '600',
   },
   grid: {
     flexDirection: 'row',
@@ -321,14 +320,12 @@ const createStyles = (colors) => StyleSheet.create({
     marginRight: 10,
   },
   cardTitle: {
+    ...typography.subtitle,
     color: colors.textSecondary,
-    fontSize: 15,
-    fontWeight: '600',
   },
   cardValue: {
+    ...typography.h3,
     color: colors.text,
-    fontSize: 18,
-    fontWeight: 'bold',
   },
   spacer: {
     height: 12,
@@ -351,9 +348,8 @@ const createStyles = (colors) => StyleSheet.create({
     alignItems: 'center',
   },
   cardFooterText: {
+    ...typography.caption,
     color: colors.textSecondary,
-    fontSize: 13,
-    fontWeight: '500',
   },
   networkCol: {
     flexDirection: 'row',
@@ -361,8 +357,8 @@ const createStyles = (colors) => StyleSheet.create({
     gap: 6,
   },
   networkValue: {
+    ...typography.caption,
+    fontFamily: 'Inter_600SemiBold',
     color: colors.textSecondary,
-    fontSize: 13,
-    fontWeight: '600',
   },
 });

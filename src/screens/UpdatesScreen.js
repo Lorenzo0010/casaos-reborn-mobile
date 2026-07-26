@@ -11,8 +11,8 @@ import * as FileSystem from 'expo-file-system';
 import * as IntentLauncher from 'expo-intent-launcher';
 
 export default function UpdatesScreen() {
-  const { colors } = useTheme();
-  const styles = createStyles(colors);
+  const { colors, typography } = useTheme();
+  const styles = createStyles(colors, typography);
 
   const [updates, setUpdates] = useState([]);
   const [isChecking, setIsChecking] = useState(false);
@@ -277,7 +277,7 @@ export default function UpdatesScreen() {
           <Text style={styles.containerName}>{item.name}</Text>
           <Text style={styles.imageName}>{item.image}</Text>
           {isRecreating && (
-            <Text style={[styles.imageName, { color: colors.primary, marginTop: 4, fontWeight: 'bold' }]}>
+            <Text style={[styles.imageName, { color: colors.primary, marginTop: 4, fontFamily: 'Inter_700Bold' }]}>
               {task.status || 'Aggiornamento in corso...'}
             </Text>
           )}
@@ -411,7 +411,7 @@ export default function UpdatesScreen() {
   );
 }
 
-const createStyles = (colors) => StyleSheet.create({
+const createStyles = (colors, typography) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -421,9 +421,9 @@ const createStyles = (colors) => StyleSheet.create({
     backgroundColor: colors.background,
   },
   sectionTitle: {
+    ...typography.body,
+    fontFamily: 'Inter_700Bold',
     color: colors.textSecondary,
-    fontSize: 14,
-    fontWeight: 'bold',
     marginBottom: 12,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -433,8 +433,8 @@ const createStyles = (colors) => StyleSheet.create({
     backgroundColor: colors.border,
   },
   progressText: {
+    ...typography.body,
     color: colors.textSecondary,
-    fontSize: 14,
     textAlign: 'center',
   },
   emptyContainer: {
@@ -444,9 +444,8 @@ const createStyles = (colors) => StyleSheet.create({
     padding: 32,
   },
   emptyText: {
+    ...typography.h3,
     color: colors.textSecondary,
-    fontSize: 18,
-    fontWeight: '500',
     textAlign: 'center',
   },
   list: {
@@ -469,14 +468,14 @@ const createStyles = (colors) => StyleSheet.create({
     marginRight: 16,
   },
   containerName: {
+    ...typography.subtitle,
+    fontFamily: 'Inter_700Bold',
     color: colors.text,
-    fontSize: 16,
-    fontWeight: 'bold',
     marginBottom: 4,
   },
   imageName: {
+    ...typography.body,
     color: colors.textSecondary,
-    fontSize: 14,
   },
   updateButton: {
     backgroundColor: colors.primary,
@@ -502,28 +501,26 @@ const createStyles = (colors) => StyleSheet.create({
     width: '80%',
   },
   modalText: {
+    ...typography.h3,
     color: colors.text,
-    fontSize: 18,
-    fontWeight: 'bold',
     marginTop: 16,
     textAlign: 'center',
   },
   modalSubtext: {
+    ...typography.body,
     color: colors.textSecondary,
-    fontSize: 14,
     marginTop: 8,
     textAlign: 'center',
   },
   alertTitle: {
+    ...typography.h3,
     color: colors.text,
-    fontSize: 18,
-    fontWeight: 'bold',
     marginBottom: 8,
     textAlign: 'center',
   },
   alertMessage: {
+    ...typography.body,
     color: colors.textSecondary,
-    fontSize: 14,
     marginBottom: 24,
     textAlign: 'center',
   },
@@ -541,7 +538,7 @@ const createStyles = (colors) => StyleSheet.create({
     alignItems: 'center',
   },
   alertButtonText: {
+    ...typography.button,
     color: '#fff',
-    fontWeight: 'bold',
   }
 });

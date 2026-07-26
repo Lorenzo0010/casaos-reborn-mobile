@@ -132,8 +132,19 @@ export function ThemeProvider({ children }) {
     error: '#f87171',
   };
 
+  const typography = {
+    h1: { fontFamily: 'Inter_700Bold', fontSize: 28 },
+    h2: { fontFamily: 'Inter_700Bold', fontSize: 22 },
+    h3: { fontFamily: 'Inter_600SemiBold', fontSize: 18 },
+    subtitle: { fontFamily: 'Inter_500Medium', fontSize: 16 },
+    body: { fontFamily: 'Inter_400Regular', fontSize: 14 },
+    bodyMedium: { fontFamily: 'Inter_500Medium', fontSize: 14 },
+    caption: { fontFamily: 'Inter_400Regular', fontSize: 12 },
+    button: { fontFamily: 'Inter_600SemiBold', fontSize: 16 }
+  };
+
   return (
-    <ThemeContext.Provider value={{ colors, activeTheme, currentTheme, themeMode, resolvedMode, isDark, changeTheme }}>
+    <ThemeContext.Provider value={{ colors, typography, activeTheme, currentTheme, themeMode, resolvedMode, isDark, changeTheme }}>
       {children}
     </ThemeContext.Provider>
   );

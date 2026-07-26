@@ -5,8 +5,8 @@ import { apiClient } from '../api/client';
 import { useTheme } from '../contexts/ThemeContext';
 
 export default function WidgetDetailsScreen({ route }) {
-  const { colors } = useTheme();
-  const styles = createStyles(colors);
+  const { colors, typography } = useTheme();
+  const styles = createStyles(colors, typography);
 
   const { type } = route.params || {}; // 'cpu' or 'ram'
   const [processes, setProcesses] = useState([]);
@@ -101,12 +101,12 @@ export default function WidgetDetailsScreen({ route }) {
             <View key={c.id || idx} style={styles.tableRow}>
               <Text style={[styles.td, styles.tdName, { flex: 3 }]} numberOfLines={1}>{c.name}</Text>
               {isCpu && (
-                <Text style={[styles.td, { flex: 1, textAlign: 'right', fontWeight: 'bold', color: colors.primary }]}>
+                <Text style={[styles.td, { flex: 1, textAlign: 'right', fontFamily: 'Inter_700Bold', color: colors.primary }]}>
                   {c.cpu?.toFixed(1)}%
                 </Text>
               )}
               {!isCpu && (
-                <Text style={[styles.td, { flex: 1.5, textAlign: 'right', fontWeight: 'bold', color: colors.primary }]}>
+                <Text style={[styles.td, { flex: 1.5, textAlign: 'right', fontFamily: 'Inter_700Bold', color: colors.primary }]}>
                   {c.memBytes ? formatBytes(c.memBytes) : `${c.mem?.toFixed(1)}%`}
                 </Text>
               )}
@@ -135,12 +135,12 @@ export default function WidgetDetailsScreen({ route }) {
               <Text style={styles.tdSubtext}>PID: {p.pid} | {p.user}</Text>
             </View>
             {isCpu && (
-              <Text style={[styles.td, { flex: 1, textAlign: 'right', fontWeight: 'bold', color: colors.primary }]}>
+              <Text style={[styles.td, { flex: 1, textAlign: 'right', fontFamily: 'Inter_700Bold', color: colors.primary }]}>
                 {p.cpu?.toFixed(1)}%
               </Text>
             )}
             {!isCpu && (
-              <Text style={[styles.td, { flex: 1.5, textAlign: 'right', fontWeight: 'bold', color: colors.primary }]}>
+              <Text style={[styles.td, { flex: 1.5, textAlign: 'right', fontFamily: 'Inter_700Bold', color: colors.primary }]}>
                 {p.memBytes ? formatBytes(p.memBytes) : `${p.mem?.toFixed(1)}%`}
               </Text>
             )}
@@ -151,7 +151,7 @@ export default function WidgetDetailsScreen({ route }) {
   );
 }
 
-const createStyles = (colors) => StyleSheet.create({
+const createStyles = (colors, typography) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -175,9 +175,9 @@ const createStyles = (colors) => StyleSheet.create({
     borderColor: 'rgba(248, 113, 113, 0.3)',
   },
   errorText: {
+    ...typography.bodyMedium,
     color: colors.error,
     textAlign: 'center',
-    fontWeight: '600',
   },
   section: {
     backgroundColor: colors.surface,
@@ -194,8 +194,7 @@ const createStyles = (colors) => StyleSheet.create({
     gap: 8,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    ...typography.h3,
     color: colors.text,
   },
   tableHeader: {
@@ -206,9 +205,9 @@ const createStyles = (colors) => StyleSheet.create({
     marginBottom: 8,
   },
   th: {
+    ...typography.caption,
+    fontFamily: 'Inter_600SemiBold',
     color: colors.textSecondary,
-    fontSize: 12,
-    fontWeight: '600',
     textTransform: 'uppercase',
   },
   tableRow: {
@@ -219,15 +218,16 @@ const createStyles = (colors) => StyleSheet.create({
     borderBottomColor: 'rgba(255,255,255,0.05)',
   },
   td: {
+    ...typography.body,
     color: colors.text,
-    fontSize: 14,
   },
   tdName: {
-    fontWeight: '500',
+    fontFamily: 'Inter_500Medium',
   },
   tdSubtext: {
-    color: colors.textSecondary,
+    ...typography.caption,
     fontSize: 11,
+    color: colors.textSecondary,
     marginTop: 2,
   },
 });
