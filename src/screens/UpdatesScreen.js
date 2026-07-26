@@ -370,7 +370,6 @@ export default function UpdatesScreen() {
         </View>
       </Modal>
 
-      </Modal>
     </View>
   );
 }
