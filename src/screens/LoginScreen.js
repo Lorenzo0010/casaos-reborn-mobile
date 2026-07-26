@@ -3,8 +3,12 @@ import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiClient, setBaseUrl } from '../api/client';
 import { LogIn } from 'lucide-react-native';
+import { useTheme } from '../contexts/ThemeContext';
 
 export default function LoginScreen({ navigation }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
+
   const [ipAddress, setIpAddress] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -87,7 +91,7 @@ export default function LoginScreen({ navigation }) {
             value={ipAddress}
             onChangeText={setIpAddress}
             placeholder="192.168.1.x:3000"
-            placeholderTextColor="#888"
+            placeholderTextColor={colors.textSecondary}
             autoCapitalize="none"
             keyboardType="url"
           />
@@ -100,7 +104,7 @@ export default function LoginScreen({ navigation }) {
             value={username}
             onChangeText={setUsername}
             placeholder="admin"
-            placeholderTextColor="#888"
+            placeholderTextColor={colors.textSecondary}
             autoCapitalize="none"
           />
         </View>
@@ -112,7 +116,7 @@ export default function LoginScreen({ navigation }) {
             value={password}
             onChangeText={setPassword}
             placeholder="********"
-            placeholderTextColor="#888"
+            placeholderTextColor={colors.textSecondary}
             secureTextEntry
           />
         </View>
@@ -132,10 +136,10 @@ export default function LoginScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1e1e1e', // Dark theme background
+    backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
@@ -143,7 +147,7 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 400,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: colors.surface,
     padding: 24,
     borderRadius: 16,
     shadowColor: '#000',
@@ -155,21 +159,21 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#ffffff',
+    color: colors.text,
     textAlign: 'center',
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 14,
-    color: '#aaaaaa',
+    color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: 24,
   },
   errorText: {
-    color: '#ff4d4f',
+    color: colors.error,
     textAlign: 'center',
     marginBottom: 16,
-    backgroundColor: 'rgba(255, 77, 79, 0.1)',
+    backgroundColor: 'rgba(248, 113, 113, 0.1)',
     padding: 8,
     borderRadius: 8,
   },
@@ -177,21 +181,21 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   label: {
-    color: '#dddddd',
+    color: colors.textSecondary,
     marginBottom: 8,
     fontSize: 14,
   },
   input: {
-    backgroundColor: '#1e1e1e',
-    color: '#ffffff',
+    backgroundColor: colors.background,
+    color: colors.text,
     padding: 12,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#333333',
+    borderColor: colors.border,
     fontSize: 16,
   },
   button: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: colors.primary,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
