@@ -284,8 +284,8 @@ const createStyles = (colors, typography) => StyleSheet.create({
     marginBottom: 4,
   },
   status: {
-    ...typography.caption,
-    fontFamily: 'Inter_700Bold',
+    ...typography.body,
+    color: colors.textSecondary,
   },
   actionRow: {
     flexDirection: 'row',

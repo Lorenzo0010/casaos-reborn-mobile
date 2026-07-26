@@ -82,7 +82,7 @@ function DashboardStackNavigator() {
       <Stack.Screen 
         name="DashboardMain" 
         component={DashboardScreen} 
-        options={{ headerShown: false }} 
+        options={{ title: 'Dashboard' }} 
       />
       <Stack.Screen 
         name="WidgetDetails" 

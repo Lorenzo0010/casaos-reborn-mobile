@@ -284,7 +284,7 @@ const createStyles = (colors, typography) => StyleSheet.create({
     color: colors.text,
   },
   subtitle: {
-    ...typography.caption,
+    ...typography.body,
     color: colors.textSecondary,
     marginTop: 4,
     textTransform: 'uppercase',
@@ -307,7 +307,7 @@ const createStyles = (colors, typography) => StyleSheet.create({
     color: colors.text,
   },
   input: {
-    ...typography.subtitle,
+    ...typography.body,
     backgroundColor: 'rgba(255,255,255,0.05)',
     borderWidth: 1,
     borderColor: colors.border,

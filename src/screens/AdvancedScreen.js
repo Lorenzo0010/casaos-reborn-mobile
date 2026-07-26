@@ -184,7 +184,7 @@ export default function AdvancedScreen() {
                     onPress={() => handleThemeChange(theme.id)}
                   >
                     {isMonet && (
-                      <Text style={{ color: '#ffffff', fontFamily: 'Inter_700Bold', fontSize: 18 }}>M</Text>
+                      <Text style={[{ color: '#ffffff' }, typography.h3]}>M</Text>
                     )}
                   </TouchableOpacity>
                 );

@@ -225,7 +225,7 @@ const createStyles = (colors, typography) => StyleSheet.create({
     fontFamily: 'Inter_500Medium',
   },
   tdSubtext: {
-    ...typography.caption,
+    ...typography.body,
     color: colors.textSecondary,
     marginTop: 2,
   },

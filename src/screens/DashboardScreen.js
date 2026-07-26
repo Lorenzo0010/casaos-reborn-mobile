@@ -155,9 +155,7 @@ export default function DashboardScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
         }
       >
-        <View style={styles.headerContainer}>
-          <Text style={styles.header}>Dashboard</Text>
-        </View>
+
 
         {error && (
           <View style={styles.errorBox}>
@@ -258,14 +256,7 @@ const createStyles = (colors, typography) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  headerContainer: {
-    marginBottom: 20,
-    marginTop: 8,
-  },
-  header: {
-    ...typography.h1,
-    color: colors.text,
-  },
+
   subHeader: {
     ...typography.subtitle,
     color: colors.textSecondary,
@@ -348,7 +339,7 @@ const createStyles = (colors, typography) => StyleSheet.create({
     alignItems: 'center',
   },
   cardFooterText: {
-    ...typography.caption,
+    ...typography.body,
     color: colors.textSecondary,
   },
   networkCol: {
