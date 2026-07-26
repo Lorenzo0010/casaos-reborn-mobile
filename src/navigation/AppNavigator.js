@@ -93,6 +93,56 @@ function DashboardStackNavigator() {
   );
 }
 
+function UpdatesStackNavigator() {
+  const { colors, typography } = useTheme();
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: { 
+          backgroundColor: colors.background,
+          borderBottomWidth: 0,
+          elevation: 0,
+          shadowOpacity: 0,
+        },
+        headerTintColor: colors.text,
+        headerBackTitleVisible: false,
+        headerTitleStyle: typography.h1,
+      }}
+    >
+      <Stack.Screen 
+        name="UpdatesMain" 
+        component={UpdatesScreen} 
+        options={{ title: 'Aggiornamenti' }} 
+      />
+    </Stack.Navigator>
+  );
+}
+
+function AdvancedStackNavigator() {
+  const { colors, typography } = useTheme();
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: { 
+          backgroundColor: colors.background,
+          borderBottomWidth: 0,
+          elevation: 0,
+          shadowOpacity: 0,
+        },
+        headerTintColor: colors.text,
+        headerBackTitleVisible: false,
+        headerTitleStyle: typography.h1,
+      }}
+    >
+      <Stack.Screen 
+        name="AdvancedMain" 
+        component={AdvancedScreen} 
+        options={{ title: 'Avanzate' }} 
+      />
+    </Stack.Navigator>
+  );
+}
+
 export default function AppNavigator() {
   const { colors, typography } = useTheme();
   const { width } = useWindowDimensions();
@@ -167,13 +217,13 @@ export default function AppNavigator() {
       />
       <Tab.Screen 
         name="Updates" 
-        component={UpdatesScreen} 
-        options={{ title: 'Aggiornamenti' }} 
+        component={UpdatesStackNavigator} 
+        options={{ headerShown: false, title: 'Aggiornamenti' }} 
       />
       <Tab.Screen 
         name="Advanced" 
-        component={AdvancedScreen} 
-        options={{ title: 'Avanzate' }} 
+        component={AdvancedStackNavigator} 
+        options={{ headerShown: false, title: 'Avanzate' }} 
       />
     </Tab.Navigator>
   );

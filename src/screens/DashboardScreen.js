@@ -53,8 +53,8 @@ export default function DashboardScreen() {
   const isTablet = windowWidth >= 768;
 
   const fullCardStyle = { width: '100%' };
-  const cpuCardStyle = isTablet ? { width: (windowWidth - 32 - 32) / 3 } : { width: '100%' };
-  const resourceCardStyle = isTablet ? { width: (windowWidth - 32 - 32) / 3 } : { width: (windowWidth - 32 - 16) / 2 };
+  const cpuCardStyle = isTablet ? { flex: 1, minWidth: '30%' } : { width: '100%' };
+  const resourceCardStyle = isTablet ? { flex: 1, minWidth: '30%' } : { width: '100%' };
 
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -116,36 +116,6 @@ export default function DashboardScreen() {
     return `${h}h ${m}m`;
   };
 
-  const WidgetCard = ({ title, icon, color, mainValue, percent, subLeft, subRight, onPress, style }) => (
-    <TouchableOpacity
-      style={[styles.card, style]}
-      activeOpacity={onPress ? 0.7 : 1}
-      onPress={onPress}
-    >
-      <View style={styles.cardHeaderFlex}>
-        <View style={styles.rowCentered}>
-          <View style={[styles.iconBox, { backgroundColor: `${color}22` }]}>
-            {icon}
-          </View>
-          <Text style={styles.cardTitle}>{title}</Text>
-        </View>
-        <Text style={styles.cardValue}>{mainValue}</Text>
-      </View>
-
-      {percent !== undefined ? (
-        <View style={styles.progressBarBg}>
-          <View style={[styles.progressBarFill, { width: `${Math.min(100, Math.max(0, percent || 0))}%`, backgroundColor: color }]} />
-        </View>
-      ) : (
-        <View style={styles.spacer} />
-      )}
-
-      <View style={styles.footerRow}>
-        <View>{subLeft}</View>
-        <View>{subRight}</View>
-      </View>
-    </TouchableOpacity>
-  );
 
   return (
     <SafeAreaView style={styles.container}>
