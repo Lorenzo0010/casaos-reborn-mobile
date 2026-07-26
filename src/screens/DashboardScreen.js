@@ -320,7 +320,7 @@ const createStyles = (colors, typography) => StyleSheet.create({
     marginRight: 10,
   },
   cardTitle: {
-    ...typography.subtitle,
+    ...typography.h3,
     color: colors.textSecondary,
   },
   cardValue: {

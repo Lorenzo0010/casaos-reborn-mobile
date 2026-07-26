@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, ScrollView, TextInput, TouchableOpacity, Activi
 import { Plus, Trash2, Settings, AlertTriangle } from 'lucide-react-native';
 import { apiClient } from '../api/client';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAlert } from '../contexts/AlertContext';
 
 const getContainerColor = (name) => {
     let hash = 0;
@@ -16,6 +17,7 @@ const getContainerColor = (name) => {
 export default function ContainerSettingsScreen({ route, navigation }) {
   const { colors, typography } = useTheme();
   const styles = createStyles(colors, typography);
+  const { showAlert } = useAlert();
 
   const { containerId, containerName, details } = route.params;
 
@@ -146,14 +148,14 @@ export default function ContainerSettingsScreen({ route, navigation }) {
       navigation.navigate('ContainersList');
     } catch (e) {
       console.error(e);
-      Alert.alert('Errore', 'Aggiornamento fallito: ' + (e.response?.data?.error || e.message));
+      showAlert('Errore', 'Aggiornamento fallito: ' + (e.response?.data?.error || e.message));
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = () => {
-    Alert.alert(
+    showAlert(
       'Elimina Container', 
       `Sei sicuro di voler eliminare definitivamente il container ${containerName}? Questa operazione non è reversibile.`,
       [
@@ -168,7 +170,7 @@ export default function ContainerSettingsScreen({ route, navigation }) {
               navigation.navigate('ContainersList');
             } catch (e) {
               console.error(e);
-              Alert.alert('Errore', 'Eliminazione fallita: ' + (e.response?.data?.error || e.message));
+              showAlert('Errore', 'Eliminazione fallita: ' + (e.response?.data?.error || e.message));
             } finally {
               setDeleteLoading(false);
             }
@@ -278,7 +280,7 @@ const createStyles = (colors, typography) => StyleSheet.create({
     marginBottom: 16,
   },
   title: {
-    ...typography.h2,
+    ...typography.h3,
     color: colors.text,
   },
   subtitle: {

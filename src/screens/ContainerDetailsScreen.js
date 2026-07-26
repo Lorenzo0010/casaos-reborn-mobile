@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, ScrollView, ActivityIndicator, TouchableOpacity
 import { Settings, Play, Square, RotateCw, Globe, RefreshCcw, Github } from 'lucide-react-native';
 import { apiClient } from '../api/client';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAlert } from '../contexts/AlertContext';
 
 const getContainerColor = (name) => {
     let hash = 0;
@@ -16,6 +17,7 @@ const getContainerColor = (name) => {
 export default function ContainerDetailsScreen({ route, navigation }) {
   const { colors, typography } = useTheme();
   const styles = createStyles(colors, typography);
+  const { showAlert } = useAlert();
 
   const { containerId, containerName } = route.params;
   const [details, setDetails] = useState(null);
@@ -39,7 +41,7 @@ export default function ContainerDetailsScreen({ route, navigation }) {
       setDetails(res.data);
     } catch (e) {
       console.error(e);
-      Alert.alert('Errore', 'Impossibile recuperare i dettagli del container: ' + (e.response?.data?.error || e.message));
+      showAlert('Errore', 'Impossibile recuperare i dettagli del container: ' + (e.response?.data?.error || e.message));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -69,7 +71,7 @@ export default function ContainerDetailsScreen({ route, navigation }) {
       await fetchDetails();
     } catch (e) {
       console.error(e);
-      Alert.alert('Errore', `Impossibile eseguire ${action}: ` + (e.response?.data?.error || e.message));
+      showAlert('Errore', `Impossibile eseguire ${action}: ` + (e.response?.data?.error || e.message));
     } finally {
       setActionLoading(false);
     }
@@ -211,7 +213,7 @@ export default function ContainerDetailsScreen({ route, navigation }) {
                   await apiClient.post(`/api/docker/containers/${containerId}/update`, { image: details.Config?.Image });
                   navigation.navigate('ContainersList');
                 } catch (e) {
-                  Alert.alert('Errore', 'Impossibile ricreare il container: ' + (e.response?.data?.error || e.message));
+                  showAlert('Errore', 'Impossibile ricreare il container: ' + (e.response?.data?.error || e.message));
                 } finally {
                   setActionLoading(false);
                 }
@@ -227,7 +229,7 @@ export default function ContainerDetailsScreen({ route, navigation }) {
             </TouchableOpacity>
 
             {isRunning && webUrl && (
-              <TouchableOpacity style={styles.actionBtn} onPress={() => Linking.openURL(webUrl).catch(() => Alert.alert('Errore', 'Impossibile aprire il link'))}>
+              <TouchableOpacity style={styles.actionBtn} onPress={() => Linking.openURL(webUrl).catch(() => showAlert('Errore', 'Impossibile aprire il link'))}>
                 <Globe color={colors.primary} size={24} />
                 <Text style={styles.actionText}>Web</Text>
               </TouchableOpacity>
@@ -239,10 +241,10 @@ export default function ContainerDetailsScreen({ route, navigation }) {
                 const image = details.Config?.Image || '';
                 const sourceUrl = details.Config?.Labels?.['org.opencontainers.image.source'] || details.Config?.Labels?.['org.opencontainers.image.url'];
                 if (sourceUrl && sourceUrl.startsWith('http')) {
-                  Linking.openURL(sourceUrl).catch(() => Alert.alert('Errore', 'Impossibile aprire il link'));
+                  Linking.openURL(sourceUrl).catch(() => showAlert('Errore', 'Impossibile aprire il link'));
                 } else {
                   const imageBase = image.split(':')[0];
-                  Linking.openURL(`https://github.com/search?q=${encodeURIComponent(imageBase)}&type=repositories`).catch(() => Alert.alert('Errore', 'Impossibile aprire il link'));
+                  Linking.openURL(`https://github.com/search?q=${encodeURIComponent(imageBase)}&type=repositories`).catch(() => showAlert('Errore', 'Impossibile aprire il link'));
                 }
               }}
             >
@@ -277,7 +279,7 @@ const createStyles = (colors, typography) => StyleSheet.create({
     marginBottom: 16,
   },
   title: {
-    ...typography.h2,
+    ...typography.h3,
     color: colors.text,
     marginBottom: 4,
   },
@@ -309,7 +311,7 @@ const createStyles = (colors, typography) => StyleSheet.create({
   },
   actionText: {
     ...typography.bodyMedium,
-    color: '#ffffff',
+    color: colors.text,
     marginTop: 8,
   },
   section: {

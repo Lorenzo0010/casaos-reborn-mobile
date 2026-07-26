@@ -3,10 +3,12 @@ import { StyleSheet, Text, View, TextInput, ScrollView, TouchableOpacity, Activi
 import { Plus, Trash2, Server } from 'lucide-react-native';
 import { apiClient } from '../api/client';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAlert } from '../contexts/AlertContext';
 
 export default function ContainerCreateScreen({ navigation }) {
   const { colors, typography } = useTheme();
   const styles = createStyles(colors, typography);
+  const { showAlert } = useAlert();
 
   const [image, setImage] = useState('');
   const [name, setName] = useState('');
@@ -43,7 +45,7 @@ export default function ContainerCreateScreen({ navigation }) {
 
   const handleCreate = async () => {
     if (!image) {
-      Alert.alert('Errore', 'Inserisci un nome immagine (es. nginx:latest)');
+      showAlert('Errore', 'Inserisci un nome immagine (es. nginx:latest)');
       return;
     }
 
@@ -78,7 +80,7 @@ export default function ContainerCreateScreen({ navigation }) {
       navigation.goBack();
     } catch (e) {
       console.error(e);
-      Alert.alert('Errore', 'Creazione fallita: ' + (e.response?.data?.error || e.message));
+      showAlert('Errore', 'Creazione fallita: ' + (e.response?.data?.error || e.message));
     } finally {
       setLoading(false);
     }
@@ -173,7 +175,7 @@ const createStyles = (colors, typography) => StyleSheet.create({
     marginBottom: 16,
   },
   title: {
-    ...typography.h1,
+    ...typography.h3,
     color: colors.text,
   },
   section: {

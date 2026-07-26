@@ -226,7 +226,6 @@ const createStyles = (colors, typography) => StyleSheet.create({
   },
   tdSubtext: {
     ...typography.caption,
-    fontSize: 11,
     color: colors.textSecondary,
     marginTop: 2,
   },

@@ -4,6 +4,7 @@ import { Play, Square, RotateCw, Edit, Check, CheckSquare, Pin, ChevronUp, Chevr
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { apiClient, logout } from '../api/client';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAlert } from '../contexts/AlertContext';
 
 const getContainerColor = (name) => {
     let hash = 0;
@@ -17,6 +18,7 @@ const getContainerColor = (name) => {
 export default function ContainersScreen() {
   const { colors, typography } = useTheme();
   const styles = createStyles(colors, typography);
+  const { showAlert } = useAlert();
 
   const [containers, setContainers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -34,15 +36,15 @@ export default function ContainersScreen() {
       headerRight: () => (
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <TouchableOpacity onPress={() => setEditMode(prev => !prev)} style={{ marginRight: 16 }}>
-            {editMode ? <Check color="#ffffff" size={24} /> : <Edit color="#ffffff" size={24} />}
+            {editMode ? <Check color={colors.text} size={24} /> : <Edit color={colors.text} size={24} />}
           </TouchableOpacity>
           <TouchableOpacity onPress={() => navigation.navigate('ContainerCreate')} style={{ marginRight: 16 }}>
-            <PlusCircle color="#ffffff" size={24} />
+            <PlusCircle color={colors.text} size={24} />
           </TouchableOpacity>
         </View>
       ),
     });
-  }, [navigation, editMode]);
+  }, [navigation, editMode, colors]);
 
   // Preferences State
   const [sortMode, setSortMode] = useState('date');
@@ -93,7 +95,7 @@ export default function ContainersScreen() {
     } catch (e) {
       console.error(e);
       const errorMessage = e.response?.data?.error || e.message || String(e);
-      Alert.alert('Errore Fetch Container', `Impossibile recuperare i container. Dettaglio: ${errorMessage}`);
+      showAlert('Errore Fetch Container', `Impossibile recuperare i container. Dettaglio: ${errorMessage}`);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -146,7 +148,7 @@ export default function ContainersScreen() {
     } catch (e) {
       console.error('Action Error:', e.response?.data || e.message);
       const serverMsg = e.response?.data?.error || e.message;
-      Alert.alert('Errore', `Impossibile eseguire l'azione '${action}': ${serverMsg}`);
+      showAlert('Errore', `Impossibile eseguire l'azione '${action}': ${serverMsg}`);
     } finally {
       setActionLoading(null);
     }
@@ -288,7 +290,7 @@ export default function ContainersScreen() {
         onPress={() => {
           if (isRecreating || editMode) return;
           if (isRunning && webUrl) {
-            Linking.openURL(webUrl).catch(() => Alert.alert('Errore', 'Impossibile aprire il link'));
+            Linking.openURL(webUrl).catch(() => showAlert('Errore', 'Impossibile aprire il link'));
           } else {
             navigation.navigate('ContainerDetails', { containerId, containerName: casaosName });
           }

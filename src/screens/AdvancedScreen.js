@@ -1,12 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Text, View, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, useWindowDimensions, PlatformColor, Switch } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, useWindowDimensions, PlatformColor } from 'react-native';
 import { useTheme, predefinedThemes } from '../contexts/ThemeContext';
+import { useAlert } from '../contexts/AlertContext';
 import { apiClient, logout } from '../api/client';
 import { Palette, Trash2, Send, Save, RefreshCcw, LogOut } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 
 export default function AdvancedScreen() {
   const { colors, activeTheme, currentTheme, themeMode, changeTheme, typography } = useTheme();
+  const { showAlert } = useAlert();
   const styles = createStyles(colors, typography);
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
@@ -43,7 +45,7 @@ export default function AdvancedScreen() {
       setLogs(res.data);
     } catch (e) {
       console.error(e);
-      Alert.alert('Errore', 'Impossibile caricare i log');
+      showAlert('Errore', 'Impossibile caricare i log');
     } finally {
       setLogsLoading(false);
     }
@@ -62,9 +64,9 @@ export default function AdvancedScreen() {
         mobileTheme: activeTheme,
         themeMode
       });
-      Alert.alert('Successo', 'Preferenze salvate correttamente');
+      showAlert('Successo', 'Preferenze salvate correttamente');
     } catch (e) {
-      Alert.alert('Errore', 'Impossibile salvare le preferenze');
+      showAlert('Errore', 'Impossibile salvare le preferenze');
     } finally {
       setSavingPrefs(false);
     }
@@ -72,7 +74,6 @@ export default function AdvancedScreen() {
 
   const handleThemeChange = (themeId) => {
     changeTheme(themeId, themeMode);
-    // Salvataggio sul server in background
     apiClient.get('/api/system/preferences').then(res => {
       const prefs = res.data || {};
       apiClient.post('/api/system/preferences', {
@@ -96,40 +97,40 @@ export default function AdvancedScreen() {
   };
 
   const clearLogs = () => {
-    Alert.alert('Svuota Log', 'Sei sicuro di voler svuotare i log di sistema?', [
+    showAlert('Svuota Log', 'Sei sicuro di voler svuotare i log di sistema?', [
       { text: 'Annulla', style: 'cancel' },
       { text: 'Sì, Svuota', style: 'destructive', onPress: async () => {
         try {
           await apiClient.delete('/api/system/logs');
           setLogs('');
         } catch(e) {
-          Alert.alert('Errore', 'Impossibile svuotare i log');
+          showAlert('Errore', 'Impossibile svuotare i log');
         }
       }}
     ]);
   };
 
   const handlePrune = (type, title, message) => {
-    Alert.alert(title, message, [
+    showAlert(title, message, [
       { text: 'Annulla', style: 'cancel' },
       { text: 'Procedi', style: 'destructive', onPress: async () => {
         try {
           const res = await apiClient.post(`/api/docker/${type}/prune`);
           if (res.data.result?.SpaceReclaimed) {
             const space = (res.data.result.SpaceReclaimed / 1024 / 1024).toFixed(2);
-            Alert.alert('Completato', `Spazio liberato: ${space} MB`);
+            showAlert('Completato', `Spazio liberato: ${space} MB`);
           } else {
-            Alert.alert('Completato', 'Operazione terminata con successo.');
+            showAlert('Completato', 'Operazione terminata con successo.');
           }
         } catch(e) {
-          Alert.alert('Errore', `Impossibile eseguire la pulizia: ${e.response?.data?.error || e.message}`);
+          showAlert('Errore', `Impossibile eseguire la pulizia: ${e.response?.data?.error || e.message}`);
         }
       }}
     ]);
   };
 
   const handleLogout = () => {
-    Alert.alert('Logout', 'Vuoi davvero disconnetterti?', [
+    showAlert('Logout', 'Vuoi davvero disconnetterti?', [
       { text: 'Annulla', style: 'cancel' },
       { text: 'Sì, Esci', style: 'destructive', onPress: () => logout(navigation) },
     ]);
@@ -140,7 +141,6 @@ export default function AdvancedScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         
         <View style={isTablet ? styles.tabletGrid : null}>
-          {/* Sezione Temi */}
           <View style={[styles.section, isTablet && styles.tabletCard]}>
             <View style={styles.sectionHeader}>
               <Palette color={colors.text} size={24} />
@@ -322,7 +322,7 @@ const createStyles = (colors, typography) => StyleSheet.create({
     marginBottom: 16,
   },
   sectionTitle: {
-    ...typography.h2,
+    ...typography.h3,
     color: colors.text,
     marginLeft: 12,
     flex: 1,

@@ -11,6 +11,7 @@ import axios from 'axios';
 import LoginScreen from './src/screens/LoginScreen';
 import AppNavigator from './src/navigation/AppNavigator';
 import { ThemeProvider, useTheme } from './src/contexts/ThemeContext';
+import { AlertProvider, useAlert } from './src/contexts/AlertContext';
 import {
   useFonts,
   Inter_400Regular,
@@ -42,21 +43,124 @@ function MainNavigation() {
     },
   };
 
+  const { showAlert } = useAlert();
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [updateProgress, setUpdateProgress] = useState(0);
+
+  useEffect(() => {
+    const checkForUpdates = async () => {
+      try {
+        const repo = 'Lorenzo0010/casaos-reborn-mobile';
+        const res = await axios.get(`https://api.github.com/repos/${repo}/releases`, {
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
+        });
+        if (!res.data || res.data.length === 0) return;
+        
+        const latestRelease = res.data[0];
+        const latestTag = latestRelease.tag_name;
+        
+        const lastIgnored = await AsyncStorage.getItem('ignored_update_tag');
+        if (lastIgnored === latestTag) {
+            return;
+        }
+
+        const storedLatest = await AsyncStorage.getItem('latest_installed_tag');
+
+        if (latestTag && latestTag !== storedLatest) {
+          const apkAsset = latestRelease.assets.find(a => a.name.endsWith('.apk'));
+          if (apkAsset) {
+            showAlert(
+              'Aggiornamento Disponibile',
+              `È disponibile la build ${latestTag}. Vuoi aggiornare ora?`,
+              [
+                { 
+                  text: 'Ignora', 
+                  style: 'cancel',
+                  onPress: () => AsyncStorage.setItem('ignored_update_tag', latestTag)
+                },
+                { 
+                  text: 'Aggiorna', 
+                  onPress: () => downloadAndInstall(apkAsset.browser_download_url, latestTag) 
+                }
+              ]
+            );
+          }
+        }
+      } catch (e) {
+        console.warn('Update check failed', e.message);
+      }
+    };
+    
+    checkForUpdates();
+  }, []);
+
+  const downloadAndInstall = async (url, tag) => {
+    setIsUpdating(true);
+    setUpdateProgress(0);
+    try {
+      const fileUri = FileSystem.cacheDirectory + 'app-release.apk';
+      
+      const fileInfo = await FileSystem.getInfoAsync(fileUri);
+      if (fileInfo.exists) {
+        await FileSystem.deleteAsync(fileUri);
+      }
+
+      const downloadResumable = FileSystem.createDownloadResumable(
+        url,
+        fileUri,
+        {},
+        (downloadProgress) => {
+          const progress = downloadProgress.totalBytesWritten / downloadProgress.totalBytesExpectedToWrite;
+          setUpdateProgress(progress);
+        }
+      );
+
+      const { uri } = await downloadResumable.downloadAsync();
+      
+      await AsyncStorage.setItem('latest_installed_tag', tag);
+      
+      const contentUri = await FileSystem.getContentUriAsync(uri);
+      await IntentLauncher.startActivityAsync('android.intent.action.VIEW', {
+        data: contentUri,
+        flags: 1, 
+        type: 'application/vnd.android.package-archive'
+      });
+      
+    } catch (e) {
+      showAlert('Errore di Aggiornamento', e.message);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   return (
-    <NavigationContainer theme={customDarkTheme}>
-      <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={colors.background} />
-      <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
-        <Stack.Screen name="Login" component={LoginScreen} />
-        <Stack.Screen name="MainApp" component={AppNavigator} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <>
+      <NavigationContainer theme={customDarkTheme}>
+        <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={colors.background} />
+        <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
+          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="MainApp" component={AppNavigator} />
+        </Stack.Navigator>
+      </NavigationContainer>
+
+      <Modal visible={isUpdating} transparent={true} animationType="fade">
+        <View style={styles.modalBackground}>
+          <View style={styles.modalContent}>
+            <ActivityIndicator size="large" color="#3b82f6" />
+            <Text style={styles.modalText}>Download in corso...</Text>
+            <Text style={styles.modalSubtext}>{Math.round(updateProgress * 100)}%</Text>
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 }
 
 export default function App() {
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [updateProgress, setUpdateProgress] = useState(0);
-
   const [fontsLoaded] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
@@ -166,18 +270,9 @@ export default function App() {
 
   return (
     <ThemeProvider>
-      <MainNavigation />
-
-      {/* Modal di download aggiornamento */}
-      <Modal visible={isUpdating} transparent={true} animationType="fade">
-        <View style={styles.modalBackground}>
-          <View style={styles.modalContent}>
-            <ActivityIndicator size="large" color="#3b82f6" />
-            <Text style={styles.modalText}>Download in corso...</Text>
-            <Text style={styles.modalSubtext}>{Math.round(updateProgress * 100)}%</Text>
-          </View>
-        </View>
-      </Modal>
+      <AlertProvider>
+        <MainNavigation />
+      </AlertProvider>
     </ThemeProvider>
   );
 }

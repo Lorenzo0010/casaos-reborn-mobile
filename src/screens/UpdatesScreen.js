@@ -4,6 +4,7 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, 
 import { RefreshCw, DownloadCloud, CheckCircle, Smartphone } from 'lucide-react-native';
 import { apiClient } from '../api/client';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAlert } from '../contexts/AlertContext';
 import io from 'socket.io-client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
@@ -30,21 +31,7 @@ export default function UpdatesScreen() {
   const [isAppUpdating, setIsAppUpdating] = useState(false);
   const [appUpdateProgress, setAppUpdateProgress] = useState(0);
 
-  // Custom Themed Alert
-  const [alertConfig, setAlertConfig] = useState({ visible: false, title: '', message: '', buttons: [] });
-
-  const showThemedAlert = (title, message, buttons) => {
-    setAlertConfig({
-      visible: true,
-      title,
-      message,
-      buttons: buttons || [{ text: 'OK' }]
-    });
-  };
-
-  const closeThemedAlert = () => {
-    setAlertConfig(prev => ({ ...prev, visible: false }));
-  };
+  const { showAlert } = useAlert();
 
   // Background Tasks State
   const [tasks, setTasks] = useState({});
@@ -97,7 +84,7 @@ export default function UpdatesScreen() {
           setIsChecking(false);
           setCheckStatus(null);
           if (data.status === 'error') {
-            Alert.alert('Errore Ricerca', data.message);
+            showAlert('Errore Ricerca', data.message);
           }
           fetchUpdates();
         }
@@ -132,7 +119,7 @@ export default function UpdatesScreen() {
     try {
       await apiClient.post('/api/docker/check-updates');
     } catch (err) {
-      Alert.alert('Errore', err.response?.data?.error || err.message);
+      showAlert('Errore', err.response?.data?.error || err.message);
     }
   };
 
@@ -161,11 +148,11 @@ export default function UpdatesScreen() {
         
         clearTimeout(timeoutId);
         
-        Alert.alert('Successo', 'CasaOS Reborn è stato aggiornato e si sta riavviando.');
+        showAlert('Successo', 'CasaOS Reborn è stato aggiornato e si sta riavviando.');
         // Rimuoviamo l'aggiornamento dalla lista
         setUpdates(prev => prev.filter(u => u.id !== item.id));
       } catch (err) {
-        Alert.alert('Errore', 'Si è verificato un errore durante l\'aggiornamento di sistema.');
+        showAlert('Errore', 'Si è verificato un errore durante l\'aggiornamento di sistema.');
         console.error(err);
       } finally {
         setIsSystemUpdating(false);
@@ -177,7 +164,7 @@ export default function UpdatesScreen() {
         await apiClient.post(`/api/docker/containers/${item.id}/update`, { image: item.image });
         // The container stays in the list; progress will be shown via fetchTasks
       } catch (err) {
-        Alert.alert('Errore', err.response?.data?.error || err.message);
+        showAlert('Errore', err.response?.data?.error || err.message);
       } finally {
         setUpdatingContainerId(null);
       }
@@ -217,7 +204,7 @@ export default function UpdatesScreen() {
       });
       
     } catch (e) {
-      Alert.alert('Errore di Aggiornamento', e.message);
+      showAlert('Errore di Aggiornamento', e.message);
     } finally {
       setIsAppUpdating(false);
     }
@@ -235,7 +222,7 @@ export default function UpdatesScreen() {
         }
       });
       if (!res.data || res.data.length === 0) {
-        showThemedAlert('Nessun aggiornamento', 'Non ci sono release dell\'app su GitHub.');
+        showAlert('Nessun aggiornamento', 'Non ci sono release dell\'app su GitHub.');
         return;
       }
       
@@ -246,7 +233,7 @@ export default function UpdatesScreen() {
       if (latestTag && latestTag !== storedLatest) {
         const apkAsset = latestRelease.assets.find(a => a.name.endsWith('.apk'));
         if (apkAsset) {
-          showThemedAlert(
+          showAlert(
             'Aggiornamento App',
             `Nuova versione ${latestTag} disponibile. Vuoi scaricarla e installarla?`,
             [
@@ -255,13 +242,13 @@ export default function UpdatesScreen() {
             ]
           );
         } else {
-          showThemedAlert('Nessun APK', 'La release trovata non contiene un file APK valido.');
+          showAlert('Nessun APK', 'La release trovata non contiene un file APK valido.');
         }
       } else {
-        showThemedAlert('App Aggiornata', 'Hai già l\'ultima versione installata.');
+        showAlert('App Aggiornata', 'Hai già l\'ultima versione installata.');
       }
     } catch (e) {
-      showThemedAlert('Errore', 'Impossibile controllare aggiornamenti app: ' + e.message);
+      showAlert('Errore', 'Impossibile controllare aggiornamenti app: ' + e.message);
     } finally {
       setIsCheckingApp(false);
     }
@@ -311,7 +298,6 @@ export default function UpdatesScreen() {
       </Modal>
 
       <View style={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 }}>
-        <Text style={styles.sectionTitle}>Azioni di Sistema</Text>
         
         <View style={styles.card}>
           <View style={styles.cardInfo}>
@@ -384,28 +370,6 @@ export default function UpdatesScreen() {
         </View>
       </Modal>
 
-      {/* Popup di Alert personalizzato (Themed Alert) */}
-      <Modal visible={alertConfig.visible} transparent={true} animationType="fade" onRequestClose={closeThemedAlert}>
-        <View style={styles.modalBackground}>
-          <View style={styles.modalContent}>
-            <Text style={styles.alertTitle}>{alertConfig.title}</Text>
-            <Text style={styles.alertMessage}>{alertConfig.message}</Text>
-            <View style={styles.alertButtonsRow}>
-              {alertConfig.buttons.map((btn, idx) => (
-                <TouchableOpacity 
-                  key={idx} 
-                  style={[styles.alertButton, btn.style === 'cancel' && { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.border }]} 
-                  onPress={() => {
-                    closeThemedAlert();
-                    if (btn.onPress) btn.onPress();
-                  }}
-                >
-                  <Text style={[styles.alertButtonText, btn.style === 'cancel' && { color: colors.textSecondary }]}>{btn.text}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        </View>
       </Modal>
     </View>
   );
@@ -421,12 +385,9 @@ const createStyles = (colors, typography) => StyleSheet.create({
     backgroundColor: colors.background,
   },
   sectionTitle: {
-    ...typography.body,
-    fontFamily: 'Inter_700Bold',
-    color: colors.textSecondary,
+    ...typography.h2,
+    color: colors.text,
     marginBottom: 12,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
   },
   progressContainer: {
     padding: 12,
@@ -468,8 +429,7 @@ const createStyles = (colors, typography) => StyleSheet.create({
     marginRight: 16,
   },
   containerName: {
-    ...typography.subtitle,
-    fontFamily: 'Inter_700Bold',
+    ...typography.h3,
     color: colors.text,
     marginBottom: 4,
   },
@@ -512,33 +472,10 @@ const createStyles = (colors, typography) => StyleSheet.create({
     marginTop: 8,
     textAlign: 'center',
   },
-  alertTitle: {
-    ...typography.h3,
-    color: colors.text,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  alertMessage: {
+  modalSubtext: {
     ...typography.body,
     color: colors.textSecondary,
-    marginBottom: 24,
+    marginTop: 8,
     textAlign: 'center',
-  },
-  alertButtonsRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 12,
-    width: '100%',
-  },
-  alertButton: {
-    flex: 1,
-    backgroundColor: colors.primary,
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  alertButtonText: {
-    ...typography.button,
-    color: '#fff',
   }
 });

@@ -22,7 +22,7 @@ const Stack = createNativeStackNavigator();
 
 
 function ContainersStackNavigator() {
-  const { colors } = useTheme();
+  const { colors, typography } = useTheme();
   return (
     <Stack.Navigator
       screenOptions={{
@@ -34,14 +34,14 @@ function ContainersStackNavigator() {
         },
         headerTintColor: colors.text,
         headerBackTitleVisible: false,
+        headerTitleStyle: typography.h1,
       }}
     >
       <Stack.Screen 
         name="ContainersList" 
         component={ContainersScreen} 
         options={{ 
-          title: 'Containers',
-          headerTitleStyle: { fontSize: 28, fontWeight: 'bold' }
+          title: 'Containers'
         }} 
       />
       <Stack.Screen 
@@ -64,7 +64,7 @@ function ContainersStackNavigator() {
 }
 
 function DashboardStackNavigator() {
-  const { colors } = useTheme();
+  const { colors, typography } = useTheme();
   return (
     <Stack.Navigator
       screenOptions={{
@@ -76,6 +76,7 @@ function DashboardStackNavigator() {
         },
         headerTintColor: colors.text,
         headerBackTitleVisible: false,
+        headerTitleStyle: typography.h1,
       }}
     >
       <Stack.Screen 
@@ -93,7 +94,7 @@ function DashboardStackNavigator() {
 }
 
 export default function AppNavigator() {
-  const { colors } = useTheme();
+  const { colors, typography } = useTheme();
   const { width } = useWindowDimensions();
   // Un touch target standard è circa 48-64px. Con 4 icone, 260px equivale a 65px ad icona.
   // È abbastanza compatto da non sprecare spazio ma facile da cliccare!
@@ -151,6 +152,7 @@ export default function AppNavigator() {
           shadowOpacity: 0,
         },
         headerTintColor: colors.text,
+        headerTitleStyle: typography.h1,
       })}
     >
       <Tab.Screen 
