@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, ScrollView, TextInput, TouchableOpacity, Activi
 import { useTheme, predefinedThemes } from '../contexts/ThemeContext';
 import { useAlert } from '../contexts/AlertContext';
 import { apiClient, logout } from '../api/client';
-import { Palette, Trash2, Send, Save, RefreshCcw, LogOut } from 'lucide-react-native';
+import { Palette, Send, Save, RefreshCcw, LogOut } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 
 export default function AdvancedScreen() {
@@ -110,24 +110,6 @@ export default function AdvancedScreen() {
     ]);
   };
 
-  const handlePrune = (type, title, message) => {
-    showAlert(title, message, [
-      { text: 'Annulla', style: 'cancel' },
-      { text: 'Procedi', style: 'destructive', onPress: async () => {
-        try {
-          const res = await apiClient.post(`/api/docker/${type}/prune`);
-          if (res.data.result?.SpaceReclaimed) {
-            const space = (res.data.result.SpaceReclaimed / 1024 / 1024).toFixed(2);
-            showAlert('Completato', `Spazio liberato: ${space} MB`);
-          } else {
-            showAlert('Completato', 'Operazione terminata con successo.');
-          }
-        } catch(e) {
-          showAlert('Errore', `Impossibile eseguire la pulizia: ${e.response?.data?.error || e.message}`);
-        }
-      }}
-    ]);
-  };
 
   const handleLogout = () => {
     showAlert('Logout', 'Vuoi davvero disconnetterti?', [
@@ -231,26 +213,6 @@ export default function AdvancedScreen() {
         </View>
 
         <View style={isTablet ? styles.tabletGrid : null}>
-          {/* Pulizia Docker */}
-          <View style={[styles.section, isTablet && styles.tabletCard]}>
-            <View style={styles.sectionHeader}>
-              <Trash2 color={colors.text} size={24} />
-              <Text style={styles.sectionTitle}>Pulizia Sistema (Docker Prune)</Text>
-            </View>
-          
-          <TouchableOpacity style={styles.dangerBtn} onPress={() => handlePrune('images', 'Pulizia Immagini', 'Sei sicuro di voler eliminare tutte le immagini Docker non utilizzate?')}>
-            <Text style={styles.dangerBtnText}>Pulisci Immagini Orfane</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.dangerBtn} onPress={() => handlePrune('volumes', 'Pulizia Volumi', 'Sei sicuro di voler eliminare tutti i volumi non collegati a nessun container? (Potrebbe cancellare dati)')}>
-            <Text style={styles.dangerBtnText}>Pulisci Volumi Orfani</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.dangerBtn} onPress={() => handlePrune('networks', 'Pulizia Reti', 'Sei sicuro di voler eliminare tutte le reti Docker non utilizzate?')}>
-            <Text style={styles.dangerBtnText}>Pulisci Reti Orfane</Text>
-          </TouchableOpacity>
-        </View>
-
           {/* Log di Sistema */}
           <View style={[styles.section, isTablet && styles.tabletCard]}>
             <View style={styles.sectionHeader}>
