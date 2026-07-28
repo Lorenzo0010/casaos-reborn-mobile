@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert, Modal, useWindowDimensions } from 'react-native';
-import { RefreshCw, DownloadCloud, CheckCircle, Smartphone } from 'lucide-react-native';
+import { RefreshCw, DownloadCloud, CheckCircle, Smartphone, Settings } from 'lucide-react-native';
 import { apiClient } from '../api/client';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAlert } from '../contexts/AlertContext';
@@ -11,7 +11,7 @@ import axios from 'axios';
 import * as FileSystem from 'expo-file-system';
 import * as IntentLauncher from 'expo-intent-launcher';
 
-export default function UpdatesScreen() {
+export default function UpdatesScreen({ navigation }) {
   const { colors, typography } = useTheme();
   const styles = createStyles(colors, typography);
 
@@ -334,6 +334,19 @@ export default function UpdatesScreen() {
 
       <View style={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 }}>
         
+        <View style={styles.card}>
+          <View style={styles.cardInfo}>
+            <Text style={styles.containerName}>Sistema CasaOS</Text>
+            <Text style={styles.imageName}>Impostazioni container principale</Text>
+          </View>
+          <TouchableOpacity 
+            style={styles.updateButton} 
+            onPress={() => navigation.navigate('SystemContainerSettings')}
+          >
+            <Settings color="#fff" size={20} />
+          </TouchableOpacity>
+        </View>
+
         <View style={styles.card}>
           <View style={styles.cardInfo}>
             <Text style={styles.containerName}>Container Server</Text>

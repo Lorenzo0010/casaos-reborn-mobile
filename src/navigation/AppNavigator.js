@@ -12,6 +12,7 @@ import ContainerDetailsScreen from '../screens/ContainerDetailsScreen';
 import ContainerSettingsScreen from '../screens/ContainerSettingsScreen';
 import ContainerCreateScreen from '../screens/ContainerCreateScreen';
 import UpdatesScreen from '../screens/UpdatesScreen';
+import SystemContainerSettingsScreen from '../screens/SystemContainerSettingsScreen';
 import AdvancedScreen from '../screens/AdvancedScreen';
 import WidgetDetailsScreen from '../screens/WidgetDetailsScreen';
 import { PlusCircle, Settings as SettingsIcon } from 'lucide-react-native';
@@ -113,6 +114,11 @@ function UpdatesStackNavigator() {
         name="UpdatesMain" 
         component={UpdatesScreen} 
         options={{ title: 'Updates' }} 
+      />
+      <Stack.Screen 
+        name="SystemContainerSettings" 
+        component={SystemContainerSettingsScreen} 
+        options={{ title: 'Sistema CasaOS' }} 
       />
     </Stack.Navigator>
   );
