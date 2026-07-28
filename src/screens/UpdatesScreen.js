@@ -139,43 +139,7 @@ export default function UpdatesScreen({ navigation }) {
 
   const handleUpdate = async (item) => {
     if (item.name === 'casaos-reborn') {
-      // Meccanismo bloccante tramite updater su porta 1112
-      setIsSystemUpdating(true);
-      try {
-        const ip = await AsyncStorage.getItem('server_ip');
-        if (!ip) throw new Error("IP Server non trovato");
-        
-        let formattedIp = ip;
-        if (!formattedIp.startsWith('http://') && !formattedIp.startsWith('https://')) {
-          formattedIp = 'http://' + formattedIp;
-        }
-        
-        // Costruzione sicura dell'URL
-        const parsedUrl = new URL(formattedIp);
-        parsedUrl.port = '1112';
-        const updaterUrl = `${parsedUrl.protocol}//${parsedUrl.hostname}:1112/api/update`;
-        
-        // Timeout di sicurezza (es. 2 minuti) per evitare che l'app si blocchi all'infinito
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 120000);
-
-        // Chiamata POST (attenderà la fine dello stream SSE)
-        await fetch(updaterUrl, { 
-          method: 'POST',
-          signal: controller.signal
-        });
-        
-        clearTimeout(timeoutId);
-        
-        showAlert('Successo', 'CasaOS Reborn è stato aggiornato e si sta riavviando.');
-        // Rimuoviamo l'aggiornamento dalla lista
-        setUpdates(prev => prev.filter(u => u.id !== item.id));
-      } catch (err) {
-        showAlert('Errore', 'Si è verificato un errore durante l\'aggiornamento di sistema.');
-        console.error(err);
-      } finally {
-        setIsSystemUpdating(false);
-      }
+      navigation.navigate('SystemContainerSettings');
     } else {
       // Aggiornamento standard (background)
       setUpdatingContainerId(item.id);
