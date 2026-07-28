@@ -98,6 +98,6 @@ This project is open-source and distributed under the **MIT License**.
 
 > [!WARNING]
 > **DISCLAIMER OF LIABILITY**
-> This software is provided "AS IS", without warranty of any kind, express or implied. The author (Lorenzo Cassano) assumes no responsibility for any data loss, server malfunctions, security breaches, or any other damages arising from the use of this application. Managing containers remotely carries inherent risks. **Use the application at your own risk.** Always ensure you have updated backups of your critical data.
+> This software is provided "AS IS", without warranty of any kind, express or implied. The author assumes no responsibility for any data loss, server malfunctions, security breaches, or any other damages arising from the use of this application. Managing containers remotely carries inherent risks. **Use the application at your own risk.** Always ensure you have updated backups of your critical data.
 
 For more details, consult the [LICENSE](./LICENSE) file included in the repository.
