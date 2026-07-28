@@ -19,7 +19,6 @@ This app is entirely open-source and developed in my free time to bring the powe
 
 ---
 
-
 ## ✨ How it works (Features)
 
 - **📊 Interactive Dashboard:** Monitor CPU, RAM, Disk, and Network traffic in real-time.
