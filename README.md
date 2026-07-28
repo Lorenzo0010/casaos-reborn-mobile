@@ -19,18 +19,6 @@ This app is entirely open-source and developed in my free time to bring the powe
 
 ---
 
-## 📸 Screenshots
-
-> **Note:** Replace these placeholders with your actual screenshots. 
-> *Showcase the beautiful mobile app screens here!*
-
-<div align="center">
-  <img src="https://via.placeholder.com/300x600.png?text=Mobile+Dashboard" alt="Dashboard Screenshot" width="250" />
-  &nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="https://via.placeholder.com/300x600.png?text=Containers+List" alt="Containers Screenshot" width="250" />
-</div>
-
----
 
 ## ✨ How it works (Features)
 
