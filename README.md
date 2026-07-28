@@ -3,6 +3,8 @@
 Benvenuto nel repository ufficiale del client mobile di **CasaOS Reborn**! 
 Questa applicazione React Native (costruita con Expo) ti permette di gestire, monitorare e aggiornare i tuoi container e le risorse del tuo server CasaOS direttamente dal palmo della tua mano, con un'interfaccia moderna e coerente.
 
+[![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg?logo=paypal&style=for-the-badge)](https://paypal.me/LorenzoCassano77)
+
 ---
 
 ## ✨ Funzionalità Principali
