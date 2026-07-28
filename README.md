@@ -21,7 +21,20 @@ Questa applicazione React Native (costruita con Expo) ti permette di gestire, mo
 
 ---
 
-## 🚀 Guida Rapida: Come Testare l'App (Senza compilare l'APK)
+## 📦 Installazione e Dipendenze (Utenti Finali)
+
+**Dipendenze:**
+Per *utilizzare* l'app finale sul tuo smartphone, **non è richiesta alcuna dipendenza esterna** (né Node.js, né Expo, né nient'altro sul PC). Ti basta uno smartphone Android. 
+
+**Metodo di Installazione:**
+1. Vai nella sezione **Releases** di questo repository GitHub.
+2. Scarica l'ultimo file `.apk` disponibile (es. `app-release.apk`).
+3. Apri il file scaricato sul tuo smartphone Android. Potrebbe esserti richiesto di abilitare l'installazione da "Origini sconosciute" nelle impostazioni di sicurezza del telefono.
+4. Clicca su **Installa** e avvia l'app!
+
+---
+
+## 🚀 Guida Rapida: Sviluppo e Test (Senza compilare l'APK)
 
 Grazie a **Expo**, non hai bisogno di compilare un APK per provare l'app. Puoi farla girare direttamente sul tuo telefono fisico in pochi secondi!
 
