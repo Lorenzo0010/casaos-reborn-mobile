@@ -3,9 +3,11 @@ import { StyleSheet, Text, View, ScrollView, ActivityIndicator, TouchableOpacity
 import { Image } from 'expo-image';
 import { Settings, Play, Square, RotateCw, Globe, RefreshCcw, Github } from 'lucide-react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { apiClient } from '../api/client';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAlert } from '../contexts/AlertContext';
+import { SPACING, HEADER } from '../constants/layout';
 
 const getContainerColor = (name) => {
     let hash = 0;
@@ -20,6 +22,7 @@ export default function ContainerDetailsScreen({ route, navigation }) {
   const { colors, typography } = useTheme();
   const styles = createStyles(colors, typography);
   const { showAlert } = useAlert();
+  const insets = useSafeAreaInsets();
 
   const { containerId, containerName } = route.params;
   const [details, setDetails] = useState(null);
@@ -158,7 +161,11 @@ export default function ContainerDetailsScreen({ route, navigation }) {
   return (
     <ScrollView 
       style={styles.container}
-      contentContainerStyle={{ padding: 16, paddingBottom: 120 }}
+      contentContainerStyle={{ 
+        paddingHorizontal: SPACING.base, 
+        paddingBottom: 120, 
+        paddingTop: insets.top + HEADER.totalOffset 
+      }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
     >
       <View style={styles.headerCard}>
@@ -242,7 +249,16 @@ export default function ContainerDetailsScreen({ route, navigation }) {
               <Text style={styles.actionText}>Ricrea</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.navigate('ContainerSettings', { containerId, containerName, details })}>
+            <TouchableOpacity 
+              style={styles.actionBtn} 
+              onPress={() => {
+                if (stableId === 'casaos-reborn') {
+                  navigation.navigate('Updates', { screen: 'SystemContainerSettings' });
+                } else {
+                  navigation.navigate('ContainerSettings', { containerId, containerName, details });
+                }
+              }}
+            >
               <Settings color={colors.primary} size={24} />
               <Text style={styles.actionText}>Settings</Text>
             </TouchableOpacity>

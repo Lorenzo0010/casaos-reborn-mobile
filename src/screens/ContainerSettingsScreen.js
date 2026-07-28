@@ -54,8 +54,9 @@ export default function ContainerSettingsScreen({ route, navigation }) {
       if (details.HostConfig?.PortBindings) {
         Object.entries(details.HostConfig.PortBindings).forEach(([containerPortStr, hostBindings]) => {
           const containerPort = containerPortStr.split('/')[0];
+          const protocol = containerPortStr.split('/')[1] || 'tcp';
           hostBindings?.forEach(binding => {
-            parsedPorts.push({ host: binding.HostPort, container: containerPort });
+            parsedPorts.push({ host: binding.HostPort, container: containerPort, protocol });
           });
         });
       }
@@ -87,7 +88,7 @@ export default function ContainerSettingsScreen({ route, navigation }) {
     }
   }, [details]);
 
-  const handleAddPort = () => setPorts([...ports, { host: '', container: '' }]);
+  const handleAddPort = () => setPorts([...ports, { host: '', container: '', protocol: 'tcp' }]);
   const handleRemovePort = (index) => setPorts(ports.filter((_, i) => i !== index));
   const handlePortChange = (index, field, value) => {
     const newPorts = [...ports];
@@ -117,7 +118,7 @@ export default function ContainerSettingsScreen({ route, navigation }) {
     const portsObj = {};
     ports.forEach(p => {
       if (p.host && p.container) {
-          const key = `${p.container}/tcp`; // Defaulting to TCP for simplicity
+          const key = `${p.container}/${p.protocol || 'tcp'}`;
           if (!portsObj[key]) portsObj[key] = [];
           portsObj[key].push({ HostPort: p.host });
       }
@@ -208,7 +209,7 @@ export default function ContainerSettingsScreen({ route, navigation }) {
     );
   };
 
-  const renderDynamicList = (title, items, handleAdd, handleRemove, handleChange, field1, field2, placeholder1, placeholder2) => (
+  const renderDynamicList = (title, items, handleAdd, handleRemove, handleChange, field1, field2, placeholder1, placeholder2, isPorts = false) => (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>{title}</Text>
@@ -232,6 +233,14 @@ export default function ContainerSettingsScreen({ route, navigation }) {
             value={item[field2]}
             onChangeText={(val) => handleChange(index, field2, val)}
           />
+          {isPorts && (
+            <TouchableOpacity 
+              style={[styles.input, { width: 60, marginRight: 8, marginBottom: 0, justifyContent: 'center', alignItems: 'center' }]}
+              onPress={() => handleChange(index, 'protocol', item.protocol === 'tcp' ? 'udp' : 'tcp')}
+            >
+              <Text style={{ color: colors.text, fontSize: 12 }}>{(item.protocol || 'tcp').toUpperCase()}</Text>
+            </TouchableOpacity>
+          )}
           <TouchableOpacity onPress={() => handleRemove(index)} style={styles.removeBtn}>
             <Trash2 color={colors.error} size={20} />
           </TouchableOpacity>
@@ -301,7 +310,7 @@ export default function ContainerSettingsScreen({ route, navigation }) {
         />
       </View>
 
-      {renderDynamicList('Porte', ports, handleAddPort, handleRemovePort, handlePortChange, 'host', 'container', 'Host (es. 8080)', 'Container (es. 80)')}
+      {renderDynamicList('Porte', ports, handleAddPort, handleRemovePort, handlePortChange, 'host', 'container', 'Host (es. 8080)', 'Container (es. 80)', true)}
       {renderDynamicList('Volumi', volumes, handleAddVolume, handleRemoveVolume, handleVolumeChange, 'host', 'container', 'Host (es. /dati)', 'Container (es. /app)')}
       {renderDynamicList('Variabili d\'Ambiente', envs, handleAddEnv, handleRemoveEnv, handleEnvChange, 'key', 'value', 'Chiave (es. PUID)', 'Valore (es. 1000)')}
 

@@ -1,21 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, useWindowDimensions, PlatformColor } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, useWindowDimensions, PlatformColor } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 import { useTheme, predefinedThemes } from '../contexts/ThemeContext';
 import { useAlert } from '../contexts/AlertContext';
 import { apiClient, logout } from '../api/client';
 import { Palette, Send, Save, RefreshCcw, LogOut } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
+import { SPACING, HEADER, CARD, FADE, CONTENT, isTabletWidth } from '../constants/layout';
 
 export default function AdvancedScreen() {
   const { colors, activeTheme, currentTheme, themeMode, changeTheme, typography } = useTheme();
   const { showAlert } = useAlert();
   const styles = createStyles(colors, typography);
+  const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const isTablet = width >= 768;
+  const isTablet = isTabletWidth(width);
   const navigation = useNavigation();
 
   const [telegramToken, setTelegramToken] = useState('');
   const [telegramChatId, setTelegramChatId] = useState('');
+  const [weatherCity, setWeatherCity] = useState('Roma');
   const [savingPrefs, setSavingPrefs] = useState(false);
 
   const [logs, setLogs] = useState('');
@@ -32,6 +37,7 @@ export default function AdvancedScreen() {
       if (res.data) {
         if (res.data.telegramToken) setTelegramToken(res.data.telegramToken);
         if (res.data.telegramChatId) setTelegramChatId(res.data.telegramChatId);
+        if (res.data.weatherCity) setWeatherCity(res.data.weatherCity);
       }
     } catch (e) {
       console.error('Failed to load preferences', e);
@@ -61,6 +67,7 @@ export default function AdvancedScreen() {
         ...prefs,
         telegramToken,
         telegramChatId,
+        weatherCity,
         mobileTheme: activeTheme,
         themeMode
       });
@@ -120,7 +127,10 @@ export default function AdvancedScreen() {
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView 
+        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + HEADER.totalOffset }]}
+        keyboardShouldPersistTaps="handled"
+      >
         
         <View style={isTablet ? styles.tabletGrid : null}>
           <View style={[styles.section, isTablet && styles.tabletCard]}>
@@ -201,6 +211,15 @@ export default function AdvancedScreen() {
               onChangeText={setTelegramChatId}
             />
 
+            <Text style={styles.label}>Città Meteo</Text>
+            <TextInput 
+              style={styles.input}
+              placeholder="es. Roma, Milano, Napoli"
+              placeholderTextColor={colors.textSecondary}
+              value={weatherCity}
+              onChangeText={setWeatherCity}
+            />
+
             <TouchableOpacity style={styles.primaryBtn} onPress={handleSavePreferences} disabled={savingPrefs}>
               {savingPrefs ? <ActivityIndicator color="#fff" /> : (
                 <>
@@ -251,6 +270,7 @@ export default function AdvancedScreen() {
         </View>
         
       </ScrollView>
+
     </KeyboardAvoidingView>
   );
 }
@@ -261,8 +281,8 @@ const createStyles = (colors, typography) => StyleSheet.create({
     backgroundColor: colors.background,
   },
   scrollContent: {
-    padding: 16,
-    paddingBottom: 120,
+    padding: SPACING.base,
+    paddingBottom: CONTENT.paddingBottom,
   },
   tabletGrid: {
     flexDirection: 'row',
@@ -273,9 +293,9 @@ const createStyles = (colors, typography) => StyleSheet.create({
   },
   section: {
     backgroundColor: colors.surface,
-    padding: 20,
-    borderRadius: 12,
-    marginBottom: 16,
+    padding: CARD.padding,
+    borderRadius: CARD.borderRadius,
+    marginBottom: CARD.gap,
   },
   sectionHeader: {
     flexDirection: 'row',

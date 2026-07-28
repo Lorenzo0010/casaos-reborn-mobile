@@ -150,7 +150,7 @@ const createStyles = (colors, typography) => StyleSheet.create({
     backgroundColor: colors.surface,
     padding: 24,
     borderRadius: 16,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 10,

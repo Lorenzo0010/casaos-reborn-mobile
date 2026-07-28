@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, Text, View, ScrollView, ActivityIndicator, RefreshControl, Dimensions, TouchableOpacity, useWindowDimensions } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Cpu, HardDrive, Network, Server, ArrowDown, ArrowUp, Activity } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { Cpu, HardDrive, Network, Server, ArrowDown, ArrowUp, Activity, CloudSun, Sun, CloudRain, Snowflake } from 'lucide-react-native';
 import { apiClient } from '../api/client';
 import { useTheme } from '../contexts/ThemeContext';
+import { SPACING, HEADER, CARD, FADE, CONTENT, isTabletWidth } from '../constants/layout';
 
 import { useNavigation } from '@react-navigation/native';
 
@@ -12,11 +14,29 @@ const WidgetCard = ({ title, icon, color, style, onPress, mainValue, percent, su
   const styles = createStyles(colors, typography);
   
   const CardComponent = onPress ? TouchableOpacity : View;
+  const touchStart = React.useRef({ x: 0, y: 0, ignore: false });
 
   return (
     <CardComponent 
       style={[styles.card, style]} 
-      onPress={onPress} 
+      delayPressIn={150}
+      onPressIn={onPress ? (e) => {
+        touchStart.current = { x: e.nativeEvent.pageX, y: e.nativeEvent.pageY, ignore: false };
+      } : undefined}
+      onPressOut={onPress ? (e) => {
+        const dx = Math.abs(e.nativeEvent.pageX - touchStart.current.x);
+        const dy = Math.abs(e.nativeEvent.pageY - touchStart.current.y);
+        if (dx > 10 || dy > 10) {
+          touchStart.current.ignore = true;
+        }
+      } : undefined}
+      onPress={onPress ? () => {
+        if (touchStart.current.ignore) {
+          touchStart.current.ignore = false;
+          return;
+        }
+        onPress();
+      } : undefined}
       activeOpacity={onPress ? 0.7 : 1}
     >
       <View style={styles.cardHeaderFlex}>
@@ -24,9 +44,11 @@ const WidgetCard = ({ title, icon, color, style, onPress, mainValue, percent, su
           <View style={[styles.iconBox, { backgroundColor: `${color}33` }]}>
             {icon}
           </View>
-          <Text style={styles.cardTitle}>{title}</Text>
+          <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Text style={styles.cardTitle}>{title}</Text>
+            <Text style={styles.cardValue}>{mainValue}</Text>
+          </View>
         </View>
-        <Text style={styles.cardValue}>{mainValue}</Text>
       </View>
 
       {percent !== undefined && (
@@ -47,16 +69,18 @@ const WidgetCard = ({ title, icon, color, style, onPress, mainValue, percent, su
 export default function DashboardScreen() {
   const { colors, typography } = useTheme();
   const styles = createStyles(colors, typography);
+  const insets = useSafeAreaInsets();
 
   const navigation = useNavigation();
   const { width: windowWidth } = useWindowDimensions();
-  const isTablet = windowWidth >= 768;
+  const isTablet = isTabletWidth(windowWidth);
 
   const fullCardStyle = { width: '100%' };
   const cpuCardStyle = isTablet ? { flex: 1, minWidth: '30%' } : { width: '100%' };
   const resourceCardStyle = isTablet ? { flex: 1, minWidth: '30%' } : { width: '100%' };
 
   const [stats, setStats] = useState(null);
+  const [weatherData, setWeatherData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
@@ -64,8 +88,14 @@ export default function DashboardScreen() {
   const fetchStats = async () => {
     try {
       setError(null);
-      const res = await apiClient.get('/api/system/stats');
-      setStats(res.data);
+      const [statsRes, weatherRes] = await Promise.all([
+        apiClient.get('/api/system/stats'),
+        apiClient.get('/api/system/weather').catch(() => null)
+      ]);
+      setStats(statsRes.data);
+      if (weatherRes && weatherRes.data) {
+        setWeatherData(weatherRes.data);
+      }
     } catch (e) {
       console.error(e);
       setError('Impossibile recuperare i dati dal server');
@@ -118,9 +148,9 @@ export default function DashboardScreen() {
 
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + HEADER.totalOffset }]}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
         }
@@ -135,6 +165,7 @@ export default function DashboardScreen() {
 
         {stats && (
           <View style={styles.grid}>
+            
             {/* SYSTEM INFO Card (Full Width) */}
             <WidgetCard
               title="Sistema"
@@ -204,10 +235,31 @@ export default function DashboardScreen() {
                 </View>
               }
             />
+
+            {/* WEATHER Card */}
+            <WidgetCard
+              title="Meteo"
+              icon={
+                weatherData?.description?.toLowerCase().includes('sun') || weatherData?.description?.toLowerCase().includes('clear') ? <Sun color="#f59e0b" size={20} /> :
+                weatherData?.description?.toLowerCase().includes('cloud') ? <CloudSun color="#f59e0b" size={20} /> :
+                weatherData?.description?.toLowerCase().includes('rain') ? <CloudRain color="#3b82f6" size={20} /> :
+                weatherData?.description?.toLowerCase().includes('snow') ? <Snowflake color="#60a5fa" size={20} /> :
+                <CloudSun color="#f59e0b" size={20} />
+              }
+              color={
+                weatherData?.description?.toLowerCase().includes('rain') || weatherData?.description?.toLowerCase().includes('snow') ? '#3b82f6' : '#f59e0b'
+              }
+              style={fullCardStyle}
+              mainValue={weatherData ? `${weatherData.temp}°C` : '--°C'}
+              subLeft={<Text style={styles.cardFooterText}>{weatherData ? weatherData.city : 'Caricamento...'}</Text>}
+              subRight={<Text style={styles.cardFooterText}>{weatherData ? weatherData.description : '--'}</Text>}
+            />
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+
+
+    </View>
   );
 }
 
@@ -217,8 +269,8 @@ const createStyles = (colors, typography) => StyleSheet.create({
     backgroundColor: colors.background,
   },
   scrollContent: {
-    padding: 16,
-    paddingBottom: 120,
+    padding: SPACING.base,
+    paddingBottom: CONTENT.paddingBottom,
   },
   center: {
     flex: 1,
@@ -252,16 +304,16 @@ const createStyles = (colors, typography) => StyleSheet.create({
   },
   card: {
     backgroundColor: colors.surface,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
+    borderRadius: CARD.borderRadius,
+    padding: CARD.padding,
+    marginBottom: CARD.gap,
+    borderWidth: CARD.borderWidth,
     borderColor: 'rgba(255, 255, 255, 0.03)',
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOpacity: CARD.shadowOpacity,
+    shadowRadius: CARD.shadowRadius,
+    elevation: CARD.elevation,
   },
   cardHeaderFlex: {
     flexDirection: 'row',
@@ -282,7 +334,7 @@ const createStyles = (colors, typography) => StyleSheet.create({
   },
   cardTitle: {
     ...typography.h3,
-    color: colors.textSecondary,
+    color: colors.text,
   },
   cardValue: {
     ...typography.h3,
@@ -310,7 +362,7 @@ const createStyles = (colors, typography) => StyleSheet.create({
   },
   cardFooterText: {
     ...typography.body,
-    color: colors.textSecondary,
+    color: colors.text,
   },
   networkCol: {
     flexDirection: 'row',
@@ -320,6 +372,6 @@ const createStyles = (colors, typography) => StyleSheet.create({
   networkValue: {
     ...typography.caption,
     fontFamily: 'Inter_600SemiBold',
-    color: colors.textSecondary,
+    color: colors.text,
   },
 });

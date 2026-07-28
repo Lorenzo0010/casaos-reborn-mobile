@@ -3,10 +3,13 @@ import { StyleSheet, Text, View, ScrollView, ActivityIndicator, RefreshControl, 
 import { Cpu, Activity, Server, Activity as ProcessIcon } from 'lucide-react-native';
 import { apiClient } from '../api/client';
 import { useTheme } from '../contexts/ThemeContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SPACING, HEADER } from '../constants/layout';
 
 export default function WidgetDetailsScreen({ route }) {
   const { colors, typography } = useTheme();
   const styles = createStyles(colors, typography);
+  const insets = useSafeAreaInsets();
 
   const { type } = route.params || {}; // 'cpu' or 'ram'
   const [processes, setProcesses] = useState([]);
@@ -72,7 +75,10 @@ export default function WidgetDetailsScreen({ route }) {
   return (
     <ScrollView 
       style={styles.container}
-      contentContainerStyle={styles.scrollContent}
+      contentContainerStyle={[
+        styles.scrollContent,
+        { paddingTop: insets.top + HEADER.totalOffset }
+      ]}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
       }

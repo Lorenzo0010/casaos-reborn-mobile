@@ -5,53 +5,53 @@ import { apiClient } from '../api/client';
 
 export const predefinedThemes = [
   { 
+    id: 'monet', name: 'Monet (Auto)', 
+    primary: 'monet', 
+    darkBg: '#18181b', darkSurface: '#27272a', darkSurfaceElevated: '#3f3f46',
+    lightBg: '#f8f9fb', lightSurface: '#ffffff', lightSurfaceElevated: '#f4f4f5'
+  },
+  { 
     id: 'navy', name: 'Oceano', 
     primary: '#3b82f6', 
-    darkBg: '#020617', darkSurface: '#0f172a',
-    lightBg: '#f8f9fb', lightSurface: '#ffffff'
+    darkBg: '#0f172a', darkSurface: '#1e293b', darkSurfaceElevated: '#334155',
+    lightBg: '#f8f9fb', lightSurface: '#ffffff', lightSurfaceElevated: '#f1f5f9'
   },
   { 
     id: 'forest', name: 'Smeraldo', 
     primary: '#10b981', 
-    darkBg: '#022c22', darkSurface: '#064e3b',
-    lightBg: '#f0fdf4', lightSurface: '#ffffff'
+    darkBg: '#111815', darkSurface: '#1b2621', darkSurfaceElevated: '#25352e',
+    lightBg: '#f0fdf4', lightSurface: '#ffffff', lightSurfaceElevated: '#ecfdf5'
   },
   { 
     id: 'red', name: 'Rubino', 
     primary: '#f43f5e', 
-    darkBg: '#2a040d', darkSurface: '#4c0519',
-    lightBg: '#fff1f2', lightSurface: '#ffffff'
+    darkBg: '#1a1314', darkSurface: '#261b1d', darkSurfaceElevated: '#332427',
+    lightBg: '#fff1f2', lightSurface: '#ffffff', lightSurfaceElevated: '#ffe4e6'
   },
   { 
     id: 'rust', name: 'Ambra', 
     primary: '#f59e0b', 
-    darkBg: '#451a03', darkSurface: '#78350f',
-    lightBg: '#fffbeb', lightSurface: '#ffffff'
+    darkBg: '#1a1613', darkSurface: '#26201b', darkSurfaceElevated: '#332b24',
+    lightBg: '#fffbeb', lightSurface: '#ffffff', lightSurfaceElevated: '#fef3c7'
   },
   { 
     id: 'purple', name: 'Ametista', 
     primary: '#8b5cf6', 
-    darkBg: '#2e1065', darkSurface: '#4c1d95',
-    lightBg: '#f5f3ff', lightSurface: '#ffffff'
+    darkBg: '#15131a', darkSurface: '#1f1b26', darkSurfaceElevated: '#2a2433',
+    lightBg: '#f5f3ff', lightSurface: '#ffffff', lightSurfaceElevated: '#ede9fe'
   },
   { 
     id: 'anthracite', name: 'Antracite', 
     primary: '#94a3b8', 
-    darkBg: '#18181b', darkSurface: '#27272a',
-    lightBg: '#f8f9fb', lightSurface: '#ffffff'
-  },
-  { 
-    id: 'monet', name: 'Monet (Auto)', 
-    primary: 'monet', 
-    darkBg: '#18181b', darkSurface: '#27272a',
-    lightBg: '#f8f9fb', lightSurface: '#ffffff'
+    darkBg: '#18181b', darkSurface: '#27272a', darkSurfaceElevated: '#3f3f46',
+    lightBg: '#f8f9fb', lightSurface: '#ffffff', lightSurfaceElevated: '#f4f4f5'
   }
 ];
 
 const ThemeContext = createContext();
 
 export function ThemeProvider({ children }) {
-  const [activeTheme, setActiveTheme] = useState('navy');
+  const [activeTheme, setActiveTheme] = useState('monet');
   const [themeMode, setThemeMode] = useState('system');
   const colorScheme = useColorScheme();
 
@@ -103,11 +103,24 @@ export function ThemeProvider({ children }) {
   const currentTheme = predefinedThemes.find(t => t.id === activeTheme) || predefinedThemes[0];
 
   const getBackgroundColor = () => {
+    if (currentTheme.id === 'monet' && Platform.OS === 'android' && Platform.Version >= 31) {
+      return isDark ? PlatformColor('@android:color/system_neutral1_900') : PlatformColor('@android:color/system_neutral1_50');
+    }
     return isDark ? currentTheme.darkBg : currentTheme.lightBg;
   };
 
   const getSurfaceColor = () => {
+    if (currentTheme.id === 'monet' && Platform.OS === 'android' && Platform.Version >= 31) {
+      return isDark ? PlatformColor('@android:color/system_neutral1_800') : PlatformColor('@android:color/system_neutral1_100');
+    }
     return isDark ? currentTheme.darkSurface : currentTheme.lightSurface;
+  };
+
+  const getSurfaceElevatedColor = () => {
+    if (currentTheme.id === 'monet' && Platform.OS === 'android' && Platform.Version >= 31) {
+      return isDark ? PlatformColor('@android:color/system_neutral1_700') : PlatformColor('@android:color/system_neutral1_200');
+    }
+    return isDark ? currentTheme.darkSurfaceElevated : currentTheme.lightSurfaceElevated;
   };
 
   const getPrimaryColor = () => {
@@ -123,17 +136,21 @@ export function ThemeProvider({ children }) {
   // Derive the active theme palette
   const colors = {
     background: getBackgroundColor(),
+    backgroundSolid: isDark ? currentTheme.darkBg : currentTheme.lightBg,
     surface: getSurfaceColor(),
+    surfaceSolid: isDark ? currentTheme.darkSurface : currentTheme.lightSurface,
+    surfaceElevated: getSurfaceElevatedColor(),
     primary: getPrimaryColor(),
     text: isDark ? '#ffffff' : '#111827',
     textSecondary: isDark ? '#aaaaaa' : '#6b7280',
     border: isDark ? '#333333' : '#e5e7eb',
+    shadow: '#000000',
     success: '#4ade80',
     error: '#f87171',
   };
 
   const typography = {
-    h1: { fontFamily: 'Inter_700Bold', fontSize: 28 },
+    h1: { fontFamily: 'Inter_700Bold', fontSize: 34 },
     h2: { fontFamily: 'Inter_700Bold', fontSize: 22 },
     h3: { fontFamily: 'Inter_600SemiBold', fontSize: 18 },
     subtitle: { fontFamily: 'Inter_500Medium', fontSize: 16 },

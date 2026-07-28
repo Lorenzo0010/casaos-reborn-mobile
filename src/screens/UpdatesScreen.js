@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert, Modal, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RefreshCw, DownloadCloud, CheckCircle, Smartphone, Settings } from 'lucide-react-native';
+
 import { apiClient } from '../api/client';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAlert } from '../contexts/AlertContext';
+import { SPACING, HEADER, CARD, FADE, CONTENT, isTabletWidth } from '../constants/layout';
 import io from 'socket.io-client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
@@ -14,6 +17,7 @@ import * as IntentLauncher from 'expo-intent-launcher';
 export default function UpdatesScreen({ navigation }) {
   const { colors, typography } = useTheme();
   const styles = createStyles(colors, typography);
+  const insets = useSafeAreaInsets();
 
   const [updates, setUpdates] = useState([]);
   const [appUpdate, setAppUpdate] = useState(null);
@@ -105,18 +109,33 @@ export default function UpdatesScreen({ navigation }) {
     };
   }, []);
 
+  useEffect(() => {
+    let interval;
+    if (isChecking) {
+      interval = setInterval(() => {
+        fetchUpdates();
+      }, 3000);
+    }
+    return () => clearInterval(interval);
+  }, [isChecking]);
+
   const fetchUpdates = async () => {
     try {
       const res = await apiClient.get('/api/docker/updates');
       const fetchedUpdates = res.data.updates || [];
       setUpdates(fetchedUpdates);
-      if (res.data.status?.status === 'checking') {
+      
+      const isCurrentlyChecking = res.data.status?.isChecking;
+      
+      if (isCurrentlyChecking) {
         setIsChecking(true);
+        if (res.data.status?.currentTask) {
+          setCheckStatus(res.data.status.currentTask);
+        }
       } else {
+        setIsChecking(false);
+        setCheckStatus(null);
         if (manualCheckContainers.current) {
-          if (fetchedUpdates.length === 0) {
-            showAlert('Nessun aggiornamento', 'Tutti i container sono aggiornati.');
-          }
           manualCheckContainers.current = false;
         }
       }
@@ -205,7 +224,6 @@ export default function UpdatesScreen({ navigation }) {
         }
       });
       if (!res.data || res.data.length === 0) {
-        showAlert('Nessun aggiornamento', 'Non ci sono release dell\'app su GitHub.');
         setAppUpdate(null);
         return;
       }
@@ -229,7 +247,6 @@ export default function UpdatesScreen({ navigation }) {
           showAlert('Nessun APK', 'La release trovata non contiene un file APK valido.');
         }
       } else {
-        showAlert('Nessun aggiornamento', 'Hai già l\'ultima versione installata.');
         setAppUpdate(null);
       }
     } catch (e) {
@@ -301,7 +318,7 @@ export default function UpdatesScreen({ navigation }) {
         </View>
       </Modal>
 
-      <View style={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 }}>
+      <View style={{ paddingHorizontal: SPACING.base, paddingTop: insets.top + HEADER.totalOffset, paddingBottom: SPACING.sm }}>
         
         <View style={styles.card}>
           <View style={styles.cardInfo}>
@@ -318,36 +335,21 @@ export default function UpdatesScreen({ navigation }) {
 
         <View style={styles.card}>
           <View style={styles.cardInfo}>
-            <Text style={styles.containerName}>Container Server</Text>
-            <Text style={styles.imageName}>Ricerca nuove immagini Docker</Text>
+            <Text style={styles.containerName}>Ricerca Aggiornamenti</Text>
+            <Text style={styles.imageName}>Verifica aggiornamenti per container e app</Text>
           </View>
           <TouchableOpacity 
-            style={[styles.updateButton, isChecking && styles.updateButtonDisabled]} 
-            onPress={checkUpdates}
-            disabled={isChecking}
+            style={[styles.updateButton, (isChecking || isCheckingApp) && styles.updateButtonDisabled]} 
+            onPress={() => {
+              checkUpdates();
+              checkAppUpdate();
+            }}
+            disabled={isChecking || isCheckingApp}
           >
-            {isChecking ? (
+            {(isChecking || isCheckingApp) ? (
               <ActivityIndicator color="#fff" size="small" />
             ) : (
               <RefreshCw color="#fff" size={20} />
-            )}
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.card}>
-          <View style={styles.cardInfo}>
-            <Text style={styles.containerName}>CasaOS Mobile App</Text>
-            <Text style={styles.imageName}>Verifica nuove release su GitHub</Text>
-          </View>
-          <TouchableOpacity 
-            style={[styles.updateButton, isCheckingApp && styles.updateButtonDisabled]} 
-            onPress={checkAppUpdate}
-            disabled={isCheckingApp}
-          >
-            {isCheckingApp ? (
-              <ActivityIndicator color="#fff" size="small" />
-            ) : (
-              <Smartphone color="#fff" size={20} />
             )}
           </TouchableOpacity>
         </View>
@@ -371,7 +373,7 @@ export default function UpdatesScreen({ navigation }) {
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
           numColumns={numColumns}
-          columnWrapperStyle={isTablet ? { gap: 16 } : undefined}
+          columnWrapperStyle={isTablet ? { gap: SPACING.base } : undefined}
           contentContainerStyle={styles.list}
         />
       )}
@@ -426,18 +428,18 @@ const createStyles = (colors, typography) => StyleSheet.create({
     textAlign: 'center',
   },
   list: {
-    padding: 16,
-    paddingBottom: 120,
+    padding: SPACING.base,
+    paddingBottom: CONTENT.paddingBottom,
   },
   card: {
     backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    borderRadius: CARD.borderRadius,
+    padding: CARD.padding,
+    marginBottom: CARD.gap,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderWidth: 1,
+    borderWidth: CARD.borderWidth,
     borderColor: colors.border,
   },
   cardInfo: {

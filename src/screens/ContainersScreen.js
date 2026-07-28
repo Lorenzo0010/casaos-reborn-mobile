@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { StyleSheet, Text, View, FlatList, ActivityIndicator, RefreshControl, TouchableOpacity, Alert, Linking, useWindowDimensions } from 'react-native';
+import { StyleSheet, Text, View, FlatList, ActivityIndicator, RefreshControl, TouchableOpacity, Alert, Linking, useWindowDimensions, LayoutAnimation } from 'react-native';
 import { Image } from 'expo-image';
-import { Play, Square, RotateCw, Edit, Check, CheckSquare, Pin, ChevronUp, ChevronDown, Globe, PlusCircle, LogOut, Info } from 'lucide-react-native';
+import { Play, Square, RotateCw, Edit, Check, CheckSquare, Pin, ChevronUp, ChevronDown, Globe, PlusCircle, LogOut, Info, X, Calendar, Type, Activity, GripVertical, Eye, EyeOff } from 'lucide-react-native';
+
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { apiClient, logout } from '../api/client';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAlert } from '../contexts/AlertContext';
+import { SPACING, HEADER, CARD, FADE, CONTENT, isTabletWidth } from '../constants/layout';
 
 const getContainerColor = (name) => {
   let hash = 0;
@@ -20,6 +23,7 @@ export default function ContainersScreen() {
   const { colors, typography } = useTheme();
   const styles = createStyles(colors, typography);
   const { showAlert } = useAlert();
+  const insets = useSafeAreaInsets();
 
   const [containers, setContainers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,27 +31,12 @@ export default function ContainersScreen() {
   const [actionLoading, setActionLoading] = useState(null);
   const [tasks, setTasks] = useState({});
   const prevTasksCount = useRef(0);
+  const touchStart = useRef({ x: 0, y: 0, ignore: false });
   const navigation = useNavigation();
   const { width } = useWindowDimensions();
-  const isTablet = width >= 768;
+  const isTablet = isTabletWidth(width);
   const numColumns = isTablet ? 2 : 1;
 
-  useEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <TouchableOpacity onPress={() => setEditMode(prev => !prev)} style={{ marginRight: 16 }}>
-            {editMode ? <Check color={colors.success} size={24} /> : <Edit color={colors.text} size={24} />}
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate('ContainerCreate')} style={{ marginRight: 16 }}>
-            <PlusCircle color={colors.text} size={24} />
-          </TouchableOpacity>
-        </View>
-      ),
-    });
-  }, [navigation, editMode, colors]);
-
-  // Preferences State
   const [sortMode, setSortMode] = useState('date');
   const [pinnedContainers, setPinnedContainers] = useState([]);
   const [customOrder, setCustomOrder] = useState([]);
@@ -55,6 +44,47 @@ export default function ContainersScreen() {
   const [editMode, setEditMode] = useState(false);
   const [prefsLoaded, setPrefsLoaded] = useState(false);
   const [containerOverrides, setContainerOverrides] = useState({});
+  const [originalPrefs, setOriginalPrefs] = useState(null);
+
+  const startEditMode = useCallback(() => {
+    setOriginalPrefs({ sortMode, pinnedContainers, customOrder, showSystemContainers });
+    setEditMode(true);
+  }, [sortMode, pinnedContainers, customOrder, showSystemContainers]);
+
+  const cancelEditMode = useCallback(() => {
+    if (originalPrefs) {
+      setSortMode(originalPrefs.sortMode);
+      setPinnedContainers(originalPrefs.pinnedContainers);
+      setCustomOrder(originalPrefs.customOrder);
+      setShowSystemContainers(originalPrefs.showSystemContainers);
+    }
+    setEditMode(false);
+  }, [originalPrefs]);
+
+  const applyEditMode = useCallback(() => {
+    setEditMode(false);
+  }, []);
+
+  React.useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <View style={{ flexDirection: 'row', gap: HEADER.actionGap }}>
+          <TouchableOpacity 
+            style={{ width: HEADER.actionSize, height: HEADER.actionSize, borderRadius: HEADER.actionRadius, backgroundColor: 'rgba(255, 255, 255, 0.05)', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }}
+            onPress={!editMode ? () => navigation.navigate('ContainerCreate') : applyEditMode}
+          >
+            {!editMode ? <PlusCircle color={colors.text} size={22} /> : <Check color={colors.success} size={22} />}
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={{ width: HEADER.actionSize, height: HEADER.actionSize, borderRadius: HEADER.actionRadius, backgroundColor: 'rgba(255, 255, 255, 0.05)', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }}
+            onPress={!editMode ? startEditMode : cancelEditMode}
+          >
+            {!editMode ? <Edit color={colors.text} size={22} /> : <X color={colors.error} size={22} />}
+          </TouchableOpacity>
+        </View>
+      ),
+    });
+  }, [navigation, editMode, colors, startEditMode, applyEditMode, cancelEditMode]);
 
   const fetchPreferences = async () => {
     try {
@@ -72,7 +102,7 @@ export default function ContainersScreen() {
   };
 
   useEffect(() => {
-    if (!prefsLoaded) return;
+    if (!prefsLoaded || editMode) return;
     const savePrefs = async () => {
       try {
         await apiClient.post('/api/system/preferences', {
@@ -87,7 +117,7 @@ export default function ContainersScreen() {
     };
     const timeout = setTimeout(savePrefs, 500);
     return () => clearTimeout(timeout);
-  }, [sortMode, pinnedContainers, customOrder, showSystemContainers, prefsLoaded]);
+  }, [sortMode, pinnedContainers, customOrder, showSystemContainers, prefsLoaded, editMode]);
 
   const fetchContainers = async () => {
     try {
@@ -291,7 +321,22 @@ export default function ContainersScreen() {
           (editMode || isPinned) && { borderColor: isPinned ? colors.primary : colors.border, borderWidth: 1 },
           isTablet && { flex: 1 }
         ]}
+        delayPressIn={150}
+        onPressIn={(e) => {
+          touchStart.current = { x: e.nativeEvent.pageX, y: e.nativeEvent.pageY, ignore: false };
+        }}
+        onPressOut={(e) => {
+          const dx = Math.abs(e.nativeEvent.pageX - touchStart.current.x);
+          const dy = Math.abs(e.nativeEvent.pageY - touchStart.current.y);
+          if (dx > 10 || dy > 10) {
+            touchStart.current.ignore = true;
+          }
+        }}
         onPress={() => {
+          if (touchStart.current.ignore) {
+            touchStart.current.ignore = false;
+            return;
+          }
           if (isRecreating || editMode) return;
           if (isRunning && webUrl) {
             Linking.openURL(webUrl).catch(() => showAlert('Errore', 'Impossibile aprire il link'));
@@ -302,11 +347,11 @@ export default function ContainersScreen() {
         activeOpacity={(isRecreating || editMode) ? 1 : 0.7}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-          {(editMode || isPinned) && (
-            <TouchableOpacity onPress={() => togglePin(stableId)} style={{ padding: 8, marginRight: 4 }}>
+          <View style={{ position: (editMode || isPinned) ? 'relative' : 'absolute', opacity: (editMode || isPinned) ? 1 : 0, left: 0 }}>
+            <TouchableOpacity onPress={() => togglePin(stableId)} style={{ padding: 8, marginRight: 4 }} disabled={!(editMode || isPinned)}>
               <Pin size={20} color={isPinned ? colors.primary : colors.textSecondary} fill={isPinned ? colors.primary : 'none'} />
             </TouchableOpacity>
-          )}
+          </View>
 
           {(() => {
             const override = containerOverrides[stableId];
@@ -350,8 +395,8 @@ export default function ContainersScreen() {
           {(actionLoading === containerId || isRecreating) ? (
             <ActivityIndicator color={colors.primary} size="small" style={{ margin: 10 }} />
           ) : (
-            editMode ? (
-              <View style={{ flexDirection: 'row' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', minWidth: 80 }}>
+              <View style={{ flexDirection: 'row', position: editMode ? 'relative' : 'absolute', opacity: editMode ? 1 : 0, right: 0 }} pointerEvents={editMode ? 'auto' : 'none'}>
                 <TouchableOpacity style={styles.actionBtn} onPress={() => moveCustom(stableId, -1)}>
                   <ChevronUp color={colors.text} size={20} />
                 </TouchableOpacity>
@@ -359,8 +404,8 @@ export default function ContainersScreen() {
                   <ChevronDown color={colors.text} size={20} />
                 </TouchableOpacity>
               </View>
-            ) : (
-              <>
+
+              <View style={{ flexDirection: 'row', position: !editMode ? 'relative' : 'absolute', opacity: !editMode ? 1 : 0, right: 0 }} pointerEvents={!editMode ? 'auto' : 'none'}>
                 <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.navigate('ContainerDetails', { containerId, containerName: casaosName })}>
                   <Info color={colors.textSecondary} size={20} />
                 </TouchableOpacity>
@@ -373,8 +418,8 @@ export default function ContainersScreen() {
                     <Play color={colors.success} size={20} fill={colors.success} />
                   </TouchableOpacity>
                 )}
-              </>
-            )
+              </View>
+            </View>
           )}
         </View>
       </TouchableOpacity>
@@ -391,48 +436,82 @@ export default function ContainersScreen() {
 
   // Header UI with Edit options
   const renderHeader = () => {
+    const getModeIcon = (mode, color) => {
+      switch(mode) {
+        case 'date': return <Calendar color={color} size={16} />;
+        case 'alphabetical': return <Type color={color} size={16} />;
+        case 'status': return <Activity color={color} size={16} />;
+        case 'custom': return <GripVertical color={color} size={16} />;
+        default: return null;
+      }
+    };
+
     if (!editMode) return null;
+
     return (
       <View style={[styles.header, styles.editOptions]}>
-        <TouchableOpacity
-          style={styles.systemToggle}
-          onPress={() => setShowSystemContainers(!showSystemContainers)}
-        >
-          {showSystemContainers ? <CheckSquare color={colors.primary} size={20} /> : <Square color={colors.textSecondary} size={20} />}
-          <Text style={styles.systemToggleText}>Mostra container di sistema</Text>
-        </TouchableOpacity>
-
-        <View style={styles.sortSelectorContainer}>
-          <Text style={{ color: colors.textSecondary, marginBottom: 4 }}>Ordina per:</Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            {['date', 'alphabetical', 'status', 'custom'].map(mode => (
+          <Text style={[typography.h3, { color: colors.text, marginBottom: 16 }]}>Impostazioni Visualizzazione</Text>
+          
+          <View style={styles.sortSelectorContainer}>
+        <Text style={{ ...typography.subtitle, color: colors.textSecondary, marginBottom: 10 }}>Ordina per</Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'space-between' }}>
+          {['date', 'alphabetical', 'status', 'custom'].map(mode => {
+            const isActive = sortMode === mode;
+            const pillColor = isActive ? colors.text : colors.textSecondary;
+            const bgColor = isActive ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)';
+            const borderColor = isActive ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 255, 255, 0.1)';
+            
+            return (
               <TouchableOpacity
                 key={mode}
-                style={[styles.sortPill, sortMode === mode && styles.sortPillActive]}
+                style={[styles.sortPill, { backgroundColor: bgColor, borderColor, width: '48%' }]}
                 onPress={() => setSortMode(mode)}
               >
-                <Text style={[styles.sortPillText, sortMode === mode && styles.sortPillTextActive]}>
-                  {mode === 'date' ? 'Data' : mode === 'alphabetical' ? 'Alfabetico' : mode === 'status' ? 'Stato' : 'Custom'}
+                {getModeIcon(mode, pillColor)}
+                <Text style={[styles.sortPillText, { color: pillColor, fontFamily: isActive ? 'Inter_600SemiBold' : 'Inter_400Regular' }]} numberOfLines={1}>
+                  {mode === 'date' ? 'Data Creazione' : mode === 'alphabetical' ? 'Alfabetico' : mode === 'status' ? 'Stato' : 'Custom'}
                 </Text>
               </TouchableOpacity>
-            ))}
-          </View>
+            )
+          })}
         </View>
       </View>
-    );
-  };
+
+      <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.1)', marginVertical: 20 }} />
+
+      <TouchableOpacity
+        style={[styles.systemToggle, { backgroundColor: showSystemContainers ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.03)' }]}
+        onPress={() => setShowSystemContainers(!showSystemContainers)}
+        activeOpacity={0.8}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          {showSystemContainers ? <Eye color={colors.text} size={20} /> : <EyeOff color={colors.textSecondary} size={20} />}
+          <Text style={[styles.systemToggleText, { color: showSystemContainers ? colors.text : colors.textSecondary }]}>
+            Mostra Container di Sistema
+          </Text>
+        </View>
+        <View style={[styles.toggleSwitch, showSystemContainers && { backgroundColor: 'rgba(255, 255, 255, 0.3)', alignItems: 'flex-end' }]}>
+          <View style={styles.toggleKnob} />
+        </View>
+      </TouchableOpacity>
+    </View>
+  );
+};
 
   return (
     <View style={styles.container}>
       <FlatList
         key={numColumns}
         data={sortedContainers}
-        keyExtractor={(item) => item.Id || item.id || Math.random().toString()}
+        keyExtractor={(item) => {
+          const stableId = item.Names ? item.Names[0].replace('/', '') : item.Id;
+          return stableId || item.id || Math.random().toString();
+        }}
         renderItem={renderItem}
         numColumns={numColumns}
-        columnWrapperStyle={isTablet ? { gap: 16 } : undefined}
+        columnWrapperStyle={isTablet ? { gap: SPACING.base } : undefined}
         ListHeaderComponent={renderHeader}
-        contentContainerStyle={{ padding: 16, paddingBottom: 120 }}
+        contentContainerStyle={{ padding: SPACING.base, paddingTop: insets.top + HEADER.totalOffset, paddingBottom: CONTENT.paddingBottom }}
         extraData={containerOverrides}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
@@ -441,6 +520,7 @@ export default function ContainersScreen() {
           !loading && <Text style={styles.emptyText}>Nessun container trovato</Text>
         }
       />
+
     </View>
   );
 }
@@ -457,7 +537,7 @@ const createStyles = (colors, typography) => StyleSheet.create({
     justifyContent: 'center',
   },
   header: {
-    marginBottom: 16,
+    marginBottom: SPACING.base,
   },
   headerRow: {
     flexDirection: 'row',
@@ -474,42 +554,54 @@ const createStyles = (colors, typography) => StyleSheet.create({
   },
   editOptions: {
     backgroundColor: colors.surface,
-    padding: 16,
-    borderRadius: 12,
+    padding: 20,
+    borderRadius: 16,
     marginTop: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
   },
   systemToggle: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    justifyContent: 'space-between',
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
   },
   systemToggleText: {
     ...typography.subtitle,
-    color: colors.text,
-    marginLeft: 8,
+    marginLeft: 12,
+    fontFamily: 'Inter_500Medium',
+  },
+  toggleSwitch: {
+    width: 44,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    padding: 2,
+    justifyContent: 'center',
+  },
+  toggleKnob: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#FFF',
   },
   sortSelectorContainer: {
-
   },
   sortPill: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  sortPillActive: {
-    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-    borderColor: colors.primary,
+    gap: 8,
   },
   sortPillText: {
     ...typography.body,
-    color: colors.textSecondary,
-  },
-  sortPillTextActive: {
-    fontFamily: 'Inter_700Bold',
-    color: colors.primary,
+    fontSize: 14,
   },
   emptyText: {
     ...typography.subtitle,
@@ -519,9 +611,9 @@ const createStyles = (colors, typography) => StyleSheet.create({
   },
   card: {
     backgroundColor: colors.surface,
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
+    padding: CARD.padding,
+    borderRadius: CARD.borderRadius,
+    marginBottom: CARD.gap,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -531,6 +623,7 @@ const createStyles = (colors, typography) => StyleSheet.create({
   },
   name: {
     ...typography.h3,
+    fontFamily: 'Inter_500Medium',
     color: colors.text,
     marginBottom: 4,
   },

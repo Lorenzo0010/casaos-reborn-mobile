@@ -1,10 +1,12 @@
-import React from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Home, Server, RefreshCw } from 'lucide-react-native';
-import { Alert, View, useWindowDimensions } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { View, useWindowDimensions, TouchableOpacity, Text } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../contexts/ThemeContext';
+import { LinearGradient } from 'expo-linear-gradient';
+import { ChevronLeft, PlusCircle, Settings as SettingsIcon } from 'lucide-react-native';
+import { SPACING, HEADER, NAVBAR, getNavbarWidth } from '../constants/layout';
 
 import DashboardScreen from '../screens/DashboardScreen';
 import ContainersScreen from '../screens/ContainersScreen';
@@ -15,30 +17,109 @@ import UpdatesScreen from '../screens/UpdatesScreen';
 import SystemContainerSettingsScreen from '../screens/SystemContainerSettingsScreen';
 import AdvancedScreen from '../screens/AdvancedScreen';
 import WidgetDetailsScreen from '../screens/WidgetDetailsScreen';
-import { PlusCircle, Settings as SettingsIcon } from 'lucide-react-native';
 
-const Tab = createBottomTabNavigator();
+const Tab = createMaterialTopTabNavigator();
 const Stack = createNativeStackNavigator();
 
+/**
+ * CustomHeader — Smart pill header
+ * 
+ * Rules:
+ * - Without headerRight: pill is centered
+ * - With headerRight: pill stays centered via space-between with a left spacer,
+ *   action buttons float on the right. If the title is too long, flexShrink
+ *   lets it compress gracefully instead of overflowing.
+ */
+function CustomHeader({ options, route, back, navigation }) {
+  const { colors, typography } = useTheme();
+  const insets = useSafeAreaInsets();
+  const { width: screenWidth } = useWindowDimensions();
+  const title = options.title !== undefined ? options.title : route.name;
+  const hasRight = !!options.headerRight;
+
+  // Estimate the width of the right action area for the invisible left spacer
+  // We add SPACING.base to balance the pill's marginRight and keep it perfectly centered
+  const rightAreaWidth = hasRight
+    ? (HEADER.actionSize * 2) + HEADER.actionGap + SPACING.base
+    : 0;
+
+  return (
+    <View style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 }}>
+
+
+      {/* Header row container */}
+      <View style={{
+        marginTop: insets.top + HEADER.topGap,
+        paddingHorizontal: SPACING.base,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: hasRight ? 'space-between' : 'center',
+      }}>
+        {/* Left spacer for centering when there are right buttons */}
+        {hasRight && <View style={{ width: rightAreaWidth, opacity: 0, flexShrink: 1 }} />}
+
+        {/* Title Pill */}
+        <View style={{
+          backgroundColor: colors.surfaceElevated,
+          borderRadius: HEADER.pillRadius,
+          height: HEADER.pillHeight,
+          justifyContent: 'center',
+          paddingHorizontal: HEADER.pillPaddingH,
+          borderWidth: HEADER.borderWidth,
+          borderColor: colors.border || 'rgba(150, 150, 150, 0.2)',
+          elevation: HEADER.elevation,
+          shadowColor: colors.shadow,
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: HEADER.shadowOpacity,
+          shadowRadius: HEADER.shadowRadius,
+          flexDirection: 'row',
+          alignItems: 'center',
+          marginRight: hasRight ? SPACING.base : 0, // Garantisce sempre spazio tra pillola e bottoni a destra
+        }}>
+          {back && (
+            <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: SPACING.base, marginLeft: -SPACING.md }}>
+              <ChevronLeft color={colors.text} size={HEADER.backIconSize} />
+            </TouchableOpacity>
+          )}
+          <Text style={{ ...typography.h1, fontFamily: 'Inter_500Medium', color: colors.text, fontSize: HEADER.titleFontSize }}>
+            {title}
+          </Text>
+        </View>
+
+        {/* Action buttons (right side) */}
+        {hasRight && (
+          <View style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: HEADER.actionGap,
+            backgroundColor: colors.surfaceElevated,
+            borderRadius: HEADER.pillRadius,
+            height: HEADER.pillHeight,
+            paddingHorizontal: HEADER.actionGap,
+            justifyContent: 'center',
+            elevation: HEADER.elevation,
+            shadowColor: colors.shadow,
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: HEADER.shadowOpacity,
+            shadowRadius: HEADER.shadowRadius,
+            borderWidth: HEADER.borderWidth,
+            borderColor: colors.border || 'rgba(150, 150, 150, 0.2)',
+          }}>
+            {options.headerRight()}
+          </View>
+        )}
+      </View>
+    </View>
+  );
+}
 
 
 function ContainersStackNavigator() {
-  const { colors, typography } = useTheme();
   return (
     <Stack.Navigator
       screenOptions={{
-        headerStyle: { 
-          backgroundColor: colors.background,
-          borderBottomWidth: 0,
-          elevation: 4,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 0 },
-          shadowOpacity: 0.2,
-          shadowRadius: 4,
-        },
-        headerTintColor: colors.text,
-        headerBackTitleVisible: false,
-        headerTitleStyle: typography.h1,
+        headerTransparent: true,
+        header: (props) => <CustomHeader {...props} />,
       }}
     >
       <Stack.Screen 
@@ -68,22 +149,11 @@ function ContainersStackNavigator() {
 }
 
 function DashboardStackNavigator() {
-  const { colors, typography } = useTheme();
   return (
     <Stack.Navigator
       screenOptions={{
-        headerStyle: { 
-          backgroundColor: colors.background,
-          borderBottomWidth: 0,
-          elevation: 4,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 0 },
-          shadowOpacity: 0.2,
-          shadowRadius: 4,
-        },
-        headerTintColor: colors.text,
-        headerBackTitleVisible: false,
-        headerTitleStyle: typography.h1,
+        headerTransparent: true,
+        header: (props) => <CustomHeader {...props} />,
       }}
     >
       <Stack.Screen 
@@ -101,22 +171,11 @@ function DashboardStackNavigator() {
 }
 
 function UpdatesStackNavigator() {
-  const { colors, typography } = useTheme();
   return (
     <Stack.Navigator
       screenOptions={{
-        headerStyle: { 
-          backgroundColor: colors.background,
-          borderBottomWidth: 0,
-          elevation: 4,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 0 },
-          shadowOpacity: 0.2,
-          shadowRadius: 4,
-        },
-        headerTintColor: colors.text,
-        headerBackTitleVisible: false,
-        headerTitleStyle: typography.h1,
+        headerTransparent: true,
+        header: (props) => <CustomHeader {...props} />,
       }}
     >
       <Stack.Screen 
@@ -134,22 +193,11 @@ function UpdatesStackNavigator() {
 }
 
 function AdvancedStackNavigator() {
-  const { colors, typography } = useTheme();
   return (
     <Stack.Navigator
       screenOptions={{
-        headerStyle: { 
-          backgroundColor: colors.background,
-          borderBottomWidth: 0,
-          elevation: 4,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 0 },
-          shadowOpacity: 0.2,
-          shadowRadius: 4,
-        },
-        headerTintColor: colors.text,
-        headerBackTitleVisible: false,
-        headerTitleStyle: typography.h1,
+        headerTransparent: true,
+        header: (props) => <CustomHeader {...props} />,
       }}
     >
       <Stack.Screen 
@@ -161,91 +209,112 @@ function AdvancedStackNavigator() {
   );
 }
 
+function CustomTabBar({ state, descriptors, navigation, colors, BAR_WIDTH, leftPosition, bottomInset }) {
+  return (
+    <View style={{
+      flexDirection: 'row',
+      backgroundColor: colors.surfaceElevated,
+      position: 'absolute',
+      bottom: NAVBAR.bottomGap + bottomInset,
+      left: leftPosition,
+      width: BAR_WIDTH,
+      borderRadius: NAVBAR.radius,
+      height: NAVBAR.height,
+      elevation: HEADER.elevation,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: HEADER.shadowOpacity,
+      shadowRadius: HEADER.shadowRadius,
+      borderWidth: HEADER.borderWidth,
+      borderColor: colors.border || 'rgba(150, 150, 150, 0.2)',
+      justifyContent: 'space-evenly',
+      alignItems: 'center',
+    }}>
+      {state.routes.map((route, index) => {
+        const { options } = descriptors[route.key];
+        const isFocused = state.index === index;
+
+        const onPress = () => {
+          const event = navigation.emit({
+            type: 'tabPress',
+            target: route.key,
+            canPreventDefault: true,
+          });
+
+          if (!isFocused && !event.defaultPrevented) {
+            navigation.navigate(route.name);
+          }
+        };
+
+        const color = isFocused ? colors.primary : colors.textSecondary;
+        let IconComponent = null;
+        if (route.name === 'Dashboard') IconComponent = Home;
+        else if (route.name === 'ContainersTab') IconComponent = Server;
+        else if (route.name === 'Updates') IconComponent = RefreshCw;
+        else if (route.name === 'Advanced') IconComponent = SettingsIcon;
+
+        return (
+          <TouchableOpacity
+            key={route.key}
+            accessibilityRole="button"
+            accessibilityState={isFocused ? { selected: true } : {}}
+            accessibilityLabel={options.tabBarAccessibilityLabel}
+            onPress={onPress}
+            style={{ flex: 1, alignItems: 'center', justifyContent: 'center', height: '100%' }}
+          >
+            {IconComponent && <IconComponent color={color} size={24} />}
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+}
+
 export default function AppNavigator() {
-  const { colors, typography } = useTheme();
+  const { colors } = useTheme();
   const { width } = useWindowDimensions();
-  // Un touch target standard è circa 48-64px. Con 4 icone, 260px equivale a 65px ad icona.
-  // È abbastanza compatto da non sprecare spazio ma facile da cliccare!
-  const BAR_WIDTH = Math.min(width - 48, 260);
+  const insets = useSafeAreaInsets();
+  const BAR_WIDTH = getNavbarWidth(width);
   const leftPosition = (width - BAR_WIDTH) / 2;
 
   return (
+    <>
     <Tab.Navigator
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size }) => {
-          if (route.name === 'Dashboard') {
-            return <Home color={color} size={size} />;
-          } else if (route.name === 'ContainersTab') {
-            return <Server color={color} size={size} />;
-          } else if (route.name === 'Updates') {
-            return <RefreshCw color={color} size={size} />;
-          } else if (route.name === 'Advanced') {
-            return <SettingsIcon color={color} size={size} />;
-          }
-        },
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textSecondary,
-        tabBarShowLabel: false,
-        tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopWidth: 0,
-          position: 'absolute',
-          bottom: 16,
-          left: leftPosition,
-          width: BAR_WIDTH,
-          borderRadius: 32,
-          height: 64,
-          paddingBottom: 0,
-          paddingTop: 0,
-          elevation: 8,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 0 },
-          shadowOpacity: 0.3,
-          shadowRadius: 8,
-        },
-        tabBarLabelStyle: {
-          marginTop: 4,
-          fontSize: 11,
-          fontWeight: '600',
-        },
-        tabBarItemStyle: {
-          justifyContent: 'center',
-          alignItems: 'center',
-          padding: 4,
-        },
-        headerStyle: {
-          backgroundColor: colors.background,
-          borderBottomWidth: 0,
-          elevation: 4,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 0 },
-          shadowOpacity: 0.2,
-          shadowRadius: 4,
-        },
-        headerTintColor: colors.text,
-        headerTitleStyle: typography.h1,
-      })}
+      tabBarPosition="bottom"
+      tabBar={(props) => <CustomTabBar {...props} colors={colors} BAR_WIDTH={BAR_WIDTH} leftPosition={leftPosition} bottomInset={insets.bottom} />}
+      screenOptions={{
+        swipeEnabled: true,
+      }}
     >
       <Tab.Screen 
         name="Dashboard" 
         component={DashboardStackNavigator} 
-        options={{ headerShown: false }} 
       />
       <Tab.Screen 
         name="ContainersTab" 
         component={ContainersStackNavigator}
-        options={{ headerShown: false, title: 'Containers' }}
       />
       <Tab.Screen 
         name="Updates" 
         component={UpdatesStackNavigator} 
-        options={{ headerShown: false, title: 'Updates' }} 
       />
       <Tab.Screen 
         name="Advanced" 
         component={AdvancedStackNavigator} 
-        options={{ headerShown: false, title: 'Avanzate' }} 
       />
     </Tab.Navigator>
+    {/* Ombra della Status Bar di sistema (top) */}
+    <LinearGradient
+      colors={['rgba(0,0,0,0.5)', 'transparent']}
+      style={{ position: 'absolute', top: 0, left: 0, right: 0, height: insets.top + 20 }}
+      pointerEvents="none"
+    />
+    {/* Ombra della Navigation Bar di sistema (bottom) */}
+    <LinearGradient
+      colors={['transparent', 'rgba(0,0,0,0.7)']}
+      style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: insets.bottom + 20 }}
+      pointerEvents="none"
+    />
+    </>
   );
 }

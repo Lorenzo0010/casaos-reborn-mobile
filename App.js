@@ -30,10 +30,11 @@ function MainNavigation() {
   
   useEffect(() => {
     if (Platform.OS === 'android') {
-      NavigationBar.setBackgroundColorAsync(colors.background).catch(() => {});
+      NavigationBar.setPositionAsync('absolute').catch(() => {});
+      NavigationBar.setBackgroundColorAsync('transparent').catch(() => {});
       NavigationBar.setButtonStyleAsync(isDark ? 'light' : 'dark').catch(() => {});
     }
-  }, [colors.background, isDark]);
+  }, [isDark]);
   
   const customDarkTheme = {
     ...DarkTheme,
@@ -139,13 +140,15 @@ function MainNavigation() {
 
   return (
     <>
-      <NavigationContainer theme={customDarkTheme}>
-        <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={colors.background} />
-        <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
-          <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen name="MainApp" component={AppNavigator} />
-        </Stack.Navigator>
-      </NavigationContainer>
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
+        <NavigationContainer theme={customDarkTheme}>
+          <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={typeof colors.background === 'object' ? 'transparent' : colors.background} />
+          <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="MainApp" component={AppNavigator} />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </View>
 
       <Modal visible={isUpdating} transparent={true} animationType="fade">
         <View style={styles.modalBackground}>
