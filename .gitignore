@@ -16,3 +16,5 @@ veda
 .DS_Store
 
 .env
+
+.agents/
