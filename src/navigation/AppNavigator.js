@@ -112,7 +112,7 @@ function UpdatesStackNavigator() {
       <Stack.Screen 
         name="UpdatesMain" 
         component={UpdatesScreen} 
-        options={{ title: 'Aggiornamenti' }} 
+        options={{ title: 'Updates' }} 
       />
     </Stack.Navigator>
   );
@@ -218,7 +218,7 @@ export default function AppNavigator() {
       <Tab.Screen 
         name="Updates" 
         component={UpdatesStackNavigator} 
-        options={{ headerShown: false, title: 'Aggiornamenti' }} 
+        options={{ headerShown: false, title: 'Updates' }} 
       />
       <Tab.Screen 
         name="Advanced" 

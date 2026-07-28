@@ -16,6 +16,8 @@ export default function UpdatesScreen() {
   const styles = createStyles(colors, typography);
 
   const [updates, setUpdates] = useState([]);
+  const [appUpdate, setAppUpdate] = useState(null);
+  const manualCheckContainers = useRef(false);
   const [isChecking, setIsChecking] = useState(false);
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
@@ -106,9 +108,17 @@ export default function UpdatesScreen() {
   const fetchUpdates = async () => {
     try {
       const res = await apiClient.get('/api/docker/updates');
-      setUpdates(res.data.updates || []);
+      const fetchedUpdates = res.data.updates || [];
+      setUpdates(fetchedUpdates);
       if (res.data.status?.status === 'checking') {
         setIsChecking(true);
+      } else {
+        if (manualCheckContainers.current) {
+          if (fetchedUpdates.length === 0) {
+            showAlert('Nessun aggiornamento', 'Tutti i container sono aggiornati.');
+          }
+          manualCheckContainers.current = false;
+        }
       }
     } catch (err) {
       console.warn("Failed to fetch updates", err);
@@ -116,9 +126,13 @@ export default function UpdatesScreen() {
   };
 
   const checkUpdates = async () => {
+    setIsChecking(true);
+    manualCheckContainers.current = true;
     try {
       await apiClient.post('/api/docker/check-updates');
     } catch (err) {
+      setIsChecking(false);
+      manualCheckContainers.current = false;
       showAlert('Errore', err.response?.data?.error || err.message);
     }
   };
@@ -223,6 +237,7 @@ export default function UpdatesScreen() {
       });
       if (!res.data || res.data.length === 0) {
         showAlert('Nessun aggiornamento', 'Non ci sono release dell\'app su GitHub.');
+        setAppUpdate(null);
         return;
       }
       
@@ -233,19 +248,20 @@ export default function UpdatesScreen() {
       if (latestTag && latestTag !== storedLatest) {
         const apkAsset = latestRelease.assets.find(a => a.name.endsWith('.apk'));
         if (apkAsset) {
-          showAlert(
-            'Aggiornamento App',
-            `Nuova versione ${latestTag} disponibile. Vuoi scaricarla e installarla?`,
-            [
-              { text: 'Annulla', style: 'cancel' },
-              { text: 'Installa', onPress: () => downloadAndInstallApp(apkAsset.browser_download_url, latestTag) }
-            ]
-          );
+          setAppUpdate({
+            id: 'app-update',
+            name: 'CasaOS Mobile App',
+            image: `Versione ${latestTag}`,
+            isAppUpdate: true,
+            url: apkAsset.browser_download_url,
+            tag: latestTag
+          });
         } else {
           showAlert('Nessun APK', 'La release trovata non contiene un file APK valido.');
         }
       } else {
-        showAlert('App Aggiornata', 'Hai già l\'ultima versione installata.');
+        showAlert('Nessun aggiornamento', 'Hai già l\'ultima versione installata.');
+        setAppUpdate(null);
       }
     } catch (e) {
       showAlert('Errore', 'Impossibile controllare aggiornamenti app: ' + e.message);
@@ -255,6 +271,23 @@ export default function UpdatesScreen() {
   };
 
   const renderItem = ({ item }) => {
+    if (item.isAppUpdate) {
+      return (
+        <View style={[styles.card, isTablet && { flex: 1 }]}>
+          <View style={styles.cardInfo}>
+            <Text style={styles.containerName}>{item.name}</Text>
+            <Text style={styles.imageName}>{item.image}</Text>
+          </View>
+          <TouchableOpacity 
+            style={styles.updateButton} 
+            onPress={() => downloadAndInstallApp(item.url, item.tag)}
+          >
+            <DownloadCloud color="#fff" size={20} />
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
     const task = tasks[item.id];
     const isRecreating = !!task;
     
@@ -283,6 +316,8 @@ export default function UpdatesScreen() {
       </View>
     );
   };
+
+  const listData = appUpdate ? [appUpdate, ...updates] : updates;
 
   return (
     <View style={styles.container}>
@@ -342,15 +377,15 @@ export default function UpdatesScreen() {
         </View>
       )}
 
-      {!isChecking && updates.length === 0 ? (
+      {!isChecking && listData.length === 0 ? (
         <View style={styles.emptyContainer}>
           <CheckCircle color={colors.success} size={48} style={{ marginBottom: 16 }} />
-          <Text style={styles.emptyText}>Tutti i container sono aggiornati</Text>
+          <Text style={styles.emptyText}>Nessun aggiornamento disponibile</Text>
         </View>
       ) : (
         <FlatList
           key={numColumns}
-          data={updates}
+          data={listData}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
           numColumns={numColumns}
