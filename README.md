@@ -101,3 +101,15 @@ eas build -p android --profile preview
 - **Icone:** Lucide React Native
 - **Storage:** AsyncStorage
 - **Chiamate API:** Axios
+
+---
+
+## ⚖️ Licenza ed Esenzione di Responsabilità
+
+Questo progetto è open-source e distribuito sotto la **Licenza MIT**.
+
+> [!WARNING]
+> **ESCLUSIONE DI RESPONSABILITÀ (DISCLAIMER)**
+> Questo software è fornito "COSÌ COM'È" (AS IS), senza alcuna garanzia esplicita o implicita. L'autore (Lorenzo Cassano) declina ogni responsabilità per eventuali perdite di dati, malfunzionamenti del server, violazioni di sicurezza o qualsiasi altro danno derivante dall'utilizzo di questa applicazione. Gestire i container in remoto comporta rischi intrinseci. **Utilizza l'applicazione a tuo rischio e pericolo.** Assicurati sempre di avere backup aggiornati dei tuoi dati critici.
+
+Per maggiori dettagli, consulta il file [LICENSE](./LICENSE) incluso nel repository.
