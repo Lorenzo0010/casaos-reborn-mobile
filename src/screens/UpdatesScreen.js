@@ -145,8 +145,13 @@ export default function UpdatesScreen({ navigation }) {
         const ip = await AsyncStorage.getItem('server_ip');
         if (!ip) throw new Error("IP Server non trovato");
         
+        let formattedIp = ip;
+        if (!formattedIp.startsWith('http://') && !formattedIp.startsWith('https://')) {
+          formattedIp = 'http://' + formattedIp;
+        }
+        
         // Costruzione sicura dell'URL
-        const parsedUrl = new URL(ip);
+        const parsedUrl = new URL(formattedIp);
         parsedUrl.port = '1112';
         const updaterUrl = `${parsedUrl.protocol}//${parsedUrl.hostname}:1112/api/update`;
         
