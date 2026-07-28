@@ -1,7 +1,13 @@
 # 📱 CasaOS Reborn Mobile
 
-Benvenuto nel repository ufficiale del client mobile di **CasaOS Reborn**! 
-Questa applicazione React Native (costruita con Expo) ti permette di gestire, monitorare e aggiornare i tuoi container e le risorse del tuo server CasaOS direttamente dal palmo della tua mano, con un'interfaccia moderna e coerente.
+Welcome to the official mobile client repository for **CasaOS Reborn**! 
+This React Native application (built with Expo) allows you to manage, monitor, and update your containers and CasaOS server resources directly from the palm of your hand, with a modern and cohesive interface.
+
+---
+
+## 💖 Support the Project
+
+This app is entirely open-source and developed in my free time to bring the power of your homelab to your smartphone. If you appreciate the effort and want to support the ongoing development, updates, and bug fixes, please consider making a donation!
 
 <div align="center">
   <a href="https://paypal.me/LorenzoCassano77" target="_blank">
@@ -9,120 +15,102 @@ Questa applicazione React Native (costruita con Expo) ti permette di gestire, mo
   </a>
 </div>
 
----
-
-## ✨ Funzionalità Principali
-
-- **📊 Dashboard Interattiva:** Monitora l'utilizzo di CPU, RAM, Disco e Traffico di Rete in tempo reale.
-- **🐳 Gestione Container:** Visualizza lo stato di tutti i tuoi container Docker, accendili, spegnili, o visualizzane i log.
-- **🔄 Aggiornamenti:** Controlla e aggiorna rapidamente le immagini Docker dei tuoi container con un tap.
-- **⚙️ Impostazioni Avanzate:** Personalizza i temi dell'app, configura bot Telegram per le notifiche e monitora il funzionamento del server.
-- **🎨 Design Coerente e Moderno:** Un'interfaccia curata nei dettagli, con temi chiari/scuri e grandezze tipografiche standardizzate per la massima leggibilità.
+*Your donations keep motivation high and the project alive. Thank you!*
 
 ---
 
-## 📦 Installazione e Dipendenze (Utenti Finali)
+## 📸 Screenshots
 
-**Dipendenze:**
-Per *utilizzare* l'app finale sul tuo smartphone, **non è richiesta alcuna dipendenza esterna** (né Node.js, né Expo, né nient'altro sul PC). Ti basta uno smartphone Android. 
+> **Note:** Replace these placeholders with your actual screenshots. 
+> *Showcase the beautiful mobile app screens here!*
 
-**Metodo di Installazione:**
-1. Vai nella sezione **Releases** di questo repository GitHub.
-2. Scarica l'ultimo file `.apk` disponibile (es. `app-release.apk`).
-3. Apri il file scaricato sul tuo smartphone Android. Potrebbe esserti richiesto di abilitare l'installazione da "Origini sconosciute" nelle impostazioni di sicurezza del telefono.
-4. Clicca su **Installa** e avvia l'app!
-
----
-
-## 🚀 Guida Rapida: Sviluppo e Test (Senza compilare l'APK)
-
-Grazie a **Expo**, non hai bisogno di compilare un APK per provare l'app. Puoi farla girare direttamente sul tuo telefono fisico in pochi secondi!
-
-### Prerequisiti
-1. Scarica l'app gratuita **Expo Go** sul tuo smartphone (disponibile su [Google Play Store](https://play.google.com/store/apps/details?id=host.exp.exponent) e [Apple App Store](https://apps.apple.com/app/expo-go/id982107779)).
-2. Assicurati di avere Node.js installato sul tuo computer.
-
-### Avvio Veloce
-1. Apri il terminale in questa cartella (`casaos-reborn-mobile`).
-2. Installa le dipendenze (solo la prima volta):
-   ```bash
-   npm install
-   ```
-3. Avvia il server di sviluppo:
-   ```bash
-   npm start
-   ```
-4. Sul tuo computer apparirà un **Codice QR gigante**.
-5. Apri **Expo Go** sul tuo telefono Android (o usa la Fotocamera su iOS) e scansiona il codice QR.
-L'app si aprirà istantaneamente! Ogni modifica che farai al codice si rifletterà sul tuo telefono in tempo reale.
+<div align="center">
+  <img src="https://via.placeholder.com/300x600.png?text=Mobile+Dashboard" alt="Dashboard Screenshot" width="250" />
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="https://via.placeholder.com/300x600.png?text=Containers+List" alt="Containers Screenshot" width="250" />
+</div>
 
 ---
 
-## 🛠 Risoluzione Problemi Comuni con Expo Go
+## ✨ How it works (Features)
 
-### Errore: "Something went wrong" (o Metro fermo su 127.0.0.1)
-Se vedi nel terminale `exp://127.0.0.1:8081`, significa che il firewall di Windows sta bloccando la rete e il telefono non riesce a comunicare col PC.
-**Soluzione:**
-Mentre il terminale è aperto, premi la lettera **`t`** sulla tastiera del computer. Questo attiverà la modalità **Tunnel**, generando un nuovo QR code che bypassa completamente i blocchi del Wi-Fi locale.
-
-### Errore: "Failed to download remote update"
-La connessione Tunnel potrebbe essersi bloccata. 
-**Soluzione:** 
-1. Chiudi completamente Expo Go dal telefono.
-2. Nel terminale premi `Ctrl + C` per fermare il server.
-3. Riavvia pulendo la cache con: `npm start -- -c`.
-
-### L'Alternativa Infallibile: Connessione via Cavo USB
-Se il Wi-Fi fa troppi capricci:
-1. Collega il telefono al PC via USB.
-2. Attiva il **Debug USB** nelle Opzioni Sviluppatore del telefono.
-3. Nel terminale dove c'è il QR code, premi la lettera **`a`** ("Open on Android").
-L'app si aprirà via cavo in modo fulmineo!
+- **📊 Interactive Dashboard:** Monitor CPU, RAM, Disk, and Network traffic in real-time.
+- **🐳 Container Management:** View the status of all your Docker containers, start/stop them, or check their logs.
+- **🔄 One-Tap Updates:** Quickly check and update the Docker images of your containers.
+- **⚙️ Advanced Settings:** Customize app themes, configure Telegram bots for notifications, and monitor your server's health.
+- **🎨 Cohesive Modern Design:** A beautifully crafted interface with automatic Light/Dark themes and standardized typography for maximum readability.
 
 ---
 
-## 🔐 Login al Server Backend
+## 📦 Installation & Dependencies
 
-Quando avvii l'app per la prima volta, ti verrà chiesto l'IP del tuo server backend (`casaos-reborn`) e le credenziali.
-Di default, le credenziali del server di backend (impostate nel file `server.js` del backend) sono:
+### For End Users (No external dependencies)
 
+**Dependencies:**
+To *use* the final app on your smartphone, **no external dependencies are required** (you don't need Node.js, Expo, or anything on your PC). All you need is an Android smartphone.
+
+**Installation Method:**
+1. Navigate to the **[Releases](https://github.com/Lorenzo0010/casaos-reborn-mobile/releases)** section of this GitHub repository.
+2. Download the latest available `.apk` file (e.g., `app-release.apk`).
+3. Open the downloaded file on your Android smartphone. You may be asked to enable installation from "Unknown sources" in your phone's security settings.
+4. Click **Install** and launch the app!
+
+### 🔗 Backend Server Login
+When you start the app for the first time, you will be prompted for your backend server IP (`casaos-reborn`) and credentials. 
+Default credentials (set in the backend's `docker-compose.yml`) are:
 - **Username:** `admin`
 - **Password:** `casaos`
 
-*(Assicurati di inserire l'IP completo e la porta, ad esempio `192.168.1.50:3000`)*.
+*(Ensure you enter the full IP and port, e.g., `192.168.1.50:1111`)*
 
 ---
 
-## 📦 Compilare l'APK Definitivo
+## 🛠 For Developers
 
-Quando sarai pronto a installare l'app in via definitiva senza usare Expo Go, potrai compilare l'APK ufficiale usando **EAS Build** (il servizio cloud di Expo) o in locale.
+**Tech Stack:**
+- **Framework:** React Native & Expo (SDK 51)
+- **Navigation:** React Navigation (Stack & Bottom Tabs)
+- **Icons:** Lucide React Native
+- **Storage:** AsyncStorage
+- **API Calls:** Axios
 
-**Per costruire un APK per Android nel cloud:**
+### 🚀 Quick Start: Development & Testing
+Thanks to **Expo**, you don't need to build an APK to test the app. You can run it directly on your physical phone in seconds!
+
+1. Download the free **Expo Go** app on your smartphone ([Google Play Store](https://play.google.com/store/apps/details?id=host.exp.exponent) or [Apple App Store](https://apps.apple.com/app/expo-go/id982107779)).
+2. Make sure you have Node.js installed on your PC.
+3. Open a terminal in this directory (`casaos-reborn-mobile`).
+4. Install dependencies:
+   ```bash
+   npm install
+   ```
+5. Start the development server:
+   ```bash
+   npm start
+   ```
+6. A giant **QR Code** will appear in your terminal. Scan it using **Expo Go** (Android) or the Camera app (iOS). The app will open instantly!
+
+### 🔧 Troubleshooting Expo Go
+- **"Something went wrong" (Metro stuck on 127.0.0.1):** Your Windows firewall is likely blocking the connection. While the terminal is running, press **`t`** to activate **Tunnel mode**. This bypasses local Wi-Fi blocks.
+- **"Failed to download remote update":** The Tunnel connection might be stuck. Close Expo Go on your phone, press `Ctrl + C` in the terminal, and restart with `npm start -- -c`.
+- **The bulletproof alternative (USB Cable):** Enable USB Debugging on your phone, connect it to the PC, and press **`a`** in the terminal to open the app via USB.
+
+### 📦 Building the Final APK
+When you are ready to build the official APK using **EAS Build** (Expo's cloud service):
 ```bash
 npm install -g eas-cli
 eas login
 eas build -p android --profile preview
 ```
-(Assicurati di aver configurato un account Expo gratuito).
 
 ---
 
-## 💻 Stack Tecnologico
+## ⚖️ License & Disclaimer
 
-- **Framework:** React Native & Expo (SDK 51)
-- **Navigazione:** React Navigation (Stack & Bottom Tabs)
-- **Icone:** Lucide React Native
-- **Storage:** AsyncStorage
-- **Chiamate API:** Axios
-
----
-
-## ⚖️ Licenza ed Esenzione di Responsabilità
-
-Questo progetto è open-source e distribuito sotto la **Licenza MIT**.
+This project is open-source and distributed under the **MIT License**.
 
 > [!WARNING]
-> **ESCLUSIONE DI RESPONSABILITÀ (DISCLAIMER)**
-> Questo software è fornito "COSÌ COM'È" (AS IS), senza alcuna garanzia esplicita o implicita. L'autore (Lorenzo Cassano) declina ogni responsabilità per eventuali perdite di dati, malfunzionamenti del server, violazioni di sicurezza o qualsiasi altro danno derivante dall'utilizzo di questa applicazione. Gestire i container in remoto comporta rischi intrinseci. **Utilizza l'applicazione a tuo rischio e pericolo.** Assicurati sempre di avere backup aggiornati dei tuoi dati critici.
+> **DISCLAIMER OF LIABILITY**
+> This software is provided "AS IS", without warranty of any kind, express or implied. The author (Lorenzo Cassano) assumes no responsibility for any data loss, server malfunctions, security breaches, or any other damages arising from the use of this application. Managing containers remotely carries inherent risks. **Use the application at your own risk.** Always ensure you have updated backups of your critical data.
 
-Per maggiori dettagli, consulta il file [LICENSE](./LICENSE) incluso nel repository.
+For more details, consult the [LICENSE](./LICENSE) file included in the repository.
