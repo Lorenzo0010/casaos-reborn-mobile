@@ -4,11 +4,13 @@ import { Plus, Trash2, Settings, Save } from 'lucide-react-native';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAlert } from '../contexts/AlertContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { HEADER, SPACING } from '../constants/layout';
 export default function SystemContainerSettingsScreen({ navigation }) {
   const { colors, typography } = useTheme();
   const styles = createStyles(colors, typography);
   const { showAlert } = useAlert();
+  const insets = useSafeAreaInsets();
 
   const [ports, setPorts] = useState([]);
   const [envs, setEnvs] = useState([]);
@@ -193,7 +195,7 @@ export default function SystemContainerSettingsScreen({ navigation }) {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ padding: 16, paddingBottom: 120 }}>
+    <ScrollView style={styles.container} contentContainerStyle={{ padding: 16, paddingTop: insets.top + HEADER.totalOffset, paddingBottom: 120 }}>
       
       <View style={[styles.headerCard, { flexDirection: 'row', alignItems: 'center' }]}>
         <View style={{ width: 64, height: 64, borderRadius: 12, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center', marginRight: 16 }}>
