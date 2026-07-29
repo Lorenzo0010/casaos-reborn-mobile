@@ -5,10 +5,16 @@ on:
     branches:
       - main
       - master
-  pull_request:
-    branches:
-      - main
-      - master
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Type of release'
+        required: true
+        default: 'Release'
+        type: choice
+        options:
+          - Release
+          - Pre-Release
 
 permissions:
   contents: write
@@ -34,8 +40,6 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-
-
       - name: Install dependencies
         run: npm ci
 
@@ -57,16 +61,33 @@ jobs:
           name: app-release
           path: android/app/build/outputs/apk/release/app-release.apk
 
-      - name: Publish APK to GitHub Releases (Pre-release)
-        if: github.event_name == 'push'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: build-${{ github.run_number }}
-          name: CasaOS Reborn Mobile Build #${{ github.run_number }}
-          body: |
-            Build automatico generato dal commit ${{ github.sha }}
-            Scarica l'APK allegato per l'installazione su Android.
-          files: android/app/build/outputs/apk/release/app-release.apk
-          prerelease: true
+      - name: Determine Release Info
+        id: release_info
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ github.event.inputs.release_type }}" == "Release" ]]; then
+            echo "TAG_NAME=Release" >> $GITHUB_OUTPUT
+            echo "RELEASE_NAME=CasaOS Reborn Mobile Stable Release" >> $GITHUB_OUTPUT
+            echo "IS_PRERELEASE=false" >> $GITHUB_OUTPUT
+          else
+            echo "TAG_NAME=Pre-Release" >> $GITHUB_OUTPUT
+            echo "RELEASE_NAME=CasaOS Reborn Mobile Pre-Release" >> $GITHUB_OUTPUT
+            echo "IS_PRERELEASE=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Publish APK to GitHub Releases
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.release_info.outputs.TAG_NAME }}"
+          TITLE="${{ steps.release_info.outputs.RELEASE_NAME }}"
+          PRERELEASE="${{ steps.release_info.outputs.IS_PRERELEASE }}"
+          
+          echo "Deleting old release and tag if they exist..."
+          gh release delete "$TAG" --cleanup-tag -y || true
+          
+          echo "Creating new tag and release..."
+          if [ "$PRERELEASE" == "true" ]; then
+            gh release create "$TAG" android/app/build/outputs/apk/release/app-release.apk --title "$TITLE" --notes "Build generata automaticamente dal commit ${{ github.sha }}" --prerelease
+          else
+            gh release create "$TAG" android/app/build/outputs/apk/release/app-release.apk --title "$TITLE" --notes "Build generata automaticamente dal commit ${{ github.sha }}"
+          fi

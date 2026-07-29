@@ -24,7 +24,7 @@ export default function SystemContainerSettingsScreen({ navigation }) {
   const fetchConfig = async () => {
     try {
       const ip = await AsyncStorage.getItem('server_ip');
-      if (!ip) throw new Error("IP Server non trovato");
+      if (!ip) throw new Error("Server IP not found");
       
       let formattedIp = ip;
       if (!formattedIp.startsWith('http://') && !formattedIp.startsWith('https://')) {
@@ -36,7 +36,7 @@ export default function SystemContainerSettingsScreen({ navigation }) {
       const configUrl = `${parsedUrl.protocol}//${parsedUrl.hostname}:1112/api/config`;
 
       const response = await fetch(configUrl);
-      if (!response.ok) throw new Error("Errore nel recupero della configurazione");
+      if (!response.ok) throw new Error("Error retrieving configuration");
       
       const details = await response.json();
       
@@ -65,7 +65,7 @@ export default function SystemContainerSettingsScreen({ navigation }) {
       setEnvs(parsedEnvs);
     } catch (e) {
       console.error(e);
-      showAlert('Errore', 'Impossibile connettersi all\'updater di sistema.');
+      showAlert('Error', 'Cannot connect to the system updater.');
       navigation.goBack();
     } finally {
       setFetching(false);
@@ -114,7 +114,7 @@ export default function SystemContainerSettingsScreen({ navigation }) {
 
     try {
       const ip = await AsyncStorage.getItem('server_ip');
-      if (!ip) throw new Error("IP Server non trovato");
+      if (!ip) throw new Error("Server IP not found");
       
       let formattedIp = ip;
       if (!formattedIp.startsWith('http://') && !formattedIp.startsWith('https://')) {
@@ -125,7 +125,7 @@ export default function SystemContainerSettingsScreen({ navigation }) {
       parsedUrl.port = '1112';
       const updaterUrl = `${parsedUrl.protocol}//${parsedUrl.hostname}:1112/api/update`;
 
-      showAlert('Aggiornamento avviato', 'Il sistema verrà riavviato per applicare le modifiche. L\'app potrebbe perdere temporaneamente la connessione.');
+      showAlert('Update started', 'The system will be restarted to apply changes. The app may temporarily lose connection.');
       
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 120000);
@@ -181,7 +181,7 @@ export default function SystemContainerSettingsScreen({ navigation }) {
         </View>
       ))}
       {items.length === 0 && (
-        <Text style={{ color: colors.textSecondary, fontStyle: 'italic' }}>Nessun elemento configurato.</Text>
+        <Text style={{ color: colors.textSecondary, fontStyle: 'italic' }}>No items configured.</Text>
       )}
     </View>
   );
@@ -202,19 +202,19 @@ export default function SystemContainerSettingsScreen({ navigation }) {
           <Settings color="white" size={32} />
         </View>
         <View style={{ flex: 1, justifyContent: 'center' }}>
-          <Text style={styles.title} numberOfLines={1}>Sistema CasaOS</Text>
+          <Text style={styles.title} numberOfLines={1}>CasaOS System</Text>
           <Text style={styles.subtitle}>casaos-reborn</Text>
         </View>
       </View>
 
-      {renderDynamicList('Porte (Riavvia UI)', ports, handleAddPort, handleRemovePort, handlePortChange, 'host', 'container', 'Host (es. 10000)', 'Container (es. 10000)')}
-      {renderDynamicList('Variabili d\'Ambiente', envs, handleAddEnv, handleRemoveEnv, handleEnvChange, 'key', 'value', 'Chiave (es. PUID)', 'Valore (es. 1000)')}
+      {renderDynamicList('Ports (Restart UI)', ports, handleAddPort, handleRemovePort, handlePortChange, 'host', 'container', 'Host (e.g. 10000)', 'Container (e.g. 10000)')}
+      {renderDynamicList('Environment Variables', envs, handleAddEnv, handleRemoveEnv, handleEnvChange, 'key', 'value', 'Key (e.g. PUID)', 'Value (e.g. 1000)')}
 
       <TouchableOpacity style={styles.createBtn} onPress={handleSave} disabled={loading}>
         {loading ? <ActivityIndicator color="#fff" /> : (
             <>
                 <Save color="#fff" size={20} style={{ marginRight: 8 }} />
-                <Text style={styles.createBtnText}>SALVA E RIAVVIA SISTEMA</Text>
+                <Text style={styles.createBtnText}>SAVE AND RESTART SYSTEM</Text>
             </>
         )}
       </TouchableOpacity>

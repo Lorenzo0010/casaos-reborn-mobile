@@ -126,7 +126,7 @@ export default function ContainersScreen() {
     } catch (e) {
       console.error(e);
       const errorMessage = e.response?.data?.error || e.message || String(e);
-      showAlert('Errore Fetch Container', `Impossibile recuperare i container. Dettaglio: ${errorMessage}`);
+      showAlert('Container Fetch Error', `Cannot retrieve containers. Details: ${errorMessage}`);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -180,7 +180,7 @@ export default function ContainersScreen() {
     } catch (e) {
       console.error('Action Error:', e.response?.data || e.message);
       const serverMsg = e.response?.data?.error || e.message;
-      showAlert('Errore', `Impossibile eseguire l'azione '${action}': ${serverMsg}`);
+      showAlert('Error', `Cannot perform action '${action}': ${serverMsg}`);
     } finally {
       setActionLoading(null);
     }
@@ -305,9 +305,9 @@ export default function ContainersScreen() {
     const stableId = item.Names ? item.Names[0].replace('/', '') : item.Id;
     const isPinned = pinnedContainers.includes(stableId);
 
-    let containerState = item.state || item.State || item.status || 'Sconosciuto';
+    let containerState = item.state || item.State || item.status || 'Unknown';
     if (isRecreating) {
-      containerState = task.status || 'Aggiornamento in corso...';
+      containerState = task.status || 'Updating...';
     }
 
     const isRunning = (containerState || '').toLowerCase().includes('running');
@@ -339,7 +339,7 @@ export default function ContainersScreen() {
           }
           if (isRecreating || editMode) return;
           if (isRunning && webUrl) {
-            Linking.openURL(webUrl).catch(() => showAlert('Errore', 'Impossibile aprire il link'));
+            Linking.openURL(webUrl).catch(() => showAlert('Error', 'Cannot open link'));
           } else {
             navigation.navigate('ContainerDetails', { containerId, containerName: casaosName });
           }
@@ -450,10 +450,10 @@ export default function ContainersScreen() {
 
     return (
       <View style={[styles.header, styles.editOptions]}>
-          <Text style={[typography.h3, { color: colors.text, marginBottom: 16 }]}>Impostazioni Visualizzazione</Text>
+          <Text style={[typography.h3, { color: colors.text, marginBottom: 16 }]}>Display Settings</Text>
           
           <View style={styles.sortSelectorContainer}>
-        <Text style={{ ...typography.subtitle, color: colors.textSecondary, marginBottom: 10 }}>Ordina per</Text>
+        <Text style={{ ...typography.subtitle, color: colors.textSecondary, marginBottom: 10 }}>Sort by</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'space-between' }}>
           {['date', 'alphabetical', 'status', 'custom'].map(mode => {
             const isActive = sortMode === mode;
@@ -469,7 +469,7 @@ export default function ContainersScreen() {
               >
                 {getModeIcon(mode, pillColor)}
                 <Text style={[styles.sortPillText, { color: pillColor, fontFamily: isActive ? 'Inter_600SemiBold' : 'Inter_400Regular' }]} numberOfLines={1}>
-                  {mode === 'date' ? 'Data Creazione' : mode === 'alphabetical' ? 'Alfabetico' : mode === 'status' ? 'Stato' : 'Custom'}
+                  {mode === 'date' ? 'Creation Date' : mode === 'alphabetical' ? 'Alphabetical' : mode === 'status' ? 'Status' : 'Custom'}
                 </Text>
               </TouchableOpacity>
             )
@@ -487,7 +487,7 @@ export default function ContainersScreen() {
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           {showSystemContainers ? <Eye color={colors.text} size={20} /> : <EyeOff color={colors.textSecondary} size={20} />}
           <Text style={[styles.systemToggleText, { color: showSystemContainers ? colors.text : colors.textSecondary }]}>
-            Mostra Container di Sistema
+            Show System Containers
           </Text>
         </View>
         <View style={[styles.toggleSwitch, showSystemContainers && { backgroundColor: 'rgba(255, 255, 255, 0.3)', alignItems: 'flex-end' }]}>
@@ -517,7 +517,7 @@ export default function ContainersScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
         }
         ListEmptyComponent={
-          !loading && <Text style={styles.emptyText}>Nessun container trovato</Text>
+          !loading && <Text style={styles.emptyText}>No containers found</Text>
         }
       />
 

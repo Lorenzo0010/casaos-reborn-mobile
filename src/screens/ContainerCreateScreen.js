@@ -55,14 +55,14 @@ export default function ContainerCreateScreen({ navigation }) {
       setYamlInput(fileContent);
       handleImportYaml(fileContent);
     } catch (err) {
-      showAlert('Errore', 'Impossibile leggere il file: ' + err.message);
+      showAlert('Error', 'Cannot read file: ' + err.message);
     }
   };
 
   const handleImportYaml = (yamlString) => {
     try {
       const parsed = yaml.load(yamlString);
-      if (!parsed || typeof parsed !== 'object') throw new Error('YAML non valido');
+      if (!parsed || typeof parsed !== 'object') throw new Error('Invalid YAML');
       
       let service = parsed;
       if (parsed.services) {
@@ -71,7 +71,7 @@ export default function ContainerCreateScreen({ navigation }) {
         if (!service.container_name) service.container_name = serviceName;
       }
 
-      if (!service.image) throw new Error('Nessuna immagine specificata nel YAML');
+      if (!service.image) throw new Error('No image specified in YAML');
 
       let imageName = service.image;
       let imageTag = 'latest';
@@ -220,9 +220,9 @@ export default function ContainerCreateScreen({ navigation }) {
       }
 
       setActiveTab('manual');
-      showAlert('Successo', 'YAML analizzato e importato correttamente.');
+      showAlert('Success', 'YAML parsed and imported successfully.');
     } catch (err) {
-      showAlert('Errore YAML', err.message);
+      showAlert('YAML Error', err.message);
     }
   };
 
@@ -236,7 +236,7 @@ export default function ContainerCreateScreen({ navigation }) {
 
   const handleCreate = async () => {
     if (!image) {
-      showAlert('Errore', 'Inserisci un nome immagine (es. nginx)');
+      showAlert('Error', 'Enter an image name (e.g. nginx)');
       return;
     }
 
@@ -294,7 +294,7 @@ export default function ContainerCreateScreen({ navigation }) {
       navigation.goBack();
     } catch (e) {
       console.error(e);
-      showAlert('Errore', 'Creazione fallita: ' + (e.response?.data?.error || e.message));
+      showAlert('Error', 'Creation failed: ' + (e.response?.data?.error || e.message));
     } finally {
       setLoading(false);
     }
@@ -350,7 +350,7 @@ export default function ContainerCreateScreen({ navigation }) {
         </View>
       ))}
       {items.length === 0 && (
-        <Text style={{ color: colors.textSecondary, fontStyle: 'italic' }}>Nessun elemento configurato.</Text>
+        <Text style={{ color: colors.textSecondary, fontStyle: 'italic' }}>No items configured.</Text>
       )}
     </View>
   );
@@ -376,7 +376,7 @@ export default function ContainerCreateScreen({ navigation }) {
       
       <View style={styles.headerCard}>
         <Server color={colors.primary} size={48} style={{ marginBottom: 16 }} />
-        <Text style={styles.title}>Nuovo Container</Text>
+        <Text style={styles.title}>New Container</Text>
       </View>
 
       <View style={styles.tabContainer}>
@@ -385,7 +385,7 @@ export default function ContainerCreateScreen({ navigation }) {
           onPress={() => setActiveTab('manual')}
         >
           <FileText size={18} color={activeTab === 'manual' ? '#fff' : colors.textSecondary} />
-          <Text style={[styles.tabText, activeTab === 'manual' && styles.tabTextActive]}>Manuale</Text>
+          <Text style={[styles.tabText, activeTab === 'manual' && styles.tabTextActive]}>Manual</Text>
         </TouchableOpacity>
         <TouchableOpacity 
           style={[styles.tabBtn, activeTab === 'yaml' && styles.tabBtnActive]} 
@@ -398,11 +398,11 @@ export default function ContainerCreateScreen({ navigation }) {
 
       {activeTab === 'yaml' ? (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Importa Compose YAML</Text>
-          <Text style={[styles.label, { marginBottom: 12, marginTop: 8 }]}>Puoi incollare il testo qui sotto oppure caricare un file dal dispositivo.</Text>
+          <Text style={styles.sectionTitle}>Import Compose YAML</Text>
+          <Text style={[styles.label, { marginBottom: 12, marginTop: 8 }]}>You can paste the text below or upload a file from your device.</Text>
           <TouchableOpacity style={styles.uploadBtn} onPress={handlePickDocument}>
             <Upload color="#fff" size={20} style={{ marginRight: 8 }} />
-            <Text style={styles.uploadBtnText}>CARICA FILE YAML</Text>
+            <Text style={styles.uploadBtnText}>UPLOAD YAML FILE</Text>
           </TouchableOpacity>
           <TextInput
             style={[styles.input, { height: 250, textAlignVertical: 'top', fontFamily: 'monospace' }]}
@@ -415,18 +415,18 @@ export default function ContainerCreateScreen({ navigation }) {
           />
           <TouchableOpacity style={styles.createBtn} onPress={() => handleImportYaml(yamlInput)}>
             <Check color="#fff" size={20} style={{ marginRight: 8 }} />
-            <Text style={styles.createBtnText}>ANALIZZA E COMPILA</Text>
+            <Text style={styles.createBtnText}>ANALYZE & COMPILE</Text>
           </TouchableOpacity>
         </View>
       ) : (
         <>
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Impostazioni Base</Text>
+            <Text style={styles.sectionTitle}>Basic Settings</Text>
             
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
               <View style={{ flex: 2 }}>
-                <Text style={styles.label}>Immagine *</Text>
-                <TextInput style={styles.input} placeholder="es. nginx" placeholderTextColor={colors.textSecondary} value={image} onChangeText={setImage} autoCapitalize="none" />
+                <Text style={styles.label}>Image *</Text>
+                <TextInput style={styles.input} placeholder="e.g. nginx" placeholderTextColor={colors.textSecondary} value={image} onChangeText={setImage} autoCapitalize="none" />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.label}>Tag</Text>
@@ -434,21 +434,21 @@ export default function ContainerCreateScreen({ navigation }) {
               </View>
             </View>
             
-            <Text style={styles.label}>Nome Container (Opzionale)</Text>
-            <TextInput style={styles.input} placeholder="es. my-nginx" placeholderTextColor={colors.textSecondary} value={name} onChangeText={setName} autoCapitalize="none" />
+            <Text style={styles.label}>Container Name (Optional)</Text>
+            <TextInput style={styles.input} placeholder="e.g. my-nginx" placeholderTextColor={colors.textSecondary} value={name} onChangeText={setName} autoCapitalize="none" />
 
-            <Text style={styles.label}>Nome Visualizzato (Dashboard)</Text>
-            <TextInput style={styles.input} placeholder={name || "es. Nginx"} placeholderTextColor={colors.textSecondary} value={displayName} onChangeText={setDisplayName} />
+            <Text style={styles.label}>Display Name (Dashboard)</Text>
+            <TextInput style={styles.input} placeholder={name || "e.g. Nginx"} placeholderTextColor={colors.textSecondary} value={displayName} onChangeText={setDisplayName} />
 
-            <Text style={styles.label}>URL Icona (Opzionale)</Text>
+            <Text style={styles.label}>Icon URL (Optional)</Text>
             <TextInput style={styles.input} placeholder="https://..." placeholderTextColor={colors.textSecondary} value={icon} onChangeText={setIcon} autoCapitalize="none" />
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Interfaccia Web (Opzionale)</Text>
+            <Text style={styles.sectionTitle}>Web Interface (Optional)</Text>
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.label}>Porta WebUI</Text>
+                <Text style={styles.label}>WebUI Port</Text>
                 <TextInput style={styles.input} placeholder="8080" placeholderTextColor={colors.textSecondary} value={webUIPort} onChangeText={setWebUIPort} keyboardType="numeric" />
               </View>
               <View style={{ flex: 1 }}>
@@ -458,30 +458,30 @@ export default function ContainerCreateScreen({ navigation }) {
                 </TouchableOpacity>
               </View>
             </View>
-            <Text style={styles.label}>Percorso (Path)</Text>
+            <Text style={styles.label}>Path</Text>
             <TextInput style={styles.input} placeholder="/" placeholderTextColor={colors.textSecondary} value={webUIPath} onChangeText={setWebUIPath} autoCapitalize="none" />
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Risorse & Privilegi</Text>
-            <Text style={[styles.label, { marginTop: 8 }]}>Limite Memoria (MB, 0=illimitato)</Text>
+            <Text style={styles.sectionTitle}>Resources & Privileges</Text>
+            <Text style={[styles.label, { marginTop: 8 }]}>Memory Limit (MB, 0=unlimited)</Text>
             <TextInput style={styles.input} placeholder="0" placeholderTextColor={colors.textSecondary} value={memory} onChangeText={setMemory} keyboardType="numeric" />
             
             {renderOptionCycler('CPU Quota', cpuQuota, setCpuQuota, [
-              { label: 'Illimitato', value: 0 },
-              { label: 'Basso (25%)', value: 1 },
-              { label: 'Medio (50%)', value: 2 },
-              { label: 'Alto (75%)', value: 3 },
+              { label: 'Unlimited', value: 0 },
+              { label: 'Low (25%)', value: 1 },
+              { label: 'Medium (50%)', value: 2 },
+              { label: 'High (75%)', value: 3 },
             ])}
             
             <View style={[styles.optionRow, { borderBottomWidth: 0, marginTop: 8, paddingVertical: 0 }]}>
-              <Text style={styles.label}>Modalità Privilegiata</Text>
+              <Text style={styles.label}>Privileged Mode</Text>
               <Switch value={privileged} onValueChange={setPrivileged} trackColor={{ true: colors.primary, false: colors.border }} />
             </View>
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Sistema & Rete</Text>
+            <Text style={styles.sectionTitle}>System & Network</Text>
             {renderOptionCycler('Network Mode', networkMode, setNetworkMode, [
               { label: 'bridge', value: 'bridge' },
               { label: 'host', value: 'host' },
@@ -495,27 +495,27 @@ export default function ContainerCreateScreen({ navigation }) {
               { label: 'No', value: 'no' },
             ])}
 
-            <Text style={[styles.label, { marginTop: 8 }]}>Hostname (Opzionale)</Text>
-            <TextInput style={styles.input} placeholder="es. my-host" placeholderTextColor={colors.textSecondary} value={hostname} onChangeText={setHostname} autoCapitalize="none" />
+            <Text style={[styles.label, { marginTop: 8 }]}>Hostname (Optional)</Text>
+            <TextInput style={styles.input} placeholder="e.g. my-host" placeholderTextColor={colors.textSecondary} value={hostname} onChangeText={setHostname} autoCapitalize="none" />
 
-            <Text style={styles.label}>PID Mode (Opzionale, es. host)</Text>
+            <Text style={styles.label}>PID Mode (Optional, e.g. host)</Text>
             <TextInput style={styles.input} placeholder="" placeholderTextColor={colors.textSecondary} value={pidMode} onChangeText={setPidMode} autoCapitalize="none" />
             
-            <Text style={styles.label}>Cap Add (separati da virgola)</Text>
-            <TextInput style={styles.input} placeholder="es. NET_ADMIN, SYS_ADMIN" placeholderTextColor={colors.textSecondary} value={capAdd} onChangeText={setCapAdd} autoCapitalize="characters" />
+            <Text style={styles.label}>Cap Add (comma separated)</Text>
+            <TextInput style={styles.input} placeholder="e.g. NET_ADMIN, SYS_ADMIN" placeholderTextColor={colors.textSecondary} value={capAdd} onChangeText={setCapAdd} autoCapitalize="characters" />
           </View>
 
-          {renderDynamicList('Porte', ports, setPorts, { host: '', container: '', protocol: 'tcp' }, 'host', 'container', 'Host (es. 8080)', 'Container (es. 80)', true)}
-          {renderDynamicList('Volumi', volumes, setVolumes, { host: '', container: '' }, 'host', 'container', 'Host (es. /dati)', 'Container (es. /app)')}
-          {renderDynamicList('Variabili d\'Ambiente', envs, setEnvs, { key: '', value: '' }, 'key', 'value', 'Chiave (es. PUID)', 'Valore (es. 1000)')}
-          {renderDynamicList('Dispositivi (Devices)', devices, setDevices, { host: '', container: '' }, 'host', 'container', 'Host (es. /dev/dri)', 'Container (es. /dev/dri)')}
-          {renderDynamicList('Comandi', commands, setCommands, { value: '' }, 'value', null, 'Comando (es. --appendonly=yes)', null, false, true)}
+          {renderDynamicList('Ports', ports, setPorts, { host: '', container: '', protocol: 'tcp' }, 'host', 'container', 'Host (e.g. 8080)', 'Container (e.g. 80)', true)}
+          {renderDynamicList('Volumes', volumes, setVolumes, { host: '', container: '' }, 'host', 'container', 'Host (e.g. /data)', 'Container (e.g. /app)')}
+          {renderDynamicList('Environment Variables', envs, setEnvs, { key: '', value: '' }, 'key', 'value', 'Key (e.g. PUID)', 'Value (e.g. 1000)')}
+          {renderDynamicList('Devices', devices, setDevices, { host: '', container: '' }, 'host', 'container', 'Host (e.g. /dev/dri)', 'Container (e.g. /dev/dri)')}
+          {renderDynamicList('Commands', commands, setCommands, { value: '' }, 'value', null, 'Command (e.g. --appendonly=yes)', null, false, true)}
 
           <TouchableOpacity style={styles.createBtn} onPress={handleCreate} disabled={loading}>
             {loading ? <ActivityIndicator color="#fff" /> : (
               <>
                 <Save color="#fff" size={20} style={{ marginRight: 8 }} />
-                <Text style={styles.createBtnText}>CREA CONTAINER</Text>
+                <Text style={styles.createBtnText}>CREATE CONTAINER</Text>
               </>
             )}
           </TouchableOpacity>

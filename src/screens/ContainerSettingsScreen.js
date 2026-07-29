@@ -177,7 +177,7 @@ export default function ContainerSettingsScreen({ route, navigation }) {
       navigation.navigate('ContainersList');
     } catch (e) {
       console.error(e);
-      showAlert('Errore', 'Aggiornamento fallito: ' + (e.response?.data?.error || e.message));
+      showAlert('Error', 'Update failed: ' + (e.response?.data?.error || e.message));
     } finally {
       setLoading(false);
     }
@@ -185,12 +185,12 @@ export default function ContainerSettingsScreen({ route, navigation }) {
 
   const handleDelete = () => {
     showAlert(
-      'Elimina Container', 
-      `Sei sicuro di voler eliminare definitivamente il container ${containerName}? Questa operazione non è reversibile.`,
+      'Delete Container', 
+      `Are you sure you want to permanently delete the container ${containerName}? This operation is not reversible.`,
       [
-        { text: 'Annulla', style: 'cancel' },
+        { text: 'Cancel', style: 'cancel' },
         { 
-          text: 'Sì, Elimina', 
+          text: 'Yes, Delete', 
           style: 'destructive',
           onPress: async () => {
             setDeleteLoading(true);
@@ -199,7 +199,7 @@ export default function ContainerSettingsScreen({ route, navigation }) {
               navigation.navigate('ContainersList');
             } catch (e) {
               console.error(e);
-              showAlert('Errore', 'Eliminazione fallita: ' + (e.response?.data?.error || e.message));
+              showAlert('Error', 'Deletion failed: ' + (e.response?.data?.error || e.message));
             } finally {
               setDeleteLoading(false);
             }
@@ -247,7 +247,7 @@ export default function ContainerSettingsScreen({ route, navigation }) {
         </View>
       ))}
       {items.length === 0 && (
-        <Text style={{ color: colors.textSecondary, fontStyle: 'italic' }}>Nessun elemento configurato.</Text>
+        <Text style={{ color: colors.textSecondary, fontStyle: 'italic' }}>No items configured.</Text>
       )}
     </View>
   );
@@ -287,22 +287,22 @@ export default function ContainerSettingsScreen({ route, navigation }) {
         )}
         <View style={{ flex: 1, justifyContent: 'center' }}>
           <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit>{displayName || stableId}</Text>
-          <Text style={styles.subtitle}>Impostazioni</Text>
+          <Text style={styles.subtitle}>Settings</Text>
         </View>
       </View>
 
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { marginBottom: 16 }]}>Generali</Text>
+        <Text style={[styles.sectionTitle, { marginBottom: 16 }]}>General</Text>
         <TextInput
           style={styles.input}
-          placeholder="Nome Visualizzato (es. AdGuard)"
+          placeholder="Display Name (e.g. AdGuard)"
           placeholderTextColor={colors.textSecondary}
           value={displayName}
           onChangeText={setDisplayName}
         />
         <TextInput
           style={styles.input}
-          placeholder="URL Icona"
+          placeholder="Icon URL"
           placeholderTextColor={colors.textSecondary}
           value={icon}
           onChangeText={setIcon}
@@ -310,19 +310,19 @@ export default function ContainerSettingsScreen({ route, navigation }) {
         />
       </View>
 
-      {renderDynamicList('Porte', ports, handleAddPort, handleRemovePort, handlePortChange, 'host', 'container', 'Host (es. 8080)', 'Container (es. 80)', true)}
-      {renderDynamicList('Volumi', volumes, handleAddVolume, handleRemoveVolume, handleVolumeChange, 'host', 'container', 'Host (es. /dati)', 'Container (es. /app)')}
-      {renderDynamicList('Variabili d\'Ambiente', envs, handleAddEnv, handleRemoveEnv, handleEnvChange, 'key', 'value', 'Chiave (es. PUID)', 'Valore (es. 1000)')}
+      {renderDynamicList('Ports', ports, handleAddPort, handleRemovePort, handlePortChange, 'host', 'container', 'Host (e.g. 8080)', 'Container (e.g. 80)', true)}
+      {renderDynamicList('Volumes', volumes, handleAddVolume, handleRemoveVolume, handleVolumeChange, 'host', 'container', 'Host (e.g. /data)', 'Container (e.g. /app)')}
+      {renderDynamicList('Environment Variables', envs, handleAddEnv, handleRemoveEnv, handleEnvChange, 'key', 'value', 'Key (e.g. PUID)', 'Value (e.g. 1000)')}
 
       <TouchableOpacity style={styles.createBtn} onPress={handleSave} disabled={loading || deleteLoading}>
-        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.createBtnText}>SALVA E RICREA</Text>}
+        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.createBtnText}>SAVE AND RECREATE</Text>}
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete} disabled={loading || deleteLoading}>
         {deleteLoading ? <ActivityIndicator color="#fff" /> : (
           <>
             <AlertTriangle color="#fff" size={20} style={{ marginRight: 8 }} />
-            <Text style={styles.deleteBtnText}>ELIMINA CONTAINER</Text>
+            <Text style={styles.deleteBtnText}>DELETE CONTAINER</Text>
           </>
         )}
       </TouchableOpacity>

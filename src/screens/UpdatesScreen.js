@@ -90,7 +90,7 @@ export default function UpdatesScreen({ navigation }) {
           setIsChecking(false);
           setCheckStatus(null);
           if (data.status === 'error') {
-            showAlert('Errore Ricerca', data.message);
+            showAlert('Search Error', data.message);
           }
           fetchUpdates();
         }
@@ -152,7 +152,7 @@ export default function UpdatesScreen({ navigation }) {
     } catch (err) {
       setIsChecking(false);
       manualCheckContainers.current = false;
-      showAlert('Errore', err.response?.data?.error || err.message);
+      showAlert('Error', err.response?.data?.error || err.message);
     }
   };
 
@@ -166,7 +166,7 @@ export default function UpdatesScreen({ navigation }) {
         await apiClient.post(`/api/docker/containers/${item.id}/update`, { image: item.image });
         // The container stays in the list; progress will be shown via fetchTasks
       } catch (err) {
-        showAlert('Errore', err.response?.data?.error || err.message);
+        showAlert('Error', err.response?.data?.error || err.message);
       } finally {
         setUpdatingContainerId(null);
       }
@@ -206,7 +206,7 @@ export default function UpdatesScreen({ navigation }) {
       });
       
     } catch (e) {
-      showAlert('Errore di Aggiornamento', e.message);
+      showAlert('Update Error', e.message);
     } finally {
       setIsAppUpdating(false);
     }
@@ -246,19 +246,19 @@ export default function UpdatesScreen({ navigation }) {
           setAppUpdate({
             id: 'app-update',
             name: 'CasaOS Mobile App',
-            image: `Versione ${latestTag}`,
+            image: `Version ${latestTag}`,
             isAppUpdate: true,
             url: apkAsset.browser_download_url,
             tag: latestTag
           });
         } else {
-          showAlert('Nessun APK', 'La release trovata non contiene un file APK valido.');
+          showAlert('No APK', 'The found release does not contain a valid APK file.');
         }
       } else {
         setAppUpdate(null);
       }
     } catch (e) {
-      showAlert('Errore', 'Impossibile controllare aggiornamenti app: ' + e.message);
+      showAlert('Error', 'Cannot check app updates: ' + e.message);
     } finally {
       setIsCheckingApp(false);
     }
@@ -292,7 +292,7 @@ export default function UpdatesScreen({ navigation }) {
           <Text style={styles.imageName}>{item.image}</Text>
           {isRecreating && (
             <Text style={[styles.imageName, { color: colors.primary, marginTop: 4, fontFamily: 'Inter_700Bold' }]}>
-              {task.status || 'Aggiornamento in corso...'}
+              {task.status || 'Updating...'}
             </Text>
           )}
         </View>
@@ -320,8 +320,8 @@ export default function UpdatesScreen({ navigation }) {
         <View style={styles.modalBackground}>
           <View style={styles.modalContent}>
             <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={styles.modalText}>Aggiornamento di sistema in corso...</Text>
-            <Text style={styles.modalSubtext}>Attendi, CasaOS Reborn si sta riavviando.</Text>
+            <Text style={styles.modalText}>System update in progress...</Text>
+            <Text style={styles.modalSubtext}>Please wait, CasaOS Reborn is restarting.</Text>
           </View>
         </View>
       </Modal>
@@ -330,8 +330,8 @@ export default function UpdatesScreen({ navigation }) {
         
         <View style={styles.card}>
           <View style={styles.cardInfo}>
-            <Text style={styles.containerName}>Sistema CasaOS</Text>
-            <Text style={styles.imageName}>Impostazioni container principale</Text>
+            <Text style={styles.containerName}>CasaOS System</Text>
+            <Text style={styles.imageName}>Main container settings</Text>
           </View>
           <TouchableOpacity 
             style={styles.updateButton} 
@@ -343,8 +343,8 @@ export default function UpdatesScreen({ navigation }) {
 
         <View style={styles.card}>
           <View style={styles.cardInfo}>
-            <Text style={styles.containerName}>Ricerca Aggiornamenti</Text>
-            <Text style={styles.imageName}>Verifica aggiornamenti per container e app</Text>
+            <Text style={styles.containerName}>Check for Updates</Text>
+            <Text style={styles.imageName}>Check updates for containers and app</Text>
           </View>
           <TouchableOpacity 
             style={[styles.updateButton, (isChecking || isCheckingApp) && styles.updateButtonDisabled]} 
@@ -365,14 +365,14 @@ export default function UpdatesScreen({ navigation }) {
 
       {isChecking && checkStatus && checkStatus.container && (
         <View style={styles.progressContainer}>
-          <Text style={styles.progressText}>Controllo: {checkStatus.container}</Text>
+          <Text style={styles.progressText}>Checking: {checkStatus.container}</Text>
         </View>
       )}
 
       {!isChecking && listData.length === 0 ? (
         <View style={styles.emptyContainer}>
           <CheckCircle color={colors.success} size={48} style={{ marginBottom: 16 }} />
-          <Text style={styles.emptyText}>Nessun aggiornamento disponibile</Text>
+          <Text style={styles.emptyText}>No updates available</Text>
         </View>
       ) : (
         <FlatList
@@ -391,7 +391,7 @@ export default function UpdatesScreen({ navigation }) {
         <View style={styles.modalBackground}>
           <View style={styles.modalContent}>
             <ActivityIndicator size="large" color="#3b82f6" />
-            <Text style={styles.modalText}>Download App in corso...</Text>
+            <Text style={styles.modalText}>Downloading App...</Text>
             <Text style={styles.modalSubtext}>{Math.round(appUpdateProgress * 100)}%</Text>
           </View>
         </View>

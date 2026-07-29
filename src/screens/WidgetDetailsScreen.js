@@ -36,7 +36,7 @@ export default function WidgetDetailsScreen({ route }) {
       setContainers(cList);
     } catch (e) {
       console.error(e);
-      setError('Impossibile recuperare i processi');
+      setError('Cannot retrieve processes');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -94,11 +94,11 @@ export default function WidgetDetailsScreen({ route }) {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Server color={colors.primary} size={20} />
-            <Text style={styles.sectionTitle}>Container (Top 10)</Text>
+            <Text style={styles.sectionTitle}>Containers (Top 10)</Text>
           </View>
           
           <View style={styles.tableHeader}>
-            <Text style={[styles.th, { flex: 3 }]}>Nome</Text>
+            <Text style={[styles.th, { flex: 3 }]}>Name</Text>
             {isCpu && <Text style={[styles.th, { flex: 1, textAlign: 'right', color: colors.primary }]}>CPU</Text>}
             {!isCpu && <Text style={[styles.th, { flex: 1.5, textAlign: 'right', color: colors.primary }]}>RAM</Text>}
           </View>
@@ -125,11 +125,11 @@ export default function WidgetDetailsScreen({ route }) {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <ProcessIcon color={colors.textSecondary} size={20} />
-          <Text style={styles.sectionTitle}>Processi di Sistema (Top 30)</Text>
+          <Text style={styles.sectionTitle}>System Processes (Top 30)</Text>
         </View>
         
         <View style={styles.tableHeader}>
-          <Text style={[styles.th, { flex: 3 }]}>Nome</Text>
+          <Text style={[styles.th, { flex: 3 }]}>Name</Text>
           {isCpu && <Text style={[styles.th, { flex: 1, textAlign: 'right', color: colors.primary }]}>CPU</Text>}
           {!isCpu && <Text style={[styles.th, { flex: 1.5, textAlign: 'right', color: colors.primary }]}>RAM</Text>}
         </View>

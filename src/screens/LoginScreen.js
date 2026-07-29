@@ -48,7 +48,7 @@ export default function LoginScreen({ navigation }) {
 
   const handleLogin = async () => {
     if (!ipAddress || !username || !password) {
-      setError('Compila tutti i campi');
+      setError('Please fill in all fields');
       return;
     }
 
@@ -66,11 +66,11 @@ export default function LoginScreen({ navigation }) {
         
         navigation.replace('MainApp'); // Will be our Tab Navigator
       } else {
-        setError('Login fallito. Nessun token restituito.');
+        setError('Login failed. No token returned.');
       }
     } catch (err) {
-      const errorMsg = err.response ? `Errore API: ${err.response.status}` : err.message;
-      setError(`Errore: ${errorMsg}`);
+      const errorMsg = err.response ? `API Error: ${err.response.status}` : err.message;
+      setError(`Error: ${errorMsg}`);
     } finally {
       setLoading(false);
     }

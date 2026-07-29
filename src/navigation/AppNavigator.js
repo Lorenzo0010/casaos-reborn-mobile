@@ -132,17 +132,17 @@ function ContainersStackNavigator() {
       <Stack.Screen 
         name="ContainerDetails" 
         component={ContainerDetailsScreen} 
-        options={{ title: 'Dettagli Container' }} 
+        options={{ title: 'Container Details' }} 
       />
       <Stack.Screen 
         name="ContainerSettings" 
         component={ContainerSettingsScreen} 
-        options={{ title: 'Impostazioni' }} 
+        options={{ title: 'Settings' }} 
       />
       <Stack.Screen 
         name="ContainerCreate" 
         component={ContainerCreateScreen} 
-        options={{ title: 'Nuovo Container' }} 
+        options={{ title: 'New Container' }} 
       />
     </Stack.Navigator>
   );
@@ -164,7 +164,7 @@ function DashboardStackNavigator() {
       <Stack.Screen 
         name="WidgetDetails" 
         component={WidgetDetailsScreen} 
-        options={({ route }) => ({ title: route.params?.title || 'Dettagli' })}
+        options={({ route }) => ({ title: route.params?.title || 'Details' })}
       />
     </Stack.Navigator>
   );
@@ -186,7 +186,7 @@ function UpdatesStackNavigator() {
       <Stack.Screen 
         name="SystemContainerSettings" 
         component={SystemContainerSettingsScreen} 
-        options={{ title: 'Sistema CasaOS' }} 
+        options={{ title: 'CasaOS System' }} 
       />
     </Stack.Navigator>
   );
@@ -203,7 +203,7 @@ function AdvancedStackNavigator() {
       <Stack.Screen 
         name="AdvancedMain" 
         component={AdvancedScreen} 
-        options={{ title: 'Avanzate' }} 
+        options={{ title: 'Advanced' }} 
       />
     </Stack.Navigator>
   );

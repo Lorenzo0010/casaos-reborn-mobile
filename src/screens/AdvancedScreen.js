@@ -38,11 +38,33 @@ export default function AdvancedScreen() {
   }, []);
 
   const toggleBetaUpdates = async (value) => {
-    setBetaUpdates(value);
-    try {
-      await AsyncStorage.setItem('beta_updates', value ? 'true' : 'false');
-    } catch (e) {
-      console.error('Failed to save beta pref', e);
+    if (value) {
+      showAlert(
+        'Warning',
+        'Pre-releases are in active development and can become very unstable. They are not recommended for production use. Do you want to enable them anyway?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Yes, Enable', 
+            style: 'destructive', 
+            onPress: async () => {
+              setBetaUpdates(true);
+              try {
+                await AsyncStorage.setItem('beta_updates', 'true');
+              } catch (e) {
+                console.error('Failed to save beta pref', e);
+              }
+            }
+          }
+        ]
+      );
+    } else {
+      setBetaUpdates(false);
+      try {
+        await AsyncStorage.setItem('beta_updates', 'false');
+      } catch (e) {
+        console.error('Failed to save beta pref', e);
+      }
     }
   };
 
@@ -66,7 +88,7 @@ export default function AdvancedScreen() {
       setLogs(res.data);
     } catch (e) {
       console.error(e);
-      showAlert('Errore', 'Impossibile caricare i log');
+      showAlert('Error', 'Cannot load logs');
     } finally {
       setLogsLoading(false);
     }
@@ -86,9 +108,9 @@ export default function AdvancedScreen() {
         mobileTheme: activeTheme,
         themeMode
       });
-      showAlert('Successo', 'Preferenze salvate correttamente');
+      showAlert('Success', 'Preferences saved successfully');
     } catch (e) {
-      showAlert('Errore', 'Impossibile salvare le preferenze');
+      showAlert('Error', 'Cannot save preferences');
     } finally {
       setSavingPrefs(false);
     }
@@ -119,14 +141,14 @@ export default function AdvancedScreen() {
   };
 
   const clearLogs = () => {
-    showAlert('Svuota Log', 'Sei sicuro di voler svuotare i log di sistema?', [
-      { text: 'Annulla', style: 'cancel' },
-      { text: 'Sì, Svuota', style: 'destructive', onPress: async () => {
+    showAlert('Clear Logs', 'Are you sure you want to clear the system logs?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Yes, Clear', style: 'destructive', onPress: async () => {
         try {
           await apiClient.delete('/api/system/logs');
           setLogs('');
         } catch(e) {
-          showAlert('Errore', 'Impossibile svuotare i log');
+          showAlert('Error', 'Cannot clear logs');
         }
       }}
     ]);
@@ -134,9 +156,9 @@ export default function AdvancedScreen() {
 
 
   const handleLogout = () => {
-    showAlert('Logout', 'Vuoi davvero disconnetterti?', [
-      { text: 'Annulla', style: 'cancel' },
-      { text: 'Sì, Esci', style: 'destructive', onPress: () => logout(navigation) },
+    showAlert('Logout', 'Do you really want to log out?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Yes, Log Out', style: 'destructive', onPress: () => logout(navigation) },
     ]);
   };
 
@@ -151,10 +173,10 @@ export default function AdvancedScreen() {
           <View style={[styles.section, isTablet && styles.tabletCard]}>
             <View style={styles.sectionHeader}>
               <Palette color={colors.text} size={24} />
-              <Text style={styles.sectionTitle}>Aspetto</Text>
+              <Text style={styles.sectionTitle}>Appearance</Text>
             </View>
 
-            <Text style={styles.label}>Modalità Tema</Text>
+            <Text style={styles.label}>Theme Mode</Text>
             <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
               {['system', 'light', 'dark'].map(mode => (
                 <TouchableOpacity 
@@ -163,13 +185,13 @@ export default function AdvancedScreen() {
                   onPress={() => handleModeChange(mode)}
                 >
                   <Text style={[styles.modeText, themeMode === mode && { color: '#fff' }]}>
-                    {mode === 'system' ? 'Auto' : mode === 'light' ? 'Chiaro' : 'Scuro'}
+                    {mode === 'system' ? 'Auto' : mode === 'light' ? 'Light' : 'Dark'}
                   </Text>
                 </TouchableOpacity>
               ))}
             </View>
             
-            <Text style={styles.label}>Tema Grafico</Text>
+            <Text style={styles.label}>Graphic Theme</Text>
             <View style={styles.colorRow}>
               {predefinedThemes.map(theme => {
                 const isMonet = theme.id === 'monet';
@@ -204,13 +226,13 @@ export default function AdvancedScreen() {
           <View style={[styles.section, isTablet && styles.tabletCard]}>
             <View style={styles.sectionHeader}>
               <Send color={colors.text} size={24} />
-              <Text style={styles.sectionTitle}>Notifiche Telegram</Text>
+              <Text style={styles.sectionTitle}>Telegram Notifications</Text>
             </View>
             
             <Text style={styles.label}>Bot Token</Text>
             <TextInput 
               style={styles.input}
-              placeholder="Inserisci il token del bot"
+              placeholder="Enter bot token"
               placeholderTextColor={colors.textSecondary}
               value={telegramToken}
               onChangeText={setTelegramToken}
@@ -220,16 +242,16 @@ export default function AdvancedScreen() {
             <Text style={styles.label}>Chat ID</Text>
             <TextInput 
               style={styles.input}
-              placeholder="Inserisci l'ID della chat"
+              placeholder="Enter chat ID"
               placeholderTextColor={colors.textSecondary}
               value={telegramChatId}
               onChangeText={setTelegramChatId}
             />
 
-            <Text style={styles.label}>Città Meteo</Text>
+            <Text style={styles.label}>Weather City</Text>
             <TextInput 
               style={styles.input}
-              placeholder="es. Roma, Milano, Napoli"
+              placeholder="e.g. Rome, Milan, Naples"
               placeholderTextColor={colors.textSecondary}
               value={weatherCity}
               onChangeText={setWeatherCity}
@@ -239,7 +261,7 @@ export default function AdvancedScreen() {
               {savingPrefs ? <ActivityIndicator color="#fff" /> : (
                 <>
                   <Save color="#fff" size={20} style={{ marginRight: 8 }} />
-                  <Text style={styles.primaryBtnText}>Salva Preferenze</Text>
+                  <Text style={styles.primaryBtnText}>Save Preferences</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -251,13 +273,13 @@ export default function AdvancedScreen() {
           <View style={[styles.section, isTablet && styles.tabletCard]}>
             <View style={styles.sectionHeader}>
               <DownloadCloud color={colors.text} size={24} />
-              <Text style={styles.sectionTitle}>Aggiornamenti App</Text>
+              <Text style={styles.sectionTitle}>App Updates</Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <View style={{ flex: 1, marginRight: 16 }}>
-                <Text style={styles.label}>Ricevi versioni Beta</Text>
+                <Text style={styles.label}>Receive Beta versions</Text>
                 <Text style={{ ...typography.caption, color: colors.textSecondary }}>
-                  Installa aggiornamenti pre-release (beta) che potrebbero contenere bug.
+                  Install pre-release updates (beta) that may contain bugs.
                 </Text>
               </View>
               <Switch
@@ -272,7 +294,7 @@ export default function AdvancedScreen() {
           {/* Log di Sistema */}
           <View style={[styles.section, isTablet && styles.tabletCard]}>
             <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Log di Sistema</Text>
+            <Text style={styles.sectionTitle}>System Logs</Text>
             <TouchableOpacity onPress={fetchLogs}>
               <RefreshCcw color={colors.primary} size={20} />
             </TouchableOpacity>
@@ -287,13 +309,13 @@ export default function AdvancedScreen() {
                   <Text key={idx} style={[styles.logText, line.includes('[ERROR]') && { color: colors.error }]}>
                     {line}
                   </Text>
-                )) : <Text style={styles.logText}>Nessun log disponibile.</Text>}
+                )) : <Text style={styles.logText}>No logs available.</Text>}
               </ScrollView>
             )}
           </View>
 
             <TouchableOpacity style={[styles.dangerBtn, { marginTop: 12 }]} onPress={clearLogs}>
-              <Text style={styles.dangerBtnText}>Svuota Log</Text>
+              <Text style={styles.dangerBtnText}>Clear Logs</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -302,7 +324,7 @@ export default function AdvancedScreen() {
         <View style={styles.section}>
           <TouchableOpacity style={[styles.dangerBtn, { marginBottom: 0, flexDirection: 'row', justifyContent: 'center' }]} onPress={handleLogout}>
             <LogOut color={colors.error} size={20} style={{ marginRight: 8 }} />
-            <Text style={styles.dangerBtnText}>Disconnetti Account</Text>
+            <Text style={styles.dangerBtnText}>Disconnect Account</Text>
           </TouchableOpacity>
         </View>
         

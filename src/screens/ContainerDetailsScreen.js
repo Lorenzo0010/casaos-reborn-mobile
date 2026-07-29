@@ -46,7 +46,7 @@ export default function ContainerDetailsScreen({ route, navigation }) {
       setDetails(res.data);
     } catch (e) {
       console.error(e);
-      showAlert('Errore', 'Impossibile recuperare i dettagli del container: ' + (e.response?.data?.error || e.message));
+      showAlert('Error', 'Cannot retrieve container details: ' + (e.response?.data?.error || e.message));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -56,7 +56,7 @@ export default function ContainerDetailsScreen({ route, navigation }) {
   useEffect(() => {
     const stableId = details?.Name?.replace(/^\//, '') || containerId;
     const override = containerOverrides[stableId];
-    const actualName = (override && override.displayName) || details?.Config?.Labels?.['casaos.reborn.name'] || containerName || 'Dettagli Container';
+    const actualName = (override && override.displayName) || details?.Config?.Labels?.['casaos.reborn.name'] || containerName || 'Container Details';
     
     navigation.setOptions({
       title: actualName
@@ -83,7 +83,7 @@ export default function ContainerDetailsScreen({ route, navigation }) {
       await fetchDetails();
     } catch (e) {
       console.error(e);
-      showAlert('Errore', `Impossibile eseguire ${action}: ` + (e.response?.data?.error || e.message));
+      showAlert('Error', `Cannot execute ${action}: ` + (e.response?.data?.error || e.message));
     } finally {
       setActionLoading(false);
     }
@@ -100,7 +100,7 @@ export default function ContainerDetailsScreen({ route, navigation }) {
   if (!details) {
     return (
       <View style={styles.center}>
-        <Text style={{ color: colors.textSecondary }}>Dettagli non trovati</Text>
+        <Text style={{ color: colors.textSecondary }}>Details not found</Text>
       </View>
     );
   }
@@ -195,9 +195,9 @@ export default function ContainerDetailsScreen({ route, navigation }) {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Info Generali</Text>
+        <Text style={styles.sectionTitle}>General Info</Text>
         <View style={styles.infoRow}>
-          <Text style={styles.label}>Immagine</Text>
+          <Text style={styles.label}>Image</Text>
           <Text style={styles.value} numberOfLines={1} ellipsizeMode="middle">{details.Config?.Image}</Text>
         </View>
         <View style={styles.infoRow}>
@@ -205,7 +205,7 @@ export default function ContainerDetailsScreen({ route, navigation }) {
           <Text style={styles.value} numberOfLines={1} ellipsizeMode="tail">{details.Id?.substring(0, 12)}</Text>
         </View>
         <View style={styles.infoRow}>
-          <Text style={styles.label}>Creato il</Text>
+          <Text style={styles.label}>Created on</Text>
           <Text style={styles.value}>{new Date(details.Created).toLocaleString()}</Text>
         </View>
       </View>
@@ -228,7 +228,7 @@ export default function ContainerDetailsScreen({ route, navigation }) {
 
             <TouchableOpacity style={styles.actionBtn} onPress={() => handleAction('restart')}>
               <RotateCw color={colors.primary} size={24} />
-              <Text style={styles.actionText}>Riavvia</Text>
+              <Text style={styles.actionText}>Restart</Text>
             </TouchableOpacity>
 
             <TouchableOpacity 
@@ -239,14 +239,14 @@ export default function ContainerDetailsScreen({ route, navigation }) {
                   await apiClient.post(`/api/docker/containers/${containerId}/update`, { image: details.Config?.Image });
                   navigation.navigate('ContainersList');
                 } catch (e) {
-                  showAlert('Errore', 'Impossibile ricreare il container: ' + (e.response?.data?.error || e.message));
+                  showAlert('Error', 'Cannot recreate container: ' + (e.response?.data?.error || e.message));
                 } finally {
                   setActionLoading(false);
                 }
               }}
             >
               <RefreshCcw color={colors.primary} size={24} />
-              <Text style={styles.actionText}>Ricrea</Text>
+              <Text style={styles.actionText}>Recreate</Text>
             </TouchableOpacity>
 
             <TouchableOpacity 
@@ -264,7 +264,7 @@ export default function ContainerDetailsScreen({ route, navigation }) {
             </TouchableOpacity>
 
             {isRunning && webUrl && (
-              <TouchableOpacity style={styles.actionBtn} onPress={() => Linking.openURL(webUrl).catch(() => showAlert('Errore', 'Impossibile aprire il link'))}>
+              <TouchableOpacity style={styles.actionBtn} onPress={() => Linking.openURL(webUrl).catch(() => showAlert('Error', 'Cannot open link'))}>
                 <Globe color={colors.primary} size={24} />
                 <Text style={styles.actionText}>Web</Text>
               </TouchableOpacity>
@@ -276,15 +276,15 @@ export default function ContainerDetailsScreen({ route, navigation }) {
                 const image = details.Config?.Image || '';
                 const sourceUrl = details.Config?.Labels?.['org.opencontainers.image.source'] || details.Config?.Labels?.['org.opencontainers.image.url'];
                 if (sourceUrl && sourceUrl.startsWith('http')) {
-                  Linking.openURL(sourceUrl).catch(() => showAlert('Errore', 'Impossibile aprire il link'));
+                  Linking.openURL(sourceUrl).catch(() => showAlert('Error', 'Cannot open link'));
                 } else {
                   const imageBase = image.split(':')[0];
-                  Linking.openURL(`https://github.com/search?q=${encodeURIComponent(imageBase)}&type=repositories`).catch(() => showAlert('Errore', 'Impossibile aprire il link'));
+                  Linking.openURL(`https://github.com/search?q=${encodeURIComponent(imageBase)}&type=repositories`).catch(() => showAlert('Error', 'Cannot open link'));
                 }
               }}
             >
               <Github color={colors.primary} size={24} />
-              <Text style={styles.actionText}>Sorgente</Text>
+              <Text style={styles.actionText}>Source</Text>
             </TouchableOpacity>
           </View>
         )}

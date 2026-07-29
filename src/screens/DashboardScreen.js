@@ -98,7 +98,7 @@ export default function DashboardScreen() {
       }
     } catch (e) {
       console.error(e);
-      setError('Impossibile recuperare i dati dal server');
+      setError('Cannot retrieve data from server');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -142,7 +142,7 @@ export default function DashboardScreen() {
     const d = Math.floor(seconds / 86400);
     const h = Math.floor((seconds % 86400) / 3600);
     const m = Math.floor((seconds % 3600) / 60);
-    if (d > 0) return `${d}g ${h}h`;
+    if (d > 0) return `${d}d ${h}h`;
     return `${h}h ${m}m`;
   };
 
@@ -168,7 +168,7 @@ export default function DashboardScreen() {
             
             {/* SYSTEM INFO Card (Full Width) */}
             <WidgetCard
-              title="Sistema"
+              title="System"
               icon={<Server color="#8b5cf6" size={20} />}
               color="#8b5cf6"
               style={fullCardStyle}
@@ -183,11 +183,11 @@ export default function DashboardScreen() {
               icon={<Cpu color="#3b82f6" size={20} />}
               color="#3b82f6"
               style={cpuCardStyle}
-              onPress={() => navigation.navigate('WidgetDetails', { type: 'cpu', title: 'Dettagli Processore' })}
+              onPress={() => navigation.navigate('WidgetDetails', { type: 'cpu', title: 'Processor Details' })}
               mainValue={`${formatCpu(stats.cpu?.load)}% ${stats.cpu?.temperature ? `| ${Math.round(stats.cpu.temperature)}°C` : ''}`}
               percent={stats.cpu?.load}
-              subLeft={<Text style={styles.cardFooterText}>{stats.cpu?.cores || 0} Core</Text>}
-              subRight={<Text style={styles.cardFooterText}>Attivi</Text>}
+              subLeft={<Text style={styles.cardFooterText}>{stats.cpu?.cores || 0} Cores</Text>}
+              subRight={<Text style={styles.cardFooterText}>Active</Text>}
             />
 
             {/* RAM Card */}
@@ -196,7 +196,7 @@ export default function DashboardScreen() {
               icon={<Activity color="#8b5cf6" size={20} />}
               color="#8b5cf6"
               style={resourceCardStyle}
-              onPress={() => navigation.navigate('WidgetDetails', { type: 'ram', title: 'Dettagli RAM' })}
+              onPress={() => navigation.navigate('WidgetDetails', { type: 'ram', title: 'RAM Details' })}
               mainValue={`${Math.round(stats.memory?.percent || 0)}%`}
               percent={stats.memory?.percent}
               subLeft={<Text style={styles.cardFooterText}>{formatBytes(stats.memory?.used)}</Text>}
@@ -205,7 +205,7 @@ export default function DashboardScreen() {
 
             {/* DISK Card */}
             <WidgetCard
-              title="Disco"
+              title="Disk"
               icon={<HardDrive color="#10b981" size={20} />}
               color="#10b981"
               style={resourceCardStyle}
@@ -217,11 +217,11 @@ export default function DashboardScreen() {
 
             {/* NETWORK Card */}
             <WidgetCard
-              title="Rete"
+              title="Network"
               icon={<Network color="#f59e0b" size={20} />}
               color="#f59e0b"
               style={fullCardStyle}
-              mainValue="In Tempo Reale"
+              mainValue="Real-time"
               subLeft={
                 <View style={styles.networkCol}>
                   <ArrowDown color="#10b981" size={16} />
@@ -238,7 +238,7 @@ export default function DashboardScreen() {
 
             {/* WEATHER Card */}
             <WidgetCard
-              title="Meteo"
+              title="Weather"
               icon={
                 weatherData?.description?.toLowerCase().includes('sun') || weatherData?.description?.toLowerCase().includes('clear') ? <Sun color="#f59e0b" size={20} /> :
                 weatherData?.description?.toLowerCase().includes('cloud') ? <CloudSun color="#f59e0b" size={20} /> :
@@ -251,7 +251,7 @@ export default function DashboardScreen() {
               }
               style={fullCardStyle}
               mainValue={weatherData ? `${weatherData.temp}°C` : '--°C'}
-              subLeft={<Text style={styles.cardFooterText}>{weatherData ? weatherData.city : 'Caricamento...'}</Text>}
+              subLeft={<Text style={styles.cardFooterText}>{weatherData ? weatherData.city : 'Loading...'}</Text>}
               subRight={<Text style={styles.cardFooterText}>{weatherData ? weatherData.description : '--'}</Text>}
             />
           </View>
