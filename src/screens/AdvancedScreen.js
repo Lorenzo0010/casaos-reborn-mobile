@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, useWindowDimensions, PlatformColor } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, useWindowDimensions, PlatformColor, Switch } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme, predefinedThemes } from '../contexts/ThemeContext';
 import { useAlert } from '../contexts/AlertContext';
 import { apiClient, logout } from '../api/client';
-import { Palette, Send, Save, RefreshCcw, LogOut } from 'lucide-react-native';
+import { Palette, Send, Save, RefreshCcw, LogOut, DownloadCloud } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SPACING, HEADER, CARD, FADE, CONTENT, isTabletWidth } from '../constants/layout';
 
 export default function AdvancedScreen() {
@@ -22,6 +23,7 @@ export default function AdvancedScreen() {
   const [telegramChatId, setTelegramChatId] = useState('');
   const [weatherCity, setWeatherCity] = useState('Roma');
   const [savingPrefs, setSavingPrefs] = useState(false);
+  const [betaUpdates, setBetaUpdates] = useState(false);
 
   const [logs, setLogs] = useState('');
   const [logsLoading, setLogsLoading] = useState(true);
@@ -29,7 +31,20 @@ export default function AdvancedScreen() {
   useEffect(() => {
     fetchPreferences();
     fetchLogs();
+    
+    AsyncStorage.getItem('beta_updates').then(val => {
+      setBetaUpdates(val === 'true');
+    }).catch(e => console.error('Failed to load beta pref', e));
   }, []);
+
+  const toggleBetaUpdates = async (value) => {
+    setBetaUpdates(value);
+    try {
+      await AsyncStorage.setItem('beta_updates', value ? 'true' : 'false');
+    } catch (e) {
+      console.error('Failed to save beta pref', e);
+    }
+  };
 
   const fetchPreferences = async () => {
     try {
@@ -232,6 +247,28 @@ export default function AdvancedScreen() {
         </View>
 
         <View style={isTablet ? styles.tabletGrid : null}>
+          {/* Aggiornamenti App */}
+          <View style={[styles.section, isTablet && styles.tabletCard]}>
+            <View style={styles.sectionHeader}>
+              <DownloadCloud color={colors.text} size={24} />
+              <Text style={styles.sectionTitle}>Aggiornamenti App</Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <View style={{ flex: 1, marginRight: 16 }}>
+                <Text style={styles.label}>Ricevi versioni Beta</Text>
+                <Text style={{ ...typography.caption, color: colors.textSecondary }}>
+                  Installa aggiornamenti pre-release (beta) che potrebbero contenere bug.
+                </Text>
+              </View>
+              <Switch
+                value={betaUpdates}
+                onValueChange={toggleBetaUpdates}
+                trackColor={{ false: colors.border, true: colors.primary }}
+                thumbColor={Platform.OS === 'android' ? (betaUpdates ? '#ffffff' : '#f4f3f4') : ''}
+              />
+            </View>
+          </View>
+
           {/* Log di Sistema */}
           <View style={[styles.section, isTablet && styles.tabletCard]}>
             <View style={styles.sectionHeader}>

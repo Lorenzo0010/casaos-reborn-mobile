@@ -228,7 +228,15 @@ export default function UpdatesScreen({ navigation }) {
         return;
       }
       
-      const latestRelease = res.data[0];
+      const includeBeta = await AsyncStorage.getItem('beta_updates') === 'true';
+      const availableReleases = res.data.filter(r => includeBeta ? true : !r.prerelease);
+      
+      if (availableReleases.length === 0) {
+        setAppUpdate(null);
+        return;
+      }
+      
+      const latestRelease = availableReleases[0];
       const latestTag = latestRelease.tag_name;
       const storedLatest = await AsyncStorage.getItem('latest_installed_tag');
 
