@@ -57,7 +57,7 @@ jobs:
           name: app-release
           path: android/app/build/outputs/apk/release/app-release.apk
 
-      - name: Publish APK to GitHub Releases
+      - name: Publish APK to GitHub Releases (Draft)
         if: github.event_name == 'push'
         uses: softprops/action-gh-release@v2
         with:
@@ -67,5 +67,6 @@ jobs:
             Build automatico generato dal commit ${{ github.sha }}
             Scarica l'APK allegato per l'installazione su Android.
           files: android/app/build/outputs/apk/release/app-release.apk
+          draft: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
