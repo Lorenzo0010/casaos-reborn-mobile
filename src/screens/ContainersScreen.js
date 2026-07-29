@@ -428,7 +428,7 @@ export default function ContainersScreen() {
 
   if (loading && containers.length === 0) {
     return (
-      <View style={styles.center}>
+      <View style={[styles.center, { paddingTop: insets.top + HEADER.totalOffset }]}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );

@@ -118,7 +118,7 @@ export default function DashboardScreen() {
 
   if (loading && !stats) {
     return (
-      <View style={styles.center}>
+      <View style={[styles.center, { paddingTop: insets.top + HEADER.totalOffset }]}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );

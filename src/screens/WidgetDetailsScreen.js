@@ -64,7 +64,7 @@ export default function WidgetDetailsScreen({ route }) {
 
   if (loading && !processes.length && !containers.length) {
     return (
-      <View style={styles.center}>
+      <View style={[styles.center, { paddingTop: insets.top + HEADER.totalOffset }]}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );

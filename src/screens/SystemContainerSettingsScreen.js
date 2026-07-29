@@ -188,7 +188,7 @@ export default function SystemContainerSettingsScreen({ navigation }) {
 
   if (fetching) {
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', paddingTop: insets.top + HEADER.totalOffset }]}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
