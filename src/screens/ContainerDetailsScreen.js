@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, Text, View, ScrollView, ActivityIndicator, TouchableOpacity, Alert, RefreshControl, Linking } from 'react-native';
 import { Image } from 'expo-image';
-import { Settings, Play, Square, RotateCw, Globe, RefreshCcw, Github } from 'lucide-react-native';
+import { Settings, Play, Square, RotateCw, Globe, RefreshCcw, Github, Box, Tag, Calendar, Network, FileCode, ArrowRight } from 'lucide-react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { apiClient } from '../api/client';
@@ -137,6 +137,55 @@ export default function ContainerDetailsScreen({ route, navigation }) {
   const initial = stableId.charAt(0).toUpperCase();
   const bgColor = getContainerColor(stableId);
 
+  // Compute parsed ports for display
+  const parsedPorts = [];
+  if (details.HostConfig?.PortBindings) {
+    Object.entries(details.HostConfig.PortBindings).forEach(([containerPortStr, hostBindings]) => {
+      const containerPort = containerPortStr.split('/')[0];
+      const protocol = containerPortStr.split('/')[1] || 'tcp';
+      hostBindings?.forEach(binding => {
+        if (binding.HostPort) {
+          parsedPorts.push({ host: binding.HostPort, container: containerPort, protocol });
+        }
+      });
+    });
+  }
+
+  // Compute parsed envs
+  const parsedEnvs = [];
+  const imageEnv = details.ImageEnv || [];
+  const IGNORED_ENV_VARS = ['PATH', 'NODE_VERSION', 'YARN_VERSION', 'HOSTNAME', 'PWD', 'HOME', 'SHLVL', 'DEBUG'];
+  if (details.Config?.Env) {
+    details.Config.Env.forEach(envStr => {
+      if (imageEnv.includes(envStr)) return;
+      const eqIdx = envStr.indexOf('=');
+      if (eqIdx !== -1) {
+        const key = envStr.substring(0, eqIdx);
+        const value = envStr.substring(eqIdx + 1);
+        if (!IGNORED_ENV_VARS.includes(key)) {
+          parsedEnvs.push({ key, value });
+        }
+      }
+    });
+  }
+
+  const renderInfoRow = (icon, label, value, isLink = false, linkUrl = '') => (
+    <View style={[styles.infoRow, { alignItems: 'center' }]}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+        {icon}
+        <Text style={[styles.label, { marginLeft: 8, marginBottom: 0 }]}>{label}</Text>
+      </View>
+      <Text 
+        style={[styles.value, isLink && { color: colors.primary, textDecorationLine: 'underline' }]} 
+        numberOfLines={1} 
+        ellipsizeMode={isLink ? 'tail' : 'middle'}
+        onPress={isLink ? () => Linking.openURL(linkUrl) : undefined}
+      >
+        {value}
+      </Text>
+    </View>
+  );
+
   return (
     <ScrollView 
       style={styles.container}
@@ -145,7 +194,7 @@ export default function ContainerDetailsScreen({ route, navigation }) {
         paddingBottom: 120, 
         paddingTop: insets.top + HEADER.totalOffset 
       }}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} progressViewOffset={insets.top + HEADER.totalOffset} />}
     >
       <View style={styles.headerCard}>
         {iconUrl ? (
@@ -174,20 +223,50 @@ export default function ContainerDetailsScreen({ route, navigation }) {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>General Info</Text>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Image</Text>
-          <Text style={styles.value} numberOfLines={1} ellipsizeMode="middle">{details.Config?.Image}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+          <Settings color={colors.text} size={20} />
+          <Text style={[styles.sectionTitle, { marginBottom: 0, marginLeft: 8 }]}>General Info</Text>
         </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>ID</Text>
-          <Text style={styles.value} numberOfLines={1} ellipsizeMode="tail">{details.Id?.substring(0, 12)}</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Created on</Text>
-          <Text style={styles.value}>{new Date(details.Created).toLocaleString()}</Text>
-        </View>
+        
+        {renderInfoRow(<Box color={colors.textSecondary} size={18} />, 'Image', details.Config?.Image)}
+        {renderInfoRow(<Tag color={colors.textSecondary} size={18} />, 'Container Name', stableId)}
+        {renderInfoRow(<Calendar color={colors.textSecondary} size={18} />, 'Created on', new Date(details.Created).toLocaleString())}
+        {webUrl && renderInfoRow(<Globe color={colors.textSecondary} size={18} />, 'Web UI', webUrl, true, webUrl)}
       </View>
+
+      {parsedPorts.length > 0 && (
+        <View style={styles.section}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+            <Network color={colors.text} size={20} />
+            <Text style={[styles.sectionTitle, { marginBottom: 0, marginLeft: 8 }]}>Ports</Text>
+          </View>
+          {parsedPorts.map((p, i) => (
+            <View key={i} style={[styles.infoRow, { backgroundColor: 'rgba(255,255,255,0.03)', padding: 12, borderRadius: 8, alignItems: 'center', justifyContent: 'space-between' }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                 <View style={styles.portBadge}><Text style={styles.portText}>{p.host}</Text></View>
+                 <ArrowRight color={colors.textSecondary} size={16} />
+                 <View style={styles.portBadge}><Text style={styles.portText}>{p.container}</Text></View>
+              </View>
+              <Text style={{ color: colors.textSecondary, fontSize: 12, textTransform: 'uppercase' }}>{p.protocol}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+
+      {parsedEnvs.length > 0 && (
+        <View style={styles.section}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+            <FileCode color={colors.text} size={20} />
+            <Text style={[styles.sectionTitle, { marginBottom: 0, marginLeft: 8 }]}>Environment Variables</Text>
+          </View>
+          {parsedEnvs.map((env, i) => (
+            <View key={i} style={[styles.infoRow, { flexDirection: 'column', alignItems: 'flex-start', backgroundColor: 'rgba(255,255,255,0.03)', padding: 12, borderRadius: 8 }]}>
+              <Text style={[styles.label, { color: colors.primary, marginBottom: 4, fontWeight: '600' }]}>{env.key}</Text>
+              <Text style={{ color: colors.text, fontFamily: 'monospace', fontSize: 13 }} selectable>{env.value}</Text>
+            </View>
+          ))}
+        </View>
+      )}
       <View style={styles.actionRow}>
         {actionLoading ? (
           <ActivityIndicator color={colors.primary} size="small" />
@@ -355,4 +434,15 @@ const createStyles = (colors, typography) => StyleSheet.create({
     flex: 2,
     textAlign: 'right',
   },
+  portBadge: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  portText: {
+    color: colors.text,
+    fontFamily: 'monospace',
+    fontSize: 13,
+  }
 });

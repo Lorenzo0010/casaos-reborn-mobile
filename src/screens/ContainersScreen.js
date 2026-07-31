@@ -189,10 +189,23 @@ export default function ContainersScreen() {
     return (c.Labels && (c.Labels['casaos.reborn.name'] || c.Labels['casaos.app.name'])) || stableId;
   };
 
+  const getWebPort = (container) => {
+    const labels = container.Labels || {};
+    const customPort = labels['casaos.reborn.web.port'];
+    if (customPort && customPort !== '0') {
+      return customPort;
+    }
+    const tcpMappings = (container.Ports || []).filter(p => p.PublicPort && (p.Type === 'tcp' || !p.Type));
+    if (tcpMappings.length > 0) {
+      return tcpMappings[0].PublicPort;
+    }
+    return null;
+  };
+
   const getContainerUrl = (container) => {
     const baseUrl = apiClient.defaults.baseURL || '';
-    const hostname = baseUrl.replace(/^https?:\/\//, '').split(':')[0].split('/')[0];
-    if (!hostname) return null;
+    const fallbackHostname = baseUrl.replace(/^https?:\/\//, '').split(':')[0].split('/')[0];
+    if (!fallbackHostname) return null;
 
     const labels = container.Labels || {};
     let scheme = labels['casaos.reborn.web.scheme'] || 'http';
@@ -202,10 +215,11 @@ export default function ContainersScreen() {
     if (!path.startsWith('/')) path = '/' + path;
 
     const customPort = labels['casaos.reborn.web.port'];
+    const customHost = labels['casaos.reborn.web.host'] || fallbackHostname;
 
     // 1. Explicit User Override (Priorità 1)
     if (customPort && customPort !== '0') {
-      return `${scheme}${hostname}:${customPort}${path}`;
+      return `${scheme}${customHost}:${customPort}${path}`;
     }
 
     // 2. Filter ONLY TCP ports, ignoring UDP mappings (Priorità 2)
@@ -215,7 +229,7 @@ export default function ContainersScreen() {
     const defaultFallbackPort = scheme === 'https://' ? 443 : 80;
     const targetPort = tcpMappings.length > 0 ? tcpMappings[0].PublicPort : defaultFallbackPort;
 
-    return `${scheme}${hostname}:${targetPort}${path}`;
+    return `${scheme}${customHost}:${targetPort}${path}`;
   };
 
   const sortedContainers = React.useMemo(() => {
@@ -379,8 +393,8 @@ export default function ContainersScreen() {
 
           <View style={styles.cardInfo}>
             <Text style={styles.name}>{casaosName}</Text>
-            <Text style={[styles.status, { color: isRecreating ? colors.primary : (isRunning ? colors.success : colors.error) }]}>
-              {String(containerState).toUpperCase()}
+            <Text style={[styles.status, { color: isRecreating ? colors.primary : (isRunning ? colors.success : colors.error), fontFamily: 'monospace' }]}>
+              {isRecreating ? String(containerState).toUpperCase() : (isRunning ? (getWebPort(item) ? `RUNNING ON ${getWebPort(item)}` : 'RUNNING') : String(containerState).toUpperCase())}
             </Text>
           </View>
         </View>
@@ -508,7 +522,7 @@ export default function ContainersScreen() {
         contentContainerStyle={{ padding: SPACING.base, paddingTop: insets.top + HEADER.totalOffset, paddingBottom: CONTENT.paddingBottom }}
         numColumns={numColumns}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} progressViewOffset={insets.top + HEADER.totalOffset} />
         }
         ListEmptyComponent={
           !loading && <Text style={styles.emptyText}>No containers found</Text>

@@ -34,6 +34,10 @@ export default function ContainerSettingsScreen({ route, navigation }) {
   const [imageTag, setImageTag] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [icon, setIcon] = useState('');
+  const [webUIScheme, setWebUIScheme] = useState('http');
+  const [webUIDomain, setWebUIDomain] = useState('');
+  const [webUIPort, setWebUIPort] = useState('');
+  const [webUIPath, setWebUIPath] = useState('/');
 
   useEffect(() => {
     if (details) {
@@ -79,10 +83,12 @@ export default function ContainerSettingsScreen({ route, navigation }) {
 
       // Parse Envs
       const parsedEnvs = [];
+      const imageEnv = details.ImageEnv || [];
       const IGNORED_ENV_VARS = ['PATH', 'NODE_VERSION', 'YARN_VERSION', 'HOSTNAME', 'PWD', 'HOME', 'SHLVL', 'DEBUG'];
       
       if (details.Config?.Env) {
         details.Config.Env.forEach(envStr => {
+          if (imageEnv.includes(envStr)) return;
           const eqIdx = envStr.indexOf('=');
           if (eqIdx !== -1) {
             const key = envStr.substring(0, eqIdx);
@@ -94,6 +100,15 @@ export default function ContainerSettingsScreen({ route, navigation }) {
         });
       }
       setEnvs(parsedEnvs);
+
+      const wScheme = details.Config?.Labels?.['casaos.reborn.web.scheme'] || 'http';
+      const wDomain = details.Config?.Labels?.['casaos.reborn.web.host'] || '';
+      const wPort = details.Config?.Labels?.['casaos.reborn.web.port'] || '';
+      const wPath = details.Config?.Labels?.['casaos.reborn.web.path'] || '/';
+      setWebUIScheme(wScheme);
+      setWebUIDomain(wDomain);
+      setWebUIPort(wPort);
+      setWebUIPath(wPath);
     }
   }, [details]);
 
@@ -153,14 +168,40 @@ export default function ContainerSettingsScreen({ route, navigation }) {
       devices: details.HostConfig?.Devices,
       capAdd: details.HostConfig?.CapAdd,
       cmd: details.Config?.Cmd,
-      webUI: details.Config?.Labels?.['casaos.reborn.web.port'] ? {
-        scheme: details.Config.Labels['casaos.reborn.web.scheme'] || 'http',
-        path: details.Config.Labels['casaos.reborn.web.path'] || '/',
-        port: details.Config.Labels['casaos.reborn.web.port']
+      webUI: (webUIPort || webUIDomain) ? {
+        scheme: webUIScheme,
+        domain: webUIDomain,
+        path: webUIPath,
+        port: webUIPort
       } : undefined
     };
 
     try {
+      // Validate Ports
+      const requestedPorts = [];
+      if (webUIPort && webUIPort !== '0') requestedPorts.push(String(webUIPort));
+      ports.forEach(p => {
+        if (p.host) requestedPorts.push(String(p.host));
+      });
+
+      if (requestedPorts.length > 0) {
+        const resContainers = await apiClient.get('/api/docker/containers');
+        const allContainers = resContainers.data;
+        const conflict = requestedPorts.find(port => {
+          return allContainers.some(c => {
+            if (c.Id.startsWith(containerId)) return false;
+            if (c.Names && c.Names.includes(`/${details.Name?.replace(/^\//, '')}`)) return false;
+            return c.Ports && c.Ports.some(cp => String(cp.PublicPort) === port);
+          });
+        });
+
+        if (conflict) {
+          showAlert('Port Conflict', `Port ${conflict} is already in use by another container.`);
+          setLoading(false);
+          return;
+        }
+      }
+
       await apiClient.post(`/api/docker/containers/${containerId}/recreate`, payload);
       navigation.navigate('ContainersList');
     } catch (e) {
@@ -298,6 +339,28 @@ export default function ContainerSettingsScreen({ route, navigation }) {
         />
       </View>
 
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { marginBottom: 16 }]}>Web Interface (Optional)</Text>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.label}>Scheme</Text>
+            <TouchableOpacity style={[styles.input, { justifyContent: 'center', marginBottom: 16 }]} onPress={() => setWebUIScheme(webUIScheme === 'http' ? 'https' : 'http')}>
+              <Text style={{ color: colors.text }}>{webUIScheme}://</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={{ flex: 2 }}>
+            <Text style={styles.label}>Domain</Text>
+            <TextInput style={styles.input} placeholder="(auto)" placeholderTextColor={colors.textSecondary} value={webUIDomain} onChangeText={setWebUIDomain} autoCapitalize="none" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.label}>Port</Text>
+            <TextInput style={styles.input} placeholder="(auto)" placeholderTextColor={colors.textSecondary} value={webUIPort} onChangeText={setWebUIPort} keyboardType="numeric" />
+          </View>
+        </View>
+        <Text style={styles.label}>Path</Text>
+        <TextInput style={styles.input} placeholder="/" placeholderTextColor={colors.textSecondary} value={webUIPath} onChangeText={setWebUIPath} autoCapitalize="none" />
+      </View>
+
       {renderDynamicList('Ports', ports, handleAddPort, handleRemovePort, handlePortChange, 'host', 'container', 'Host (e.g. 8080)', 'Container (e.g. 80)', true)}
       {renderDynamicList('Volumes', volumes, handleAddVolume, handleRemoveVolume, handleVolumeChange, 'host', 'container', 'Host (e.g. /data)', 'Container (e.g. /app)')}
       {renderDynamicList('Environment Variables', envs, handleAddEnv, handleRemoveEnv, handleEnvChange, 'key', 'value', 'Key (e.g. PUID)', 'Value (e.g. 1000)')}
@@ -357,6 +420,11 @@ const createStyles = (colors, typography) => StyleSheet.create({
   sectionTitle: {
     ...typography.h3,
     color: colors.text,
+  },
+  label: { 
+    ...typography.body, 
+    color: colors.textSecondary, 
+    marginBottom: 8 
   },
   input: {
     ...typography.body,

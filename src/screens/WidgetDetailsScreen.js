@@ -80,7 +80,7 @@ export default function WidgetDetailsScreen({ route }) {
         { paddingTop: insets.top + HEADER.totalOffset }
       ]}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} progressViewOffset={insets.top + HEADER.totalOffset} />
       }
     >
       {error && (

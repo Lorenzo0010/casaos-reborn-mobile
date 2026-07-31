@@ -25,6 +25,7 @@ export default function ContainerCreateScreen({ navigation }) {
   const [displayName, setDisplayName] = useState('');
   const [icon, setIcon] = useState('');
   const [webUIScheme, setWebUIScheme] = useState('http');
+  const [webUIDomain, setWebUIDomain] = useState('');
   const [webUIPort, setWebUIPort] = useState('');
   const [webUIPath, setWebUIPath] = useState('/');
   
@@ -99,6 +100,7 @@ export default function ContainerCreateScreen({ navigation }) {
           else if (xCasaos.title.en_us) res.title = xCasaos.title.en_us;
         }
         if (xCasaos.port_map) res.port = String(xCasaos.port_map);
+        if (xCasaos.host) res.host = String(xCasaos.host);
         if (xCasaos.scheme) res.scheme = normalizeScheme(xCasaos.scheme);
         if (xCasaos.index) res.path = xCasaos.index;
 
@@ -106,6 +108,7 @@ export default function ContainerCreateScreen({ navigation }) {
             const uiPort = xCasaos.ports.find(p => p.ui || p.web);
             if (uiPort) {
                 res.scheme = normalizeScheme(uiPort.scheme) || res.scheme || 'http';
+                res.host = uiPort.host || res.host || '';
                 res.port = uiPort.target || uiPort.published || res.port || '';
                 res.path = uiPort.path || res.path || '/';
             }
@@ -140,8 +143,9 @@ export default function ContainerCreateScreen({ navigation }) {
         }
       }
 
-      if (serviceCasaosData.port || rootCasaosData.port) {
+      if (serviceCasaosData.port || rootCasaosData.port || serviceCasaosData.host || rootCasaosData.host) {
           setWebUIScheme(serviceCasaosData.scheme || rootCasaosData.scheme || 'http');
+          setWebUIDomain(serviceCasaosData.host || rootCasaosData.host || '');
           setWebUIPort(serviceCasaosData.port || rootCasaosData.port || '');
           setWebUIPath(serviceCasaosData.path || rootCasaosData.path || '/');
       }
@@ -276,7 +280,7 @@ export default function ContainerCreateScreen({ navigation }) {
       name: name || undefined,
       displayName: displayName,
       icon: icon,
-      webUI: webUIPort ? { scheme: webUIScheme, port: webUIPort, path: webUIPath } : null,
+      webUI: (webUIPort || webUIDomain) ? { scheme: webUIScheme, domain: webUIDomain, port: webUIPort, path: webUIPath } : null,
       networkMode: networkMode,
       pidMode: pidMode,
       hostname: hostname,
@@ -293,6 +297,30 @@ export default function ContainerCreateScreen({ navigation }) {
     };
 
     try {
+      // Validate Ports
+      const requestedPorts = [];
+      if (webUIPort && webUIPort !== '0') requestedPorts.push(String(webUIPort));
+      ports.forEach(p => {
+        if (p.host) requestedPorts.push(String(p.host));
+      });
+
+      if (requestedPorts.length > 0) {
+        const resContainers = await apiClient.get('/api/docker/containers');
+        const allContainers = resContainers.data;
+        const conflict = requestedPorts.find(port => {
+          return allContainers.some(c => {
+            if (name && c.Names && c.Names.includes(`/${name}`)) return false;
+            return c.Ports && c.Ports.some(cp => String(cp.PublicPort) === port);
+          });
+        });
+
+        if (conflict) {
+          showAlert('Port Conflict', `Port ${conflict} is already in use by another container.`);
+          setLoading(false);
+          return;
+        }
+      }
+
       await apiClient.post('/api/docker/containers/create', payload);
       navigation.goBack();
     } catch (e) {
@@ -451,14 +479,18 @@ export default function ContainerCreateScreen({ navigation }) {
             <Text style={styles.sectionTitle}>Web Interface (Optional)</Text>
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.label}>WebUI Port</Text>
-                <TextInput style={styles.input} placeholder="8080" placeholderTextColor={colors.textSecondary} value={webUIPort} onChangeText={setWebUIPort} keyboardType="numeric" />
-              </View>
-              <View style={{ flex: 1 }}>
                 <Text style={styles.label}>Scheme</Text>
                 <TouchableOpacity style={[styles.input, { justifyContent: 'center' }]} onPress={() => setWebUIScheme(webUIScheme === 'http' ? 'https' : 'http')}>
                   <Text style={{ color: colors.text }}>{webUIScheme}://</Text>
                 </TouchableOpacity>
+              </View>
+              <View style={{ flex: 2 }}>
+                <Text style={styles.label}>Domain</Text>
+                <TextInput style={styles.input} placeholder="(auto)" placeholderTextColor={colors.textSecondary} value={webUIDomain} onChangeText={setWebUIDomain} autoCapitalize="none" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.label}>Port</Text>
+                <TextInput style={styles.input} placeholder="(auto)" placeholderTextColor={colors.textSecondary} value={webUIPort} onChangeText={setWebUIPort} keyboardType="numeric" />
               </View>
             </View>
             <Text style={styles.label}>Path</Text>
