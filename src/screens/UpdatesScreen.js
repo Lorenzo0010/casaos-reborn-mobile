@@ -212,6 +212,38 @@ export default function UpdatesScreen({ navigation }) {
     }
   };
 
+  const compareSemver = (a, b) => {
+    if (!a && !b) return 0;
+    if (!a) return -1;
+    if (!b) return 1;
+    
+    const parse = (v) => {
+      const parts = v.replace(/^v/, '').split('-');
+      const nums = parts[0].split('.').map(n => parseInt(n, 10));
+      const isBeta = parts.length > 1;
+      const betaNum = isBeta ? parseInt(parts[1].replace(/[^0-9]/g, '') || '0', 10) : 9999;
+      return { nums, isBeta, betaNum };
+    };
+    
+    const pa = parse(a);
+    const pb = parse(b);
+    
+    for (let i = 0; i < Math.max(pa.nums.length, pb.nums.length); i++) {
+      const na = pa.nums[i] || 0;
+      const nb = pb.nums[i] || 0;
+      if (na > nb) return 1;
+      if (na < nb) return -1;
+    }
+    
+    if (pa.isBeta && !pb.isBeta) return -1;
+    if (!pa.isBeta && pb.isBeta) return 1;
+    
+    if (pa.betaNum > pb.betaNum) return 1;
+    if (pa.betaNum < pb.betaNum) return -1;
+    
+    return 0;
+  };
+
   const checkAppUpdate = async () => {
     setIsCheckingApp(true);
     try {
@@ -236,11 +268,13 @@ export default function UpdatesScreen({ navigation }) {
         return;
       }
       
+      availableReleases.sort((a, b) => compareSemver(b.tag_name, a.tag_name));
+      
       const latestRelease = availableReleases[0];
       const latestTag = latestRelease.tag_name;
       const storedLatest = await AsyncStorage.getItem('latest_installed_tag');
 
-      if (latestTag && latestTag !== storedLatest) {
+      if (latestTag && compareSemver(latestTag, storedLatest) > 0) {
         const apkAsset = latestRelease.assets.find(a => a.name.endsWith('.apk'));
         if (apkAsset) {
           setAppUpdate({
