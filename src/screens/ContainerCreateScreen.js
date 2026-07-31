@@ -4,6 +4,8 @@ import { Plus, Trash2, Server, FileText, Code, Upload, Save, Check } from 'lucid
 import { apiClient } from '../api/client';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAlert } from '../contexts/AlertContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { HEADER, CONTENT } from '../constants/layout';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 import yaml from 'js-yaml';
@@ -12,6 +14,7 @@ export default function ContainerCreateScreen({ navigation }) {
   const { colors, typography } = useTheme();
   const styles = createStyles(colors, typography);
   const { showAlert } = useAlert();
+  const insets = useSafeAreaInsets();
 
   const [activeTab, setActiveTab] = useState('manual');
   const [yamlInput, setYamlInput] = useState('');
@@ -372,7 +375,7 @@ export default function ContainerCreateScreen({ navigation }) {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ padding: 16, paddingBottom: 120 }}>
+    <ScrollView style={styles.container} contentContainerStyle={{ padding: 16, paddingTop: insets.top + HEADER.totalOffset, paddingBottom: CONTENT.paddingBottom }}>
       
       <View style={styles.headerCard}>
         <Server color={colors.primary} size={48} style={{ marginBottom: 16 }} />

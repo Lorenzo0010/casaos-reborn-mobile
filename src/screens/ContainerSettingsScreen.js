@@ -5,6 +5,8 @@ import { Plus, Trash2, Settings, AlertTriangle } from 'lucide-react-native';
 import { apiClient } from '../api/client';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAlert } from '../contexts/AlertContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { HEADER, CONTENT } from '../constants/layout';
 
 const getContainerColor = (name) => {
     let hash = 0;
@@ -19,6 +21,7 @@ export default function ContainerSettingsScreen({ route, navigation }) {
   const { colors, typography } = useTheme();
   const styles = createStyles(colors, typography);
   const { showAlert } = useAlert();
+  const insets = useSafeAreaInsets();
 
   const { containerId, containerName, details } = route.params;
 
@@ -252,7 +255,7 @@ export default function ContainerSettingsScreen({ route, navigation }) {
   const bgColor = stableId ? getContainerColor(stableId) : colors.primary;
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ padding: 16, paddingBottom: 120 }}>
+    <ScrollView style={styles.container} contentContainerStyle={{ padding: 16, paddingTop: insets.top + HEADER.totalOffset, paddingBottom: CONTENT.paddingBottom }}>
       
       <View style={[styles.headerCard, { flexDirection: 'row', alignItems: 'center' }]}>
         {displayIconUrl ? (
