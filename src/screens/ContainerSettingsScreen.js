@@ -46,8 +46,8 @@ export default function ContainerSettingsScreen({ route, navigation }) {
       setImageName(imgName);
       setImageTag(imgTag);
       
-      setDisplayName(details.Config?.Labels?.['casaos.reborn.name'] || '');
-      setIcon(details.Config?.Labels?.['casaos.reborn.icon'] || '');
+      setDisplayName(details.Config?.Labels?.['casaos.reborn.name'] || details.Config?.Labels?.['casaos.app.name'] || '');
+      setIcon(details.Config?.Labels?.['casaos.reborn.icon'] || details.Config?.Labels?.['icon'] || '');
 
       // Parse Ports
       const parsedPorts = [];
@@ -76,11 +76,17 @@ export default function ContainerSettingsScreen({ route, navigation }) {
 
       // Parse Envs
       const parsedEnvs = [];
+      const IGNORED_ENV_VARS = ['PATH', 'NODE_VERSION', 'YARN_VERSION', 'HOSTNAME', 'PWD', 'HOME', 'SHLVL', 'DEBUG'];
+      
       if (details.Config?.Env) {
         details.Config.Env.forEach(envStr => {
           const eqIdx = envStr.indexOf('=');
           if (eqIdx !== -1) {
-            parsedEnvs.push({ key: envStr.substring(0, eqIdx), value: envStr.substring(eqIdx + 1) });
+            const key = envStr.substring(0, eqIdx);
+            const value = envStr.substring(eqIdx + 1);
+            if (!IGNORED_ENV_VARS.includes(key)) {
+              parsedEnvs.push({ key, value });
+            }
           }
         });
       }

@@ -143,9 +143,10 @@ export default function ContainerDetailsScreen({ route, navigation }) {
 
   const webUrl = isRunning ? getContainerUrl() : null;
 
-  const stableId = details.Name?.replace(/^\//, '') || containerId;
+  const stableId = details.Name ? details.Name.replace(/^\//, '') : containerId;
   const override = containerOverrides[stableId];
-  let iconUrl = (override && override.icon) || (details.Config?.Labels && details.Config.Labels['casaos.reborn.icon']);
+  const name = (override && override.displayName) || (details.Config?.Labels && (details.Config.Labels['casaos.reborn.name'] || details.Config.Labels['casaos.app.name'])) || stableId;
+  let iconUrl = (override && override.icon) || (details.Config?.Labels && (details.Config.Labels['casaos.reborn.icon'] || details.Config.Labels['casaos.app.icon'] || details.Config.Labels['icon']));
   
   if (iconUrl && typeof iconUrl === 'string') {
       iconUrl = iconUrl.trim();

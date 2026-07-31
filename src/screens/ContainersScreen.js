@@ -189,8 +189,7 @@ export default function ContainersScreen() {
   const getContainerName = (c) => {
     const stableId = c.Names ? c.Names[0].replace('/', '') : c.Id;
     const override = containerOverrides[stableId];
-    if (override && override.displayName) return override.displayName;
-    return c.Labels?.['casaos.reborn.name'] || stableId;
+    return (override && override.displayName) || (c.Labels && (c.Labels['casaos.reborn.name'] || c.Labels['casaos.app.name'])) || stableId;
   };
 
   const getContainerUrl = (container) => {
@@ -207,20 +206,27 @@ export default function ContainersScreen() {
     }
 
     const labels = container.Labels || {};
-    let port = labels['casaos.reborn.webport'] || labels['casaos.reborn.port'];
+    let scheme = labels['casaos.reborn.web.scheme'] || 'http';
+    if (!scheme.includes('://')) scheme = scheme + '://';
 
-    if (!port && container.Ports) {
-      const publicPort = container.Ports.find(p => p.PublicPort);
-      if (publicPort) {
-        port = publicPort.PublicPort;
-      }
+    let path = labels['casaos.reborn.web.path'] || '/';
+    if (!path.startsWith('/')) path = '/' + path;
+
+    const customPort = labels['casaos.reborn.web.port'];
+
+    // 1. Explicit User Override (Priorità 1)
+    if (customPort && customPort !== '0') {
+      return `${scheme}${hostname}:${customPort}${path}`;
     }
 
-    if (port) {
-      return `http://${hostname}:${port}`;
-    }
+    // 2. Filter ONLY TCP ports, ignoring UDP mappings (Priorità 2)
+    const tcpMappings = (container.Ports || []).filter(p => p.PublicPort && (p.Type === 'tcp' || !p.Type));
+    
+    // 3. Fallback to first TCP port or default port 80/443 (Priorità 3)
+    const defaultFallbackPort = scheme === 'https://' ? 443 : 80;
+    const targetPort = tcpMappings.length > 0 ? tcpMappings[0].PublicPort : defaultFallbackPort;
 
-    return null;
+    return `${scheme}${hostname}:${targetPort}${path}`;
   };
 
   const sortedContainers = React.useMemo(() => {
@@ -355,7 +361,7 @@ export default function ContainersScreen() {
 
           {(() => {
             const override = containerOverrides[stableId];
-            let iconUrl = (override && override.icon) || (item.Labels && item.Labels['casaos.reborn.icon']);
+            let iconUrl = (override && override.icon) || (item.Labels && (item.Labels['casaos.reborn.icon'] || item.Labels['icon']));
             if (iconUrl && typeof iconUrl === 'string') {
               iconUrl = iconUrl.trim();
               if (!iconUrl.startsWith('http') && !iconUrl.startsWith('data:')) {
