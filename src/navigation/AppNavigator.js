@@ -1,5 +1,6 @@
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { Home, Server, RefreshCw } from 'lucide-react-native';
 import { View, useWindowDimensions, TouchableOpacity, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -270,6 +271,18 @@ function CustomTabBar({ state, descriptors, navigation, colors, BAR_WIDTH, leftP
   );
 }
 
+function getSwipeEnabled(route) {
+  const routeName = getFocusedRouteNameFromRoute(route) ?? '';
+  const disableSwipeRoutes = [
+    'ContainerDetails',
+    'ContainerSettings',
+    'ContainerCreate',
+    'SystemContainerSettings',
+    'WidgetDetails'
+  ];
+  return !disableSwipeRoutes.includes(routeName);
+}
+
 export default function AppNavigator() {
   const { colors } = useTheme();
   const { width } = useWindowDimensions();
@@ -289,18 +302,22 @@ export default function AppNavigator() {
       <Tab.Screen 
         name="Dashboard" 
         component={DashboardStackNavigator} 
+        options={({ route }) => ({ swipeEnabled: getSwipeEnabled(route) })}
       />
       <Tab.Screen 
         name="ContainersTab" 
         component={ContainersStackNavigator}
+        options={({ route }) => ({ swipeEnabled: getSwipeEnabled(route) })}
       />
       <Tab.Screen 
         name="Updates" 
         component={UpdatesStackNavigator} 
+        options={({ route }) => ({ swipeEnabled: getSwipeEnabled(route) })}
       />
       <Tab.Screen 
         name="Advanced" 
         component={AdvancedStackNavigator} 
+        options={({ route }) => ({ swipeEnabled: getSwipeEnabled(route) })}
       />
     </Tab.Navigator>
     {/* Ombra della Status Bar di sistema (top) */}
