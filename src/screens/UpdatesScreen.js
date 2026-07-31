@@ -174,7 +174,7 @@ export default function UpdatesScreen({ navigation }) {
     }
   };
 
-  const downloadAndInstallApp = async (url, tag) => {
+  const downloadAndInstallApp = async (url, tag, releaseDate) => {
     setIsAppUpdating(true);
     setAppUpdateProgress(0);
     try {
@@ -198,6 +198,9 @@ export default function UpdatesScreen({ navigation }) {
       const { uri } = await downloadResumable.downloadAsync();
       
       await AsyncStorage.setItem('latest_installed_tag', tag);
+      if (releaseDate) {
+        await AsyncStorage.setItem('latest_installed_date', releaseDate);
+      }
       
       const contentUri = await FileSystem.getContentUriAsync(uri);
       await IntentLauncher.startActivityAsync('android.intent.action.VIEW', {
@@ -211,38 +214,6 @@ export default function UpdatesScreen({ navigation }) {
     } finally {
       setIsAppUpdating(false);
     }
-  };
-
-  const compareSemver = (a, b) => {
-    if (!a && !b) return 0;
-    if (!a) return -1;
-    if (!b) return 1;
-    
-    const parse = (v) => {
-      const parts = v.replace(/^v/, '').split('-');
-      const nums = parts[0].split('.').map(n => parseInt(n, 10));
-      const isBeta = parts.length > 1;
-      const betaNum = isBeta ? parseInt(parts[1].replace(/[^0-9]/g, '') || '0', 10) : 9999;
-      return { nums, isBeta, betaNum };
-    };
-    
-    const pa = parse(a);
-    const pb = parse(b);
-    
-    for (let i = 0; i < Math.max(pa.nums.length, pb.nums.length); i++) {
-      const na = pa.nums[i] || 0;
-      const nb = pb.nums[i] || 0;
-      if (na > nb) return 1;
-      if (na < nb) return -1;
-    }
-    
-    if (pa.isBeta && !pb.isBeta) return -1;
-    if (!pa.isBeta && pb.isBeta) return 1;
-    
-    if (pa.betaNum > pb.betaNum) return 1;
-    if (pa.betaNum < pb.betaNum) return -1;
-    
-    return 0;
   };
 
   const checkAppUpdate = async () => {
@@ -269,26 +240,42 @@ export default function UpdatesScreen({ navigation }) {
         return;
       }
       
-      availableReleases.sort((a, b) => compareSemver(b.tag_name, a.tag_name));
+      // Ordinamento per data invece che per semver, poiché i tag sono costanti ("Release" / "Pre-Release")
+      availableReleases.sort((a, b) => new Date(b.published_at || b.created_at) - new Date(a.published_at || a.created_at));
       
       const latestRelease = availableReleases[0];
       const latestTag = latestRelease.tag_name;
+      const latestDate = latestRelease.published_at || latestRelease.created_at;
+      
+      const storedDate = await AsyncStorage.getItem('latest_installed_date');
       const storedLatest = await AsyncStorage.getItem('latest_installed_tag');
 
-      if (latestTag && compareSemver(latestTag, storedLatest) > 0) {
+      let isNewer = false;
+      if (storedDate) {
+        isNewer = new Date(latestDate) > new Date(storedDate);
+      } else if (storedLatest) {
+        // Fallback: se hanno già il tag ma non la data, mostriamo l'update per forzare il passaggio al nuovo sistema
+        isNewer = true;
+      } else {
+        isNewer = true;
+      }
+
+      if (isNewer) {
         const apkAsset = latestRelease.assets.find(a => a.name.endsWith('.apk'));
         if (apkAsset) {
           const isStable = !latestRelease.prerelease;
+          const displayDate = new Date(latestDate).toLocaleDateString();
           setAppUpdate({
             id: 'app-update',
             name: `CasaOS Mobile App (${isStable ? 'Stable' : 'Beta'})`,
-            image: `Version ${latestTag}`,
+            image: `Update available (${displayDate})`,
             isAppUpdate: true,
             url: apkAsset.browser_download_url,
-            tag: latestTag
+            tag: latestTag,
+            date: latestDate
           });
         } else {
-          showAlert('No APK', 'The found release does not contain a valid APK file.');
+          setAppUpdate(null);
         }
       } else {
         setAppUpdate(null);
@@ -310,7 +297,7 @@ export default function UpdatesScreen({ navigation }) {
           </View>
           <TouchableOpacity 
             style={styles.updateButton} 
-            onPress={() => downloadAndInstallApp(item.url, item.tag)}
+            onPress={() => downloadAndInstallApp(item.url, item.tag, item.date)}
           >
             <DownloadCloud color="#fff" size={20} />
           </TouchableOpacity>
