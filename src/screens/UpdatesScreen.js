@@ -103,6 +103,7 @@ export default function UpdatesScreen({ navigation }) {
 
     setupSocket();
     fetchUpdates();
+    checkAppUpdate();
 
     return () => {
       if (socket) socket.disconnect();
@@ -277,9 +278,10 @@ export default function UpdatesScreen({ navigation }) {
       if (latestTag && compareSemver(latestTag, storedLatest) > 0) {
         const apkAsset = latestRelease.assets.find(a => a.name.endsWith('.apk'));
         if (apkAsset) {
+          const isStable = !latestRelease.prerelease;
           setAppUpdate({
             id: 'app-update',
-            name: 'CasaOS Mobile App',
+            name: `CasaOS Mobile App (${isStable ? 'Stable' : 'Beta'})`,
             image: `Version ${latestTag}`,
             isAppUpdate: true,
             url: apkAsset.browser_download_url,
