@@ -1,0 +1,68 @@
+name: Manual Build Stable APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number for the tag (e.g. 1.0.5)'
+        required: true
+        default: '1.0.0'
+      notes:
+        description: 'Release notes (optional)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Stable APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Expo Prebuild
+        run: npx expo prebuild --platform android --clean
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          cache-read-only: false
+
+      - name: Build APK
+        working-directory: ./android
+        run: ./gradlew assembleRelease --no-daemon --parallel --build-cache
+
+      - name: Publish Stable Release to GitHub
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="v${{ github.event.inputs.version }}"
+          TITLE="CasaOS Mobile Stable Release $TAG"
+          NOTES="${{ github.event.inputs.notes }}"
+          if [ -z "$NOTES" ]; then
+            NOTES="Stable Release $TAG triggered manually"
+          fi
+          
+          # Creiamo la nuova release stable mantenendo lo storico
+          gh release create "$TAG" android/app/build/outputs/apk/release/app-release.apk \
+            --title "$TITLE" \
+            --notes "$NOTES"
