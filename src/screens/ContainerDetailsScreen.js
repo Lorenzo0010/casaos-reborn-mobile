@@ -29,16 +29,7 @@ export default function ContainerDetailsScreen({ route, navigation }) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
-  const [containerOverrides, setContainerOverrides] = useState({});
-
-  const fetchPreferences = async () => {
-    try {
-      const res = await apiClient.get('/api/system/preferences');
-      if (res.data.containerOverrides) setContainerOverrides(res.data.containerOverrides);
-    } catch (e) {
-      console.error('Error loading preferences', e);
-    }
-  };
+  const [actionLoading, setActionLoading] = useState(false);
 
   const fetchDetails = async () => {
     try {
@@ -54,25 +45,21 @@ export default function ContainerDetailsScreen({ route, navigation }) {
   };
 
   useEffect(() => {
-    const stableId = details?.Name?.replace(/^\//, '') || containerId;
-    const override = containerOverrides[stableId];
-    const actualName = (override && override.displayName) || details?.Config?.Labels?.['casaos.reborn.name'] || containerName || 'Container Details';
+    const actualName = details?.Config?.Labels?.['casaos.reborn.name'] || containerName || 'Container Details';
     
     navigation.setOptions({
       title: actualName
     });
-  }, [containerId, containerName, navigation, details, containerOverrides]);
+  }, [containerId, containerName, navigation, details]);
 
   useFocusEffect(
     useCallback(() => {
-      fetchPreferences();
       fetchDetails();
     }, [containerId])
   );
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    fetchPreferences();
     fetchDetails();
   }, [containerId]);
 
@@ -110,17 +97,10 @@ export default function ContainerDetailsScreen({ route, navigation }) {
 
   const getContainerUrl = () => {
     if (!details) return null;
-    const stableId = details.Name?.replace(/^\//, '') || containerId;
-    const override = containerOverrides[stableId];
     
     const baseUrl = apiClient.defaults.baseURL || '';
     const hostname = baseUrl.replace(/^https?:\/\//, '').split(':')[0].split('/')[0];
     if (!hostname) return null;
-
-    if (override && override.url) {
-      if (override.url.startsWith('http')) return override.url;
-      return `http://${hostname}:${override.url}`;
-    }
 
     const labels = details.Config?.Labels || {};
     let port = labels['casaos.reborn.webport'] || labels['casaos.reborn.port'];
@@ -144,9 +124,8 @@ export default function ContainerDetailsScreen({ route, navigation }) {
   const webUrl = isRunning ? getContainerUrl() : null;
 
   const stableId = details.Name ? details.Name.replace(/^\//, '') : containerId;
-  const override = containerOverrides[stableId];
-  const name = (override && override.displayName) || (details.Config?.Labels && (details.Config.Labels['casaos.reborn.name'] || details.Config.Labels['casaos.app.name'])) || stableId;
-  let iconUrl = (override && override.icon) || (details.Config?.Labels && (details.Config.Labels['casaos.reborn.icon'] || details.Config.Labels['casaos.app.icon'] || details.Config.Labels['icon']));
+  const name = (details.Config?.Labels && (details.Config.Labels['casaos.reborn.name'] || details.Config.Labels['casaos.app.name'])) || stableId;
+  let iconUrl = (details.Config?.Labels && (details.Config.Labels['casaos.reborn.icon'] || details.Config.Labels['casaos.app.icon'] || details.Config.Labels['icon']));
   
   if (iconUrl && typeof iconUrl === 'string') {
       iconUrl = iconUrl.trim();

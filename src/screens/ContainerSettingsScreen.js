@@ -158,27 +158,6 @@ export default function ContainerSettingsScreen({ route, navigation }) {
     };
 
     try {
-      // Sync overrides to preferences for Web UI and instant update
-      try {
-        const prefsRes = await apiClient.get('/api/system/preferences');
-        const currentPrefs = prefsRes.data || {};
-        const overrides = currentPrefs.containerOverrides || {};
-        const stableId = details.Name?.replace(/^\//, '') || containerId;
-        
-        overrides[stableId] = {
-          ...(overrides[stableId] || {}),
-          displayName: displayName,
-          icon: icon
-        };
-        
-        await apiClient.post('/api/system/preferences', {
-          ...currentPrefs,
-          containerOverrides: overrides
-        });
-      } catch (prefErr) {
-        console.warn('Failed to sync preferences:', prefErr);
-      }
-
       await apiClient.post(`/api/docker/containers/${containerId}/recreate`, payload);
       navigation.navigate('ContainersList');
     } catch (e) {

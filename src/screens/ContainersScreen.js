@@ -43,7 +43,6 @@ export default function ContainersScreen() {
   const [showSystemContainers, setShowSystemContainers] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [prefsLoaded, setPrefsLoaded] = useState(false);
-  const [containerOverrides, setContainerOverrides] = useState({});
   const [originalPrefs, setOriginalPrefs] = useState(null);
 
   const startEditMode = useCallback(() => {
@@ -93,7 +92,6 @@ export default function ContainersScreen() {
       if (Array.isArray(res.data.pinnedContainers)) setPinnedContainers(res.data.pinnedContainers);
       if (Array.isArray(res.data.customOrder)) setCustomOrder(res.data.customOrder);
       if (res.data.showSystemContainers !== undefined) setShowSystemContainers(res.data.showSystemContainers);
-      if (res.data.containerOverrides) setContainerOverrides(res.data.containerOverrides);
     } catch (e) {
       console.error('Error loading preferences', e);
     } finally {
@@ -188,22 +186,13 @@ export default function ContainersScreen() {
 
   const getContainerName = (c) => {
     const stableId = c.Names ? c.Names[0].replace('/', '') : c.Id;
-    const override = containerOverrides[stableId];
-    return (override && override.displayName) || (c.Labels && (c.Labels['casaos.reborn.name'] || c.Labels['casaos.app.name'])) || stableId;
+    return (c.Labels && (c.Labels['casaos.reborn.name'] || c.Labels['casaos.app.name'])) || stableId;
   };
 
   const getContainerUrl = (container) => {
-    const stableId = container.Names ? container.Names[0].replace('/', '') : container.Id;
-    const override = containerOverrides[stableId];
-
     const baseUrl = apiClient.defaults.baseURL || '';
     const hostname = baseUrl.replace(/^https?:\/\//, '').split(':')[0].split('/')[0];
     if (!hostname) return null;
-
-    if (override && override.url) {
-      if (override.url.startsWith('http')) return override.url;
-      return `http://${hostname}:${override.url}`;
-    }
 
     const labels = container.Labels || {};
     let scheme = labels['casaos.reborn.web.scheme'] || 'http';
@@ -271,7 +260,7 @@ export default function ContainersScreen() {
     });
 
     return [...pinned, ...unpinned];
-  }, [containers, sortMode, pinnedContainers, customOrder, showSystemContainers, containerOverrides]);
+  }, [containers, sortMode, pinnedContainers, customOrder, showSystemContainers]);
 
   const togglePin = (id) => {
     if (pinnedContainers.includes(id)) {
@@ -360,8 +349,7 @@ export default function ContainersScreen() {
           </View>
 
           {(() => {
-            const override = containerOverrides[stableId];
-            let iconUrl = (override && override.icon) || (item.Labels && (item.Labels['casaos.reborn.icon'] || item.Labels['icon']));
+            let iconUrl = item.Labels && (item.Labels['casaos.reborn.icon'] || item.Labels['icon']);
             if (iconUrl && typeof iconUrl === 'string') {
               iconUrl = iconUrl.trim();
               if (!iconUrl.startsWith('http') && !iconUrl.startsWith('data:')) {
@@ -518,7 +506,7 @@ export default function ContainersScreen() {
         columnWrapperStyle={isTablet ? { gap: SPACING.base } : undefined}
         ListHeaderComponent={renderHeader}
         contentContainerStyle={{ padding: SPACING.base, paddingTop: insets.top + HEADER.totalOffset, paddingBottom: CONTENT.paddingBottom }}
-        extraData={containerOverrides}
+        numColumns={numColumns}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
         }
