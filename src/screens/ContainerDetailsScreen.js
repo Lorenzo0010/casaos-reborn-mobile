@@ -29,7 +29,6 @@ export default function ContainerDetailsScreen({ route, navigation }) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
-  const [actionLoading, setActionLoading] = useState(false);
 
   const fetchDetails = async () => {
     try {
@@ -166,7 +165,7 @@ export default function ContainerDetailsScreen({ route, navigation }) {
         )}
         <View style={{ flex: 1, justifyContent: 'center' }}>
           <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit>
-            {(override && override.displayName) || details.Config?.Labels?.['casaos.reborn.name'] || stableId}
+            {details.Config?.Labels?.['casaos.reborn.name'] || containerName || stableId}
           </Text>
           <Text style={[styles.status, { color: statusColor }]}>
             {details.State?.Status?.toUpperCase()}
