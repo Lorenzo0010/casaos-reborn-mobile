@@ -292,10 +292,11 @@ export default function UpdatesScreen({ navigation }) {
         if (apkAsset) {
           const isStable = !latestRelease.prerelease;
           const displayDate = new Date(latestDate).toLocaleDateString();
+          const displayTime = new Date(latestDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
           setAppUpdate({
             id: 'app-update',
             name: `CasaOS Mobile App (${isStable ? 'Stable' : 'Beta'})`,
-            image: `Update available (${displayDate})`,
+            image: `Version ${latestTag} • ${displayDate} at ${displayTime}`,
             isAppUpdate: true,
             url: apkAsset.browser_download_url,
             tag: latestTag,
