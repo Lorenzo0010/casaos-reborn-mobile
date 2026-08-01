@@ -11,6 +11,18 @@ export const predefinedThemes = [
     lightBg: '#f8f9fb', lightSurface: '#ffffff', lightSurfaceElevated: '#f4f4f5'
   },
   { 
+    id: 'monochrome', name: 'Monochrome', 
+    primary: '#71717a', 
+    darkBg: '#000000', darkSurface: '#121212', darkSurfaceElevated: '#1e1e1e',
+    lightBg: '#f4f4f5', lightSurface: '#ffffff', lightSurfaceElevated: '#e4e4e7'
+  },
+  { 
+    id: 'dark_gray', name: 'Grigio Scuro', 
+    primary: '#6b7280', 
+    darkBg: '#111827', darkSurface: '#1f2937', darkSurfaceElevated: '#374151',
+    lightBg: '#f3f4f6', lightSurface: '#ffffff', lightSurfaceElevated: '#e5e7eb'
+  },
+  { 
     id: 'navy', name: 'Oceano', 
     primary: '#3b82f6', 
     darkBg: '#0f172a', darkSurface: '#1e293b', darkSurfaceElevated: '#334155',
@@ -39,12 +51,6 @@ export const predefinedThemes = [
     primary: '#8b5cf6', 
     darkBg: '#15131a', darkSurface: '#1f1b26', darkSurfaceElevated: '#2a2433',
     lightBg: '#f5f3ff', lightSurface: '#ffffff', lightSurfaceElevated: '#ede9fe'
-  },
-  { 
-    id: 'anthracite', name: 'Antracite', 
-    primary: '#94a3b8', 
-    darkBg: '#18181b', darkSurface: '#27272a', darkSurfaceElevated: '#3f3f46',
-    lightBg: '#f8f9fb', lightSurface: '#ffffff', lightSurfaceElevated: '#f4f4f5'
   }
 ];
 
