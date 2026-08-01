@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, useWindowDimensions, PlatformColor, Switch } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Constants from 'expo-constants';
 
 import { useTheme, predefinedThemes } from '../contexts/ThemeContext';
 import { useAlert } from '../contexts/AlertContext';
@@ -331,6 +332,13 @@ export default function AdvancedScreen() {
             <LogOut color={colors.error} size={20} style={{ marginRight: 8 }} />
             <Text style={styles.dangerBtnText}>Disconnect Account</Text>
           </TouchableOpacity>
+        </View>
+
+        {/* Version Info */}
+        <View style={{ alignItems: 'center', marginTop: 16, marginBottom: 24 }}>
+          <Text style={{ ...typography.caption, color: colors.textSecondary }}>
+            App Version: {Constants.expoConfig?.version || '1.0.0'} ({Constants.expoConfig?.extra?.buildType || 'Dev'})
+          </Text>
         </View>
         
       </ScrollView>

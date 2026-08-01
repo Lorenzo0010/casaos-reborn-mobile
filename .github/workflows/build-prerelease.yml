@@ -17,6 +17,31 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate Shared Build Number
+        run: |
+          LATEST_BUILD=$(git tag -l "build-*" | sed 's/build-//' | sort -n | tail -n 1)
+          if [ -z "$LATEST_BUILD" ] || [ "$LATEST_BUILD" -lt 100 ]; then
+            BUILD_NUMBER=100
+          else
+            BUILD_NUMBER=$((LATEST_BUILD + 1))
+          fi
+          
+          PADDED_BUILD=$(printf "%03d" $BUILD_NUMBER)
+          PATCH=${PADDED_BUILD: -1}
+          MINOR=${PADDED_BUILD: -2:1}
+          MAJOR=${PADDED_BUILD:0:${#PADDED_BUILD}-2}
+          SEMVER="$MAJOR.$MINOR.$PATCH"
+          
+          echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_ENV
+          echo "SEMVER=$SEMVER" >> $GITHUB_ENV
+          
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "build-$BUILD_NUMBER"
+          git push origin "build-$BUILD_NUMBER"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -32,6 +57,10 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Inject versionCode and version into app.json
+        run: |
+          jq '.expo.version = "${{ env.SEMVER }}" | .expo.android.versionCode = ${{ env.BUILD_NUMBER }} | .expo.extra.buildType = "Beta"' app.json > app.tmp.json && mv app.tmp.json app.json
 
       - name: Expo Prebuild
         run: npx expo prebuild --platform android --clean
@@ -49,9 +78,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Generiamo un tag progressivo basato sul numero della build
-          TAG="v1.0.${{ github.run_number }}-beta"
-          TITLE="CasaOS Mobile Pre-Release (Build ${{ github.run_number }})"
+          # Generiamo un tag progressivo basato sul semver calcolato
+          TAG="v${{ env.SEMVER }}-beta"
+          TITLE="CasaOS Mobile Pre-Release v${{ env.SEMVER }}"
           
           # Creiamo la nuova release senza eliminare le precedenti per mantenere lo storico
           gh release create "$TAG" android/app/build/outputs/apk/release/app-release.apk \
