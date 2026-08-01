@@ -240,12 +240,23 @@ export default function ContainerDetailsScreen({ route, navigation }) {
             <Network color={colors.text} size={20} />
             <Text style={[styles.sectionTitle, { marginBottom: 0, marginLeft: 8 }]}>Ports</Text>
           </View>
+          <View style={{ flexDirection: 'row', paddingHorizontal: 12, marginBottom: 6 }}>
+            <Text style={{ color: colors.textSecondary, fontSize: 11, width: 70, textAlign: 'center', fontWeight: 'bold' }}>HOST</Text>
+            <View style={{ width: 32 }} />
+            <Text style={{ color: colors.textSecondary, fontSize: 11, width: 70, textAlign: 'center', fontWeight: 'bold' }}>CONTAINER</Text>
+          </View>
           {parsedPorts.map((p, i) => (
-            <View key={i} style={[styles.infoRow, { backgroundColor: 'rgba(255,255,255,0.03)', padding: 12, borderRadius: 8, alignItems: 'center', justifyContent: 'space-between' }]}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                 <View style={styles.portBadge}><Text style={styles.portText}>{p.host}</Text></View>
-                 <ArrowRight color={colors.textSecondary} size={16} />
-                 <View style={styles.portBadge}><Text style={styles.portText}>{p.container}</Text></View>
+            <View key={i} style={[styles.infoRow, { backgroundColor: 'rgba(255,255,255,0.03)', paddingVertical: 8, paddingHorizontal: 12, marginBottom: 8, borderRadius: 8, alignItems: 'center', justifyContent: 'space-between' }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                 <View style={[styles.portBadge, { width: 70, alignItems: 'center' }]}>
+                   <Text style={styles.portText}>{p.host}</Text>
+                 </View>
+                 <View style={{ width: 32, alignItems: 'center' }}>
+                   <ArrowRight color={colors.textSecondary} size={16} />
+                 </View>
+                 <View style={[styles.portBadge, { width: 70, alignItems: 'center' }]}>
+                   <Text style={styles.portText}>{p.container}</Text>
+                 </View>
               </View>
               <Text style={{ color: colors.textSecondary, fontSize: 12, textTransform: 'uppercase' }}>{p.protocol}</Text>
             </View>

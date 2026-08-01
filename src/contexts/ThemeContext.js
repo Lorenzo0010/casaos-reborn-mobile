@@ -13,14 +13,14 @@ export const predefinedThemes = [
   { 
     id: 'monochrome', name: 'Monochrome', 
     primary: '#71717a', 
-    darkBg: '#09090b', darkSurface: '#18181b', darkSurfaceElevated: '#27272a',
+    darkBg: '#000000', darkSurface: '#121212', darkSurfaceElevated: '#1e1e1e',
     lightBg: '#f4f4f5', lightSurface: '#ffffff', lightSurfaceElevated: '#ffffff'
   },
   { 
     id: 'dark_gray', name: 'Grigio Scuro', 
-    primary: '#6b7280', 
-    darkBg: '#111827', darkSurface: '#1f2937', darkSurfaceElevated: '#374151',
-    lightBg: '#e5e7eb', lightSurface: '#ffffff', lightSurfaceElevated: '#f3f4f6'
+    primary: '#737373', 
+    darkBg: '#1e1e1e', darkSurface: '#2d2d2d', darkSurfaceElevated: '#3d3d3d',
+    lightBg: '#e5e5e5', lightSurface: '#ffffff', lightSurfaceElevated: '#f5f5f5'
   },
   { 
     id: 'navy', name: 'Oceano', 
@@ -151,8 +151,8 @@ export function ThemeProvider({ children }) {
     textSecondary: isDark ? '#aaaaaa' : '#6b7280',
     border: isDark ? '#333333' : '#e5e7eb',
     shadow: '#000000',
-    success: '#4ade80',
-    error: '#f87171',
+    success: isDark ? '#4ade80' : '#16a34a',
+    error: isDark ? '#f87171' : '#dc2626',
   };
 
   const typography = {

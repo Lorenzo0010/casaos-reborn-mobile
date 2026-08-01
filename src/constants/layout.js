@@ -60,7 +60,7 @@ export const CARD = {
 export const NAVBAR = {
   height: 64,
   radius: 32,
-  bottomGap: SPACING.base,
+  bottomGap: SPACING.sm, // reduced from SPACING.base to lower the navbar
   maxWidthPhone: 260,
   maxWidthTablet: 360,
   sideMargin: 48,                 // total horizontal margin (24 each side)

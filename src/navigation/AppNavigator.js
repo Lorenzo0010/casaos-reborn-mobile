@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../contexts/ThemeContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, PlusCircle, Settings as SettingsIcon } from 'lucide-react-native';
-import { SPACING, HEADER, NAVBAR, getNavbarWidth } from '../constants/layout';
+import { SPACING, HEADER, NAVBAR, getNavbarWidth, CARD } from '../constants/layout';
 
 import DashboardScreen from '../screens/DashboardScreen';
 import ContainersScreen from '../screens/ContainersScreen';
@@ -61,18 +61,18 @@ function CustomHeader({ options, route, back, navigation }) {
 
         {/* Title Pill */}
         <View style={{
-          backgroundColor: colors.surfaceElevated,
+          backgroundColor: colors.surface,
           borderRadius: HEADER.pillRadius,
           height: HEADER.pillHeight,
           justifyContent: 'center',
           paddingHorizontal: HEADER.pillPaddingH,
           borderWidth: HEADER.borderWidth,
-          borderColor: colors.border || 'rgba(150, 150, 150, 0.2)',
-          elevation: HEADER.elevation,
+          borderColor: colors.surfaceElevated === colors.surface ? colors.border : colors.surfaceElevated,
+          elevation: CARD.elevation,
           shadowColor: colors.shadow,
-          shadowOffset: { width: 0, height: 0 },
-          shadowOpacity: HEADER.shadowOpacity,
-          shadowRadius: HEADER.shadowRadius,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: CARD.shadowOpacity,
+          shadowRadius: CARD.shadowRadius,
           flexDirection: 'row',
           alignItems: 'center',
           marginRight: hasRight ? SPACING.base : 0, // Garantisce sempre spazio tra pillola e bottoni a destra
@@ -93,18 +93,18 @@ function CustomHeader({ options, route, back, navigation }) {
             flexDirection: 'row',
             alignItems: 'center',
             gap: HEADER.actionGap,
-            backgroundColor: colors.surfaceElevated,
+            backgroundColor: colors.surface,
             borderRadius: HEADER.pillRadius,
             height: HEADER.pillHeight,
             paddingHorizontal: HEADER.actionGap,
             justifyContent: 'center',
-            elevation: HEADER.elevation,
+            elevation: CARD.elevation,
             shadowColor: colors.shadow,
-            shadowOffset: { width: 0, height: 0 },
-            shadowOpacity: HEADER.shadowOpacity,
-            shadowRadius: HEADER.shadowRadius,
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: CARD.shadowOpacity,
+            shadowRadius: CARD.shadowRadius,
             borderWidth: HEADER.borderWidth,
-            borderColor: colors.border || 'rgba(150, 150, 150, 0.2)',
+            borderColor: colors.surfaceElevated === colors.surface ? colors.border : colors.surfaceElevated,
           }}>
             {options.headerRight()}
           </View>
@@ -214,20 +214,20 @@ function CustomTabBar({ state, descriptors, navigation, colors, BAR_WIDTH, leftP
   return (
     <View style={{
       flexDirection: 'row',
-      backgroundColor: colors.surfaceElevated,
+      backgroundColor: colors.surface,
       position: 'absolute',
       bottom: NAVBAR.bottomGap + bottomInset,
       left: leftPosition,
       width: BAR_WIDTH,
       borderRadius: NAVBAR.radius,
       height: NAVBAR.height,
-      elevation: HEADER.elevation,
+      elevation: CARD.elevation,
       shadowColor: colors.shadow,
-      shadowOffset: { width: 0, height: 0 },
-      shadowOpacity: HEADER.shadowOpacity,
-      shadowRadius: HEADER.shadowRadius,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: CARD.shadowOpacity,
+      shadowRadius: CARD.shadowRadius,
       borderWidth: HEADER.borderWidth,
-      borderColor: colors.border || 'rgba(150, 150, 150, 0.2)',
+      borderColor: colors.surfaceElevated === colors.surface ? colors.border : colors.surfaceElevated,
       justifyContent: 'space-evenly',
       alignItems: 'center',
     }}>
@@ -265,9 +265,11 @@ function CustomTabBar({ state, descriptors, navigation, colors, BAR_WIDTH, leftP
           >
             <View style={{
               backgroundColor: isFocused ? colors.primary : 'transparent',
-              paddingVertical: 6,
-              paddingHorizontal: 16,
-              borderRadius: 20,
+              width: 48,
+              height: 48,
+              justifyContent: 'center',
+              alignItems: 'center',
+              borderRadius: 24,
               opacity: isFocused ? 1 : 0.8
             }}>
               {IconComponent && <IconComponent color={isFocused ? '#ffffff' : colors.text} size={24} />}

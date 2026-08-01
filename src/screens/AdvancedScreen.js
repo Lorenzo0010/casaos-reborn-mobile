@@ -11,7 +11,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SPACING, HEADER, CARD, FADE, CONTENT, isTabletWidth } from '../constants/layout';
 
 export default function AdvancedScreen() {
-  const { colors, activeTheme, currentTheme, themeMode, changeTheme, typography } = useTheme();
+  const { colors, activeTheme, currentTheme, themeMode, changeTheme, typography, isDark } = useTheme();
   const { showAlert } = useAlert();
   const styles = createStyles(colors, typography);
   const insets = useSafeAreaInsets();
@@ -207,14 +207,19 @@ export default function AdvancedScreen() {
                     key={theme.id} 
                     style={[
                       styles.colorCircle, 
-                      { backgroundColor: btnColor }, 
-                      activeTheme === theme.id && styles.colorSelected
+                      { 
+                        backgroundColor: isDark ? theme.darkSurface : theme.lightSurface,
+                        borderWidth: activeTheme === theme.id ? 2 : 1,
+                        borderColor: activeTheme === theme.id ? colors.text : colors.border,
+                      }
                     ]}
                     onPress={() => handleThemeChange(theme.id)}
                   >
-                    {isMonet && (
-                      <Text style={[{ color: '#ffffff' }, typography.h3]}>M</Text>
-                    )}
+                    <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: btnColor, alignItems: 'center', justifyContent: 'center' }}>
+                      {isMonet && (
+                        <Text style={{ color: '#ffffff', fontSize: 12, fontFamily: 'Inter_700Bold' }}>M</Text>
+                      )}
+                    </View>
                   </TouchableOpacity>
                 );
               })}
@@ -355,6 +360,13 @@ const createStyles = (colors, typography) => StyleSheet.create({
     padding: CARD.padding,
     borderRadius: CARD.borderRadius,
     marginBottom: CARD.gap,
+    borderWidth: CARD.borderWidth,
+    borderColor: colors.surfaceElevated === colors.surface ? colors.border : colors.surfaceElevated,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: CARD.shadowOpacity,
+    shadowRadius: CARD.shadowRadius,
+    elevation: CARD.elevation,
   },
   sectionHeader: {
     flexDirection: 'row',

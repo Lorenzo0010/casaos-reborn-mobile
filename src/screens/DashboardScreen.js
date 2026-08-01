@@ -308,7 +308,7 @@ const createStyles = (colors, typography) => StyleSheet.create({
     padding: CARD.padding,
     marginBottom: CARD.gap,
     borderWidth: CARD.borderWidth,
-    borderColor: 'rgba(255, 255, 255, 0.03)',
+    borderColor: colors.surfaceElevated === colors.surface ? colors.border : colors.surfaceElevated,
     shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: CARD.shadowOpacity,
