@@ -8,49 +8,49 @@ export const predefinedThemes = [
     id: 'monet', name: 'Monet (Auto)', 
     primary: 'monet', 
     darkBg: '#18181b', darkSurface: '#27272a', darkSurfaceElevated: '#3f3f46',
-    lightBg: '#f8f9fb', lightSurface: '#ffffff', lightSurfaceElevated: '#f4f4f5'
+    lightBg: '#e4e4e7', lightSurface: '#ffffff', lightSurfaceElevated: '#f4f4f5'
   },
   { 
     id: 'monochrome', name: 'Monochrome', 
     primary: '#71717a', 
     darkBg: '#000000', darkSurface: '#121212', darkSurfaceElevated: '#1e1e1e',
-    lightBg: '#f4f4f5', lightSurface: '#ffffff', lightSurfaceElevated: '#e4e4e7'
+    lightBg: '#e4e4e7', lightSurface: '#ffffff', lightSurfaceElevated: '#f4f4f5'
   },
   { 
     id: 'dark_gray', name: 'Grigio Scuro', 
     primary: '#6b7280', 
     darkBg: '#111827', darkSurface: '#1f2937', darkSurfaceElevated: '#374151',
-    lightBg: '#f3f4f6', lightSurface: '#ffffff', lightSurfaceElevated: '#e5e7eb'
+    lightBg: '#e5e7eb', lightSurface: '#ffffff', lightSurfaceElevated: '#f3f4f6'
   },
   { 
     id: 'navy', name: 'Oceano', 
     primary: '#3b82f6', 
     darkBg: '#0f172a', darkSurface: '#1e293b', darkSurfaceElevated: '#334155',
-    lightBg: '#f8f9fb', lightSurface: '#ffffff', lightSurfaceElevated: '#f1f5f9'
+    lightBg: '#e2e8f0', lightSurface: '#ffffff', lightSurfaceElevated: '#f1f5f9'
   },
   { 
     id: 'forest', name: 'Smeraldo', 
     primary: '#10b981', 
     darkBg: '#111815', darkSurface: '#1b2621', darkSurfaceElevated: '#25352e',
-    lightBg: '#f0fdf4', lightSurface: '#ffffff', lightSurfaceElevated: '#ecfdf5'
+    lightBg: '#d1fae5', lightSurface: '#ffffff', lightSurfaceElevated: '#ecfdf5'
   },
   { 
     id: 'red', name: 'Rubino', 
     primary: '#f43f5e', 
     darkBg: '#1a1314', darkSurface: '#261b1d', darkSurfaceElevated: '#332427',
-    lightBg: '#fff1f2', lightSurface: '#ffffff', lightSurfaceElevated: '#ffe4e6'
+    lightBg: '#ffe4e6', lightSurface: '#ffffff', lightSurfaceElevated: '#fff1f2'
   },
   { 
     id: 'rust', name: 'Ambra', 
     primary: '#f59e0b', 
     darkBg: '#1a1613', darkSurface: '#26201b', darkSurfaceElevated: '#332b24',
-    lightBg: '#fffbeb', lightSurface: '#ffffff', lightSurfaceElevated: '#fef3c7'
+    lightBg: '#fef3c7', lightSurface: '#ffffff', lightSurfaceElevated: '#fffbeb'
   },
   { 
     id: 'purple', name: 'Ametista', 
     primary: '#8b5cf6', 
     darkBg: '#15131a', darkSurface: '#1f1b26', darkSurfaceElevated: '#2a2433',
-    lightBg: '#f5f3ff', lightSurface: '#ffffff', lightSurfaceElevated: '#ede9fe'
+    lightBg: '#ede9fe', lightSurface: '#ffffff', lightSurfaceElevated: '#f5f3ff'
   }
 ];
 
