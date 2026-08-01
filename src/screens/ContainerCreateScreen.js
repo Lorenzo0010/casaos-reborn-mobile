@@ -237,9 +237,26 @@ export default function ContainerCreateScreen({ navigation }) {
     const newItems = [...items];
     newItems[index][field] = value;
     setter(newItems);
+
+    if (setter === setPorts && field === 'host' && networkMode === 'bridge') {
+        const validPorts = newItems.map(p => p.host).filter(Boolean);
+        if (webUIPort && !validPorts.includes(webUIPort)) {
+            setWebUIPort('');
+        }
+    }
   };
   const addDynamicItem = (setter, items, emptyObj) => setter([...items, emptyObj]);
-  const removeDynamicItem = (setter, items, index) => setter(items.filter((_, i) => i !== index));
+  const removeDynamicItem = (setter, items, index) => {
+    const newItems = items.filter((_, i) => i !== index);
+    setter(newItems);
+
+    if (setter === setPorts && networkMode === 'bridge') {
+        const validPorts = newItems.map(p => p.host).filter(Boolean);
+        if (webUIPort && !validPorts.includes(webUIPort)) {
+            setWebUIPort('');
+        }
+    }
+  };
 
   const handleCreate = async () => {
     if (!image) {
@@ -490,7 +507,27 @@ export default function ContainerCreateScreen({ navigation }) {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.label}>Port</Text>
-                <TextInput style={styles.input} placeholder="(auto)" placeholderTextColor={colors.textSecondary} value={webUIPort} onChangeText={setWebUIPort} keyboardType="numeric" />
+                {networkMode === 'bridge' ? (
+                  <TouchableOpacity 
+                    style={[styles.input, { justifyContent: 'center', opacity: ports.filter(p => p.host).length === 0 ? 0.5 : 1 }]} 
+                    onPress={() => {
+                        const availablePorts = ports.filter(p => p.host).map(p => p.host);
+                        if (availablePorts.length === 0) return;
+                        const opts = ['', ...availablePorts];
+                        const currentIndex = opts.findIndex(p => String(p) === String(webUIPort));
+                        const nextIndex = (currentIndex + 1) % opts.length;
+                        setWebUIPort(String(opts[nextIndex]));
+                    }}
+                  >
+                    <Text style={{ color: colors.text }} numberOfLines={1}>
+                        {ports.filter(p => p.host).length === 0 
+                            ? 'N/A' 
+                            : (webUIPort || '(auto)')}
+                    </Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TextInput style={styles.input} placeholder="(auto)" placeholderTextColor={colors.textSecondary} value={webUIPort} onChangeText={setWebUIPort} keyboardType="numeric" />
+                )}
               </View>
             </View>
             <Text style={styles.label}>Path</Text>
