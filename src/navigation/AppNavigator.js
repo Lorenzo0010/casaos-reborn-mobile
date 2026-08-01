@@ -263,7 +263,15 @@ function CustomTabBar({ state, descriptors, navigation, colors, BAR_WIDTH, leftP
             onPress={onPress}
             style={{ flex: 1, alignItems: 'center', justifyContent: 'center', height: '100%' }}
           >
-            {IconComponent && <IconComponent color={color} size={24} />}
+            <View style={{
+              backgroundColor: isFocused ? colors.primary : 'transparent',
+              paddingVertical: 6,
+              paddingHorizontal: 16,
+              borderRadius: 20,
+              opacity: isFocused ? 1 : 0.8
+            }}>
+              {IconComponent && <IconComponent color={isFocused ? '#ffffff' : colors.text} size={24} />}
+            </View>
           </TouchableOpacity>
         );
       })}
@@ -322,14 +330,14 @@ export default function AppNavigator() {
     </Tab.Navigator>
     {/* Ombra della Status Bar di sistema (top) */}
     <LinearGradient
-      colors={['rgba(0,0,0,0.5)', 'transparent']}
-      style={{ position: 'absolute', top: 0, left: 0, right: 0, height: insets.top + 20 }}
+      colors={['rgba(0,0,0,0.3)', 'transparent']}
+      style={{ position: 'absolute', top: 0, left: 0, right: 0, height: insets.top + 40 }}
       pointerEvents="none"
     />
     {/* Ombra della Navigation Bar di sistema (bottom) */}
     <LinearGradient
-      colors={['transparent', 'rgba(0,0,0,0.7)']}
-      style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: insets.bottom + 20 }}
+      colors={['transparent', 'rgba(0,0,0,0.4)']}
+      style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: insets.bottom + 40 }}
       pointerEvents="none"
     />
     </>

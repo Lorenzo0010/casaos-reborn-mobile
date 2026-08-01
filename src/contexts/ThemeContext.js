@@ -7,14 +7,14 @@ export const predefinedThemes = [
   { 
     id: 'monet', name: 'Monet (Auto)', 
     primary: 'monet', 
-    darkBg: '#18181b', darkSurface: '#27272a', darkSurfaceElevated: '#3f3f46',
-    lightBg: '#e4e4e7', lightSurface: '#ffffff', lightSurfaceElevated: '#f4f4f5'
+    darkBg: '#0f172a', darkSurface: '#1e293b', darkSurfaceElevated: '#334155',
+    lightBg: '#f1f5f9', lightSurface: '#ffffff', lightSurfaceElevated: '#ffffff'
   },
   { 
     id: 'monochrome', name: 'Monochrome', 
     primary: '#71717a', 
-    darkBg: '#000000', darkSurface: '#121212', darkSurfaceElevated: '#1e1e1e',
-    lightBg: '#e4e4e7', lightSurface: '#ffffff', lightSurfaceElevated: '#f4f4f5'
+    darkBg: '#09090b', darkSurface: '#18181b', darkSurfaceElevated: '#27272a',
+    lightBg: '#f4f4f5', lightSurface: '#ffffff', lightSurfaceElevated: '#ffffff'
   },
   { 
     id: 'dark_gray', name: 'Grigio Scuro', 
@@ -110,21 +110,21 @@ export function ThemeProvider({ children }) {
 
   const getBackgroundColor = () => {
     if (currentTheme.id === 'monet' && Platform.OS === 'android' && Platform.Version >= 31) {
-      return isDark ? PlatformColor('@android:color/system_neutral1_900') : PlatformColor('@android:color/system_neutral1_50');
+      return isDark ? PlatformColor('@android:color/system_neutral1_900') : PlatformColor('@android:color/system_neutral1_100');
     }
     return isDark ? currentTheme.darkBg : currentTheme.lightBg;
   };
 
   const getSurfaceColor = () => {
     if (currentTheme.id === 'monet' && Platform.OS === 'android' && Platform.Version >= 31) {
-      return isDark ? PlatformColor('@android:color/system_neutral1_800') : PlatformColor('@android:color/system_neutral1_100');
+      return isDark ? PlatformColor('@android:color/system_neutral1_800') : PlatformColor('@android:color/system_neutral1_50');
     }
     return isDark ? currentTheme.darkSurface : currentTheme.lightSurface;
   };
 
   const getSurfaceElevatedColor = () => {
     if (currentTheme.id === 'monet' && Platform.OS === 'android' && Platform.Version >= 31) {
-      return isDark ? PlatformColor('@android:color/system_neutral1_700') : PlatformColor('@android:color/system_neutral1_200');
+      return isDark ? PlatformColor('@android:color/system_neutral1_700') : PlatformColor('@android:color/system_neutral1_10');
     }
     return isDark ? currentTheme.darkSurfaceElevated : currentTheme.lightSurfaceElevated;
   };
