@@ -240,8 +240,34 @@ export default function UpdatesScreen({ navigation }) {
         return;
       }
       
-      // Ordinamento per data invece che per semver, poiché i tag sono costanti ("Release" / "Pre-Release")
-      availableReleases.sort((a, b) => new Date(b.published_at || b.created_at) - new Date(a.published_at || a.created_at));
+      // Helper function to parse semantic versioning from tag (e.g. v1.1.0-beta)
+      const parseSemver = (tag) => {
+        const m = tag.match(/v(\d+)\.(\d+)\.(\d+)(?:-(.*))?/);
+        if (!m) return { major: 0, minor: 0, patch: 0, pre: '' };
+        return {
+          major: parseInt(m[1]),
+          minor: parseInt(m[2]),
+          patch: parseInt(m[3]),
+          pre: m[4] || 'zzzz' // 'zzzz' forces stable releases to be considered newer than prereleases of the same version
+        };
+      };
+
+      const compareSemver = (tagA, tagB) => {
+        const a = parseSemver(tagA);
+        const b = parseSemver(tagB);
+        if (a.major !== b.major) return a.major - b.major;
+        if (a.minor !== b.minor) return a.minor - b.minor;
+        if (a.patch !== b.patch) return a.patch - b.patch;
+        return a.pre.localeCompare(b.pre);
+      };
+
+      // Sort releases using semver descending (newest first)
+      availableReleases.sort((a, b) => {
+        const semverDiff = compareSemver(b.tag_name, a.tag_name);
+        if (semverDiff !== 0) return semverDiff;
+        // Fallback to date if tags are identical or not semver
+        return new Date(b.published_at || b.created_at) - new Date(a.published_at || a.created_at);
+      });
       
       const latestRelease = availableReleases[0];
       const latestTag = latestRelease.tag_name;
@@ -251,10 +277,11 @@ export default function UpdatesScreen({ navigation }) {
       const storedLatest = await AsyncStorage.getItem('latest_installed_tag');
 
       let isNewer = false;
-      if (storedDate) {
+      if (storedLatest && storedLatest.startsWith('v')) {
+        isNewer = compareSemver(latestTag, storedLatest) > 0;
+      } else if (storedDate) {
         isNewer = new Date(latestDate) > new Date(storedDate);
       } else if (storedLatest) {
-        // Fallback: se hanno già il tag ma non la data, mostriamo l'update per forzare il passaggio al nuovo sistema
         isNewer = true;
       } else {
         isNewer = true;
