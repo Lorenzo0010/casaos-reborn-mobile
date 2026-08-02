@@ -51,7 +51,8 @@ Default credentials (set in the backend's `docker-compose.yml`) are:
 *(Ensure you enter the full IP and port, e.g., `192.168.1.50:1111`)*
 
 > **Note on File Manager (Home Shortcut):**
-> If you want the "Home" shortcut in the mobile File Manager to open a specific host folder (e.g., your actual user folder), make sure you have set the `HOST_HOMEDIR` environment variable in your backend's `docker-compose.yml` (e.g., `HOST_HOMEDIR=/home`). The mobile app will automatically respect this configuration.
+> By default, the "Home" shortcut in the mobile File Manager opens the `/home` directory (since the backend runs in a Docker container). 
+> If you want it to open a specific user's folder instead (e.g. `/home/username`), make sure to set the `HOST_HOMEDIR` environment variable in your backend's `docker-compose.yml` (e.g., `HOST_HOMEDIR=/home/username`). The mobile app will automatically respect this configuration.
 
 ---
 
