@@ -50,6 +50,7 @@ function MainNavigation() {
 
   useEffect(() => {
     const checkForUpdates = async () => {
+      if (Platform.OS === 'web') return;
       try {
         const repo = 'Lorenzo0010/casaos-reborn-mobile';
         const res = await axios.get(`https://api.github.com/repos/${repo}/releases`, {

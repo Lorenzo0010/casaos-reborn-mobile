@@ -62,25 +62,34 @@ Default credentials (set in the backend's `docker-compose.yml`) are:
 - **API Calls:** Axios
 
 ### 🚀 Quick Start: Development & Testing
-Thanks to **Expo**, you don't need to build an APK to test the app. You can run it directly on your physical phone in seconds!
+Thanks to **Expo**, you have multiple ways to test the app depending on your needs.
 
-1. Download the free **Expo Go** app on your smartphone ([Google Play Store](https://play.google.com/store/apps/details?id=host.exp.exponent) or [Apple App Store](https://apps.apple.com/app/expo-go/id982107779)).
-2. Make sure you have Node.js installed on your PC.
-3. Open a terminal in this directory (`casaos-reborn-mobile`).
-4. Install dependencies:
-   ```bash
-   npm install
-   ```
-5. Start the development server:
+#### 1. Test directly on PC (Web Mode)
+The quickest way to test UI changes without installing anything else:
+1. Open a terminal in this directory (`casaos-reborn-mobile`).
+2. Run `npm install` (only the first time).
+3. Run `npm run web` to start the app as a website in your browser.
+4. Press `F12` and enable device mode (`Ctrl+Shift+M`) to simulate a mobile screen.
+
+#### 2. Test on your physical phone (Expo Go)
+Run the app directly on your smartphone in seconds!
+1. Download the free **Expo Go** app on your smartphone (Android/iOS).
+2. Start the development server on your PC:
    ```bash
    npm start
    ```
-6. A giant **QR Code** will appear in your terminal. Scan it using **Expo Go** (Android) or the Camera app (iOS). The app will open instantly!
+3. A giant **QR Code** will appear in your terminal. Scan it using **Expo Go** (Android) or the Camera app (iOS).
+   *Note: If it gets stuck, press `t` in the terminal to activate **Tunnel mode** to bypass local network issues, or connect via USB and press `a`.*
 
-### 🔧 Troubleshooting Expo Go
-- **"Something went wrong" (Metro stuck on 127.0.0.1):** Your Windows firewall is likely blocking the connection. While the terminal is running, press **`t`** to activate **Tunnel mode**. This bypasses local Wi-Fi blocks.
-- **"Failed to download remote update":** The Tunnel connection might be stuck. Close Expo Go on your phone, press `Ctrl + C` in the terminal, and restart with `npm start -- -c`.
-- **The bulletproof alternative (USB Cable):** Enable USB Debugging on your phone, connect it to the PC, and press **`a`** in the terminal to open the app via USB.
+#### 3. Test on Android Emulator (High fidelity)
+For the most accurate representation of the Android app directly on your Windows PC:
+1. Install **Android Studio** and create a Virtual Device (AVD).
+2. Launch the virtual device.
+3. Open a terminal and run:
+   ```bash
+   npm run android
+   ```
+   *The app will automatically compile and launch on the virtual device on your screen.*
 
 ### 📦 Building the Final APK
 When you are ready to build the official APK using **EAS Build** (Expo's cloud service):

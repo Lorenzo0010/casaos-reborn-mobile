@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert, Modal, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert, Modal, useWindowDimensions, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RefreshCw, DownloadCloud, CheckCircle, Smartphone, Settings } from 'lucide-react-native';
 
@@ -217,6 +217,10 @@ export default function UpdatesScreen({ navigation }) {
   };
 
   const checkAppUpdate = async () => {
+    if (Platform.OS === 'web') {
+      setAppUpdate(null);
+      return;
+    }
     setIsCheckingApp(true);
     try {
       const repo = 'Lorenzo0010/casaos-reborn-mobile';
