@@ -1,7 +1,6 @@
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
-import { Home, Server, RefreshCw } from 'lucide-react-native';
+import { Home, Server, RefreshCw, Folder } from 'lucide-react-native';
 import { View, useWindowDimensions, TouchableOpacity, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../contexts/ThemeContext';
@@ -18,6 +17,8 @@ import UpdatesScreen from '../screens/UpdatesScreen';
 import SystemContainerSettingsScreen from '../screens/SystemContainerSettingsScreen';
 import AdvancedScreen from '../screens/AdvancedScreen';
 import WidgetDetailsScreen from '../screens/WidgetDetailsScreen';
+import FilesScreen from '../screens/FilesScreen';
+import FileViewerScreen from '../screens/FileViewerScreen';
 
 const Tab = createMaterialTopTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -59,32 +60,53 @@ function CustomHeader({ options, route, back, navigation }) {
         {/* Left spacer for centering when there are right buttons */}
         {hasRight && <View style={{ width: rightAreaWidth, opacity: 0, flexShrink: 1 }} />}
 
-        {/* Title Pill */}
-        <View style={{
-          backgroundColor: colors.surface,
-          borderRadius: HEADER.pillRadius,
-          height: HEADER.pillHeight,
-          justifyContent: 'center',
-          paddingHorizontal: HEADER.pillPaddingH,
-          borderWidth: HEADER.borderWidth,
-          borderColor: colors.surfaceElevated === colors.surface ? colors.border : colors.surfaceElevated,
-          elevation: CARD.elevation,
-          shadowColor: colors.shadow,
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: CARD.shadowOpacity,
-          shadowRadius: CARD.shadowRadius,
-          flexDirection: 'row',
-          alignItems: 'center',
-          marginRight: hasRight ? SPACING.base : 0, // Garantisce sempre spazio tra pillola e bottoni a destra
-        }}>
+        {/* Center Group (Back Button + Title Pill) */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: HEADER.actionGap }}>
           {back && (
-            <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: SPACING.base, marginLeft: -SPACING.md }}>
+            <TouchableOpacity 
+              onPress={() => navigation.goBack()} 
+              style={{
+                width: HEADER.pillHeight,
+                height: HEADER.pillHeight,
+                borderRadius: HEADER.pillRadius,
+                backgroundColor: colors.surface,
+                justifyContent: 'center',
+                alignItems: 'center',
+                elevation: CARD.elevation,
+                shadowColor: colors.shadow,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: CARD.shadowOpacity,
+                shadowRadius: CARD.shadowRadius,
+                borderWidth: HEADER.borderWidth,
+                borderColor: colors.surfaceElevated === colors.surface ? colors.border : colors.surfaceElevated,
+              }}
+            >
               <ChevronLeft color={colors.text} size={HEADER.backIconSize} />
             </TouchableOpacity>
           )}
-          <Text style={{ ...typography.h1, fontFamily: 'Inter_500Medium', color: colors.text, fontSize: HEADER.titleFontSize }}>
-            {title}
-          </Text>
+
+          {/* Title Pill */}
+          <View style={{
+            backgroundColor: colors.surface,
+            borderRadius: HEADER.pillRadius,
+            height: HEADER.pillHeight,
+            justifyContent: 'center',
+            paddingHorizontal: HEADER.pillPaddingH,
+            borderWidth: HEADER.borderWidth,
+            borderColor: colors.surfaceElevated === colors.surface ? colors.border : colors.surfaceElevated,
+            elevation: CARD.elevation,
+            shadowColor: colors.shadow,
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: CARD.shadowOpacity,
+            shadowRadius: CARD.shadowRadius,
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginRight: hasRight ? SPACING.base : 0, // Garantisce sempre spazio tra pillola e bottoni a destra
+          }}>
+            <Text style={{ ...typography.h1, fontFamily: 'Inter_500Medium', color: colors.text, fontSize: HEADER.titleFontSize }}>
+              {title}
+            </Text>
+          </View>
         </View>
 
         {/* Action buttons (right side) */}
@@ -193,6 +215,28 @@ function UpdatesStackNavigator() {
   );
 }
 
+function FilesStackNavigator() {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerTransparent: true,
+        header: (props) => <CustomHeader {...props} />,
+      }}
+    >
+      <Stack.Screen 
+        name="FilesMain" 
+        component={FilesScreen} 
+        options={{ title: 'Files' }} 
+      />
+      <Stack.Screen 
+        name="FileViewer" 
+        component={FileViewerScreen} 
+        options={({ route }) => ({ title: route.params?.name || 'File Viewer' })} 
+      />
+    </Stack.Navigator>
+  );
+}
+
 function AdvancedStackNavigator() {
   return (
     <Stack.Navigator
@@ -247,12 +291,19 @@ function CustomTabBar({ state, descriptors, navigation, colors, BAR_WIDTH, leftP
           }
         };
 
-        const color = isFocused ? colors.primary : colors.textSecondary;
-        let IconComponent = null;
-        if (route.name === 'Dashboard') IconComponent = Home;
-        else if (route.name === 'ContainersTab') IconComponent = Server;
-        else if (route.name === 'Updates') IconComponent = RefreshCw;
-        else if (route.name === 'Advanced') IconComponent = SettingsIcon;
+        const iconColor = isFocused ? '#ffffff' : colors.text;
+        let icon = null;
+        if (route.name === 'Dashboard') {
+          icon = <Home color={iconColor} size={24} />;
+        } else if (route.name === 'ContainersTab') {
+          icon = <Server color={iconColor} size={24} />;
+        } else if (route.name === 'FilesTab') {
+          icon = <Folder color={iconColor} size={24} />;
+        } else if (route.name === 'Updates') {
+          icon = <RefreshCw color={iconColor} size={24} />;
+        } else if (route.name === 'Advanced') {
+          icon = <SettingsIcon color={iconColor} size={24} />;
+        }
 
         return (
           <TouchableOpacity
@@ -272,7 +323,7 @@ function CustomTabBar({ state, descriptors, navigation, colors, BAR_WIDTH, leftP
               borderRadius: 24,
               opacity: isFocused ? 1 : 0.8
             }}>
-              {IconComponent && <IconComponent color={isFocused ? '#ffffff' : colors.text} size={24} />}
+              {icon}
             </View>
           </TouchableOpacity>
         );
@@ -280,19 +331,6 @@ function CustomTabBar({ state, descriptors, navigation, colors, BAR_WIDTH, leftP
     </View>
   );
 }
-
-function getSwipeEnabled(route) {
-  const routeName = getFocusedRouteNameFromRoute(route) ?? '';
-  const disableSwipeRoutes = [
-    'ContainerDetails',
-    'ContainerSettings',
-    'ContainerCreate',
-    'SystemContainerSettings',
-    'WidgetDetails'
-  ];
-  return !disableSwipeRoutes.includes(routeName);
-}
-
 export default function AppNavigator() {
   const { colors } = useTheme();
   const { width } = useWindowDimensions();
@@ -306,28 +344,28 @@ export default function AppNavigator() {
       tabBarPosition="bottom"
       tabBar={(props) => <CustomTabBar {...props} colors={colors} BAR_WIDTH={BAR_WIDTH} leftPosition={leftPosition} bottomInset={insets.bottom} />}
       screenOptions={{
-        swipeEnabled: true,
+        swipeEnabled: false,
       }}
     >
       <Tab.Screen 
         name="Dashboard" 
         component={DashboardStackNavigator} 
-        options={({ route }) => ({ swipeEnabled: getSwipeEnabled(route) })}
       />
       <Tab.Screen 
         name="ContainersTab" 
         component={ContainersStackNavigator}
-        options={({ route }) => ({ swipeEnabled: getSwipeEnabled(route) })}
+      />
+      <Tab.Screen 
+        name="FilesTab" 
+        component={FilesStackNavigator}
       />
       <Tab.Screen 
         name="Updates" 
         component={UpdatesStackNavigator} 
-        options={({ route }) => ({ swipeEnabled: getSwipeEnabled(route) })}
       />
       <Tab.Screen 
         name="Advanced" 
         component={AdvancedStackNavigator} 
-        options={({ route }) => ({ swipeEnabled: getSwipeEnabled(route) })}
       />
     </Tab.Navigator>
     {/* Ombra della Status Bar di sistema (top) */}

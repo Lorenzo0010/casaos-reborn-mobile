@@ -1,3 +1,4 @@
+import 'react-native-gesture-handler';
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, Alert, Modal, ActivityIndicator, Platform } from 'react-native';
 import { NavigationContainer, DarkTheme } from '@react-navigation/native';
@@ -7,11 +8,13 @@ import * as IntentLauncher from 'expo-intent-launcher';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import axios from 'axios';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import LoginScreen from './src/screens/LoginScreen';
 import AppNavigator from './src/navigation/AppNavigator';
 import { ThemeProvider, useTheme } from './src/contexts/ThemeContext';
 import { AlertProvider, useAlert } from './src/contexts/AlertContext';
+import { EditProvider } from './src/contexts/EditContext';
 import {
   useFonts,
   Inter_400Regular,
@@ -140,7 +143,7 @@ function MainNavigation() {
   };
 
   return (
-    <>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <View style={{ flex: 1, backgroundColor: colors.background }}>
         <NavigationContainer theme={customDarkTheme}>
           <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={typeof colors.background === 'object' ? 'transparent' : colors.background} />
@@ -160,7 +163,7 @@ function MainNavigation() {
           </View>
         </View>
       </Modal>
-    </>
+    </GestureHandlerRootView>
   );
 }
 
@@ -184,7 +187,9 @@ export default function App() {
   return (
     <ThemeProvider>
       <AlertProvider>
-        <MainNavigation />
+        <EditProvider>
+          <MainNavigation />
+        </EditProvider>
       </AlertProvider>
     </ThemeProvider>
   );

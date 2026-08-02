@@ -1,13 +1,16 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { StyleSheet, Text, View, FlatList, ActivityIndicator, RefreshControl, TouchableOpacity, Alert, Linking, useWindowDimensions, LayoutAnimation } from 'react-native';
+import { Swipeable } from 'react-native-gesture-handler';
+import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
-import { Play, Square, RotateCw, Edit, Check, CheckSquare, Pin, ChevronUp, ChevronDown, Globe, PlusCircle, LogOut, Info, X, Calendar, Type, Activity, GripVertical, Eye, EyeOff } from 'lucide-react-native';
+import { Play, Square, RotateCw, Edit, Check, CheckSquare, Pin, ChevronUp, ChevronDown, Globe, PlusCircle, LogOut, Info, X, Calendar, Type, Activity, GripVertical, Eye, EyeOff, Settings } from 'lucide-react-native';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { apiClient, logout } from '../api/client';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAlert } from '../contexts/AlertContext';
+import { useEdit } from '../contexts/EditContext';
 import { SPACING, HEADER, CARD, FADE, CONTENT, isTabletWidth } from '../constants/layout';
 
 const getContainerColor = (name) => {
@@ -41,49 +44,25 @@ export default function ContainersScreen() {
   const [pinnedContainers, setPinnedContainers] = useState([]);
   const [customOrder, setCustomOrder] = useState([]);
   const [showSystemContainers, setShowSystemContainers] = useState(false);
-  const [editMode, setEditMode] = useState(false);
+  const { isLayoutUnlocked } = useEdit();
   const [prefsLoaded, setPrefsLoaded] = useState(false);
-  const [originalPrefs, setOriginalPrefs] = useState(null);
 
-  const startEditMode = useCallback(() => {
-    setOriginalPrefs({ sortMode, pinnedContainers, customOrder, showSystemContainers });
-    setEditMode(true);
-  }, [sortMode, pinnedContainers, customOrder, showSystemContainers]);
 
-  const cancelEditMode = useCallback(() => {
-    if (originalPrefs) {
-      setSortMode(originalPrefs.sortMode);
-      setPinnedContainers(originalPrefs.pinnedContainers);
-      setCustomOrder(originalPrefs.customOrder);
-      setShowSystemContainers(originalPrefs.showSystemContainers);
-    }
-    setEditMode(false);
-  }, [originalPrefs]);
-
-  const applyEditMode = useCallback(() => {
-    setEditMode(false);
-  }, []);
 
   React.useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
         <View style={{ flexDirection: 'row', gap: HEADER.actionGap }}>
           <TouchableOpacity 
-            style={{ width: HEADER.actionSize, height: HEADER.actionSize, borderRadius: HEADER.actionRadius, backgroundColor: 'rgba(255, 255, 255, 0.05)', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }}
-            onPress={!editMode ? () => navigation.navigate('ContainerCreate') : applyEditMode}
+            style={{ width: HEADER.actionSize, height: HEADER.actionSize, justifyContent: 'center', alignItems: 'center' }}
+            onPress={() => navigation.navigate('ContainerCreate')}
           >
-            {!editMode ? <PlusCircle color={colors.text} size={22} /> : <Check color={colors.success} size={22} />}
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={{ width: HEADER.actionSize, height: HEADER.actionSize, borderRadius: HEADER.actionRadius, backgroundColor: 'rgba(255, 255, 255, 0.05)', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }}
-            onPress={!editMode ? startEditMode : cancelEditMode}
-          >
-            {!editMode ? <Edit color={colors.text} size={22} /> : <X color={colors.error} size={22} />}
+            <PlusCircle color={colors.text} size={22} />
           </TouchableOpacity>
         </View>
       ),
     });
-  }, [navigation, editMode, colors, startEditMode, applyEditMode, cancelEditMode]);
+  }, [navigation, colors]);
 
   const fetchPreferences = async () => {
     try {
@@ -100,7 +79,7 @@ export default function ContainersScreen() {
   };
 
   useEffect(() => {
-    if (!prefsLoaded || editMode) return;
+    if (!prefsLoaded) return;
     const savePrefs = async () => {
       try {
         await apiClient.post('/api/system/preferences', {
@@ -115,7 +94,7 @@ export default function ContainersScreen() {
     };
     const timeout = setTimeout(savePrefs, 500);
     return () => clearTimeout(timeout);
-  }, [sortMode, pinnedContainers, customOrder, showSystemContainers, prefsLoaded, editMode]);
+  }, [sortMode, pinnedContainers, customOrder, showSystemContainers, prefsLoaded]);
 
   const fetchContainers = async () => {
     try {
@@ -146,7 +125,7 @@ export default function ContainersScreen() {
       }
       prevTasksCount.current = tasksList.length;
     } catch (e) {
-      // Ignora l'errore o logga in modo silenzioso
+      // Ignore error or log silently
     }
   };
 
@@ -323,114 +302,151 @@ export default function ContainersScreen() {
     const casaosName = getContainerName(item);
     const webUrl = isRunning ? getContainerUrl(item) : null;
 
-    return (
-      <TouchableOpacity
-        style={[
-          styles.card,
-          (editMode || isPinned) && { borderColor: isPinned ? colors.primary : colors.border, borderWidth: 1 },
-          isTablet && { flex: 1 }
-        ]}
-        delayPressIn={150}
-        onPressIn={(e) => {
-          touchStart.current = { x: e.nativeEvent.pageX, y: e.nativeEvent.pageY, ignore: false };
-        }}
-        onPressOut={(e) => {
-          const dx = Math.abs(e.nativeEvent.pageX - touchStart.current.x);
-          const dy = Math.abs(e.nativeEvent.pageY - touchStart.current.y);
-          if (dx > 10 || dy > 10) {
-            touchStart.current.ignore = true;
-          }
-        }}
-        onPress={() => {
-          if (touchStart.current.ignore) {
-            touchStart.current.ignore = false;
-            return;
-          }
-          if (isRecreating || editMode) return;
-          if (isRunning && webUrl) {
-            Linking.openURL(webUrl).catch(() => showAlert('Error', 'Cannot open link'));
-          } else {
-            navigation.navigate('ContainerDetails', { containerId, containerName: casaosName });
-          }
-        }}
-        activeOpacity={(isRecreating || editMode) ? 1 : 0.7}
-      >
-        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-          <View style={{ position: (editMode || isPinned) ? 'relative' : 'absolute', opacity: (editMode || isPinned) ? 1 : 0, left: 0 }}>
-            <TouchableOpacity onPress={() => togglePin(stableId)} style={{ padding: 8, marginRight: 4 }} disabled={!(editMode || isPinned)}>
-              <Pin size={20} color={isPinned ? colors.primary : colors.textSecondary} fill={isPinned ? colors.primary : 'none'} />
+    const renderRightActions = () => {
+      if (isLayoutUnlocked) return null;
+      return (
+        <View style={{ flexDirection: 'row', alignItems: 'center', height: '100%', paddingLeft: 8 }}>
+          {isRunning ? (
+            <TouchableOpacity 
+              style={{ width: 64, height: '100%', backgroundColor: colors.error, justifyContent: 'center', alignItems: 'center', borderRadius: CARD.borderRadius }}
+              onPress={() => { handleAction(containerId, 'stop'); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); }}
+            >
+              <Square color="white" size={24} fill="white" />
             </TouchableOpacity>
-          </View>
-
-          {(() => {
-            let iconUrl = item.Labels && (item.Labels['casaos.reborn.icon'] || item.Labels['icon']);
-            if (iconUrl && typeof iconUrl === 'string') {
-              iconUrl = iconUrl.trim();
-              if (!iconUrl.startsWith('http') && !iconUrl.startsWith('data:')) {
-                if (!iconUrl.startsWith('/')) iconUrl = '/' + iconUrl;
-                iconUrl = `${apiClient.defaults.baseURL}${iconUrl}`;
-              }
-              return (
-                <Image
-                  source={{ 
-                    uri: iconUrl,
-                    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' }
-                  }}
-                  style={{ width: 40, height: 40, borderRadius: 8, marginRight: 12 }}
-                  contentFit="contain"
-                  transition={200}
-                />
-              );
-            }
-            const initial = stableId.charAt(0).toUpperCase();
-            const bgColor = getContainerColor(stableId);
-            return (
-              <View style={{ width: 40, height: 40, borderRadius: 8, backgroundColor: bgColor, justifyContent: 'center', alignItems: 'center', marginRight: 12 }}>
-                <Text style={[{ color: 'white' }, typography.h2]}>{initial}</Text>
-              </View>
-            );
-          })()}
-
-          <View style={styles.cardInfo}>
-            <Text style={styles.name}>{casaosName}</Text>
-            <Text style={[styles.status, { color: isRecreating ? colors.primary : (isRunning ? colors.success : colors.error), fontFamily: 'monospace' }]}>
-              {isRecreating ? String(containerState).toUpperCase() : (isRunning ? (getWebPort(item) ? `RUNNING ON ${getWebPort(item)}` : 'RUNNING') : String(containerState).toUpperCase())}
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.actions}>
-          {(actionLoading === containerId || isRecreating) ? (
-            <ActivityIndicator color={colors.primary} size="small" style={{ margin: 10 }} />
           ) : (
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', minWidth: 80 }}>
-              <View style={{ flexDirection: 'row', position: editMode ? 'relative' : 'absolute', opacity: editMode ? 1 : 0, right: 0 }} pointerEvents={editMode ? 'auto' : 'none'}>
-                <TouchableOpacity style={styles.actionBtn} onPress={() => moveCustom(stableId, -1)}>
-                  <ChevronUp color={colors.text} size={20} />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.actionBtn} onPress={() => moveCustom(stableId, 1)}>
-                  <ChevronDown color={colors.text} size={20} />
-                </TouchableOpacity>
-              </View>
-
-              <View style={{ flexDirection: 'row', position: !editMode ? 'relative' : 'absolute', opacity: !editMode ? 1 : 0, right: 0 }} pointerEvents={!editMode ? 'auto' : 'none'}>
-                <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.navigate('ContainerDetails', { containerId, containerName: casaosName })}>
-                  <Info color={colors.textSecondary} size={20} />
-                </TouchableOpacity>
-                {isRunning ? (
-                  <TouchableOpacity style={styles.actionBtn} onPress={() => handleAction(containerId, 'stop')}>
-                    <Square color={colors.error} size={20} fill={colors.error} />
-                  </TouchableOpacity>
-                ) : (
-                  <TouchableOpacity style={styles.actionBtn} onPress={() => handleAction(containerId, 'start')}>
-                    <Play color={colors.success} size={20} fill={colors.success} />
-                  </TouchableOpacity>
-                )}
-              </View>
-            </View>
+            <TouchableOpacity 
+              style={{ width: 64, height: '100%', backgroundColor: colors.success, justifyContent: 'center', alignItems: 'center', borderRadius: CARD.borderRadius }}
+              onPress={() => { handleAction(containerId, 'start'); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); }}
+            >
+              <Play color="white" size={24} fill="white" />
+            </TouchableOpacity>
           )}
         </View>
-      </TouchableOpacity>
+      );
+    };
+
+    const renderLeftActions = () => {
+      if (isLayoutUnlocked) return null;
+      return (
+        <View style={{ flexDirection: 'row', alignItems: 'center', height: '100%', paddingRight: 8 }}>
+          <TouchableOpacity 
+            style={{ width: 64, height: '100%', backgroundColor: colors.surfaceElevated, justifyContent: 'center', alignItems: 'center', borderRadius: CARD.borderRadius }}
+            onPress={() => { navigation.navigate('ContainerDetails', { containerId, containerName: casaosName }); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+          >
+            <Settings color={colors.text} size={24} />
+          </TouchableOpacity>
+          {webUrl && (
+            <TouchableOpacity 
+              style={{ width: 64, height: '100%', backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center', borderRadius: CARD.borderRadius, marginLeft: 8 }}
+              onPress={() => { Linking.openURL(webUrl).catch(() => showAlert('Error', 'Cannot open link')); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+            >
+              <Globe color="white" size={24} />
+            </TouchableOpacity>
+          )}
+        </View>
+      );
+    };
+
+    return (
+      <Swipeable
+        renderLeftActions={renderLeftActions}
+        renderRightActions={renderRightActions}
+        enabled={!isLayoutUnlocked && !isRecreating}
+        onSwipeableOpen={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+        containerStyle={[isTablet && { flex: 1 }, { marginBottom: CARD.gap }]}
+        friction={2}
+        rightThreshold={40}
+        leftThreshold={40}
+      >
+        <TouchableOpacity
+          style={[
+            styles.card,
+            (isLayoutUnlocked || isPinned) && { borderColor: isPinned ? colors.primary : colors.border, borderWidth: 1 }
+          ]}
+          delayPressIn={150}
+          onPressIn={(e) => {
+            touchStart.current = { x: e.nativeEvent.pageX, y: e.nativeEvent.pageY, ignore: false };
+          }}
+          onPressOut={(e) => {
+            const dx = Math.abs(e.nativeEvent.pageX - touchStart.current.x);
+            const dy = Math.abs(e.nativeEvent.pageY - touchStart.current.y);
+            if (dx > 10 || dy > 10) {
+              touchStart.current.ignore = true;
+            }
+          }}
+          onPress={() => {
+            if (touchStart.current.ignore) {
+              touchStart.current.ignore = false;
+              return;
+            }
+            if (isRecreating || isLayoutUnlocked) return;
+            if (isRunning && webUrl) {
+              Linking.openURL(webUrl).catch(() => showAlert('Error', 'Cannot open link'));
+            } else {
+              navigation.navigate('ContainerDetails', { containerId, containerName: casaosName });
+            }
+          }}
+          activeOpacity={(isRecreating || isLayoutUnlocked) ? 1 : 0.7}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+            <View style={{ position: (isLayoutUnlocked || isPinned) ? 'relative' : 'absolute', opacity: (isLayoutUnlocked || isPinned) ? 1 : 0, left: 0 }}>
+              <TouchableOpacity onPress={() => { togglePin(stableId); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }} style={{ padding: 8, marginRight: 4 }} disabled={!(isLayoutUnlocked || isPinned)}>
+                <Pin size={20} color={isPinned ? colors.primary : colors.textSecondary} fill={isPinned ? colors.primary : 'none'} />
+              </TouchableOpacity>
+            </View>
+
+            {(() => {
+              let iconUrl = item.Labels && (item.Labels['casaos.reborn.icon'] || item.Labels['icon']);
+              if (iconUrl && typeof iconUrl === 'string') {
+                iconUrl = iconUrl.trim();
+                if (!iconUrl.startsWith('http') && !iconUrl.startsWith('data:')) {
+                  if (!iconUrl.startsWith('/')) iconUrl = '/' + iconUrl;
+                  iconUrl = `${apiClient.defaults.baseURL}${iconUrl}`;
+                }
+                return (
+                  <Image
+                    source={{ uri: iconUrl }}
+                    style={{ width: 40, height: 40, borderRadius: 8, marginRight: 12 }}
+                    contentFit="contain"
+                    transition={200}
+                  />
+                );
+              }
+              const initial = stableId.charAt(0).toUpperCase();
+              const bgColor = getContainerColor(stableId);
+              return (
+                <View style={{ width: 40, height: 40, borderRadius: 8, backgroundColor: bgColor, justifyContent: 'center', alignItems: 'center', marginRight: 12 }}>
+                  <Text style={[{ color: 'white' }, typography.h2]}>{initial}</Text>
+                </View>
+              );
+            })()}
+
+            <View style={styles.cardInfo}>
+              <Text style={styles.name}>{casaosName}</Text>
+              <Text style={[styles.status, { color: isRecreating ? colors.primary : (isRunning ? colors.success : colors.error), fontFamily: 'monospace' }]}>
+                {isRecreating ? String(containerState).toUpperCase() : (isRunning ? (getWebPort(item) ? `RUNNING ON ${getWebPort(item)}` : 'RUNNING') : String(containerState).toUpperCase())}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.actions}>
+            {(actionLoading === containerId || isRecreating) ? (
+              <ActivityIndicator color={colors.primary} size="small" style={{ margin: 10 }} />
+            ) : (
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end' }}>
+                <View style={{ flexDirection: 'row', position: isLayoutUnlocked ? 'relative' : 'absolute', opacity: isLayoutUnlocked ? 1 : 0, right: 0 }} pointerEvents={isLayoutUnlocked ? 'auto' : 'none'}>
+                  <TouchableOpacity style={styles.actionBtn} onPress={() => { moveCustom(stableId, -1); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}>
+                    <ChevronUp color={colors.text} size={20} />
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.actionBtn} onPress={() => { moveCustom(stableId, 1); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}>
+                    <ChevronDown color={colors.text} size={20} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+          </View>
+        </TouchableOpacity>
+      </Swipeable>
     );
   };
 
@@ -454,7 +470,7 @@ export default function ContainersScreen() {
       }
     };
 
-    if (!editMode) return null;
+    if (!isLayoutUnlocked) return null;
 
     return (
       <View style={[styles.header, styles.editOptions]}>
@@ -621,7 +637,6 @@ const createStyles = (colors, typography) => StyleSheet.create({
     backgroundColor: colors.surface,
     padding: CARD.padding,
     borderRadius: CARD.borderRadius,
-    marginBottom: CARD.gap,
     borderWidth: CARD.borderWidth,
     borderColor: colors.surfaceElevated === colors.surface ? colors.border : colors.surfaceElevated,
     shadowColor: colors.shadow,

@@ -1,15 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, Text, View, ScrollView, ActivityIndicator, RefreshControl, Dimensions, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-import { Cpu, HardDrive, Network, Server, ArrowDown, ArrowUp, Activity, CloudSun, Sun, CloudRain, Snowflake } from 'lucide-react-native';
-import { apiClient } from '../api/client';
+import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
+import { useEdit } from '../contexts/EditContext';
+
+import { Cpu, HardDrive, Network, Server, ArrowDown, ArrowUp, Activity, CloudSun, Sun, CloudRain, Snowflake, Edit, Check, X, ChevronUp, ChevronDown } from 'lucide-react-native';
+import { apiClient } from '../api/client';
 import { SPACING, HEADER, CARD, FADE, CONTENT, isTabletWidth } from '../constants/layout';
 
 import { useNavigation } from '@react-navigation/native';
 
-const WidgetCard = ({ title, icon, color, style, onPress, mainValue, percent, subLeft, subRight }) => {
+const WidgetCard = ({ title, icon, color, style, onPress, mainValue, percent, subLeft, subRight, isEditMode, onMoveUp, onMoveDown }) => {
   const { colors, typography } = useTheme();
   const styles = createStyles(colors, typography);
   
@@ -35,18 +37,20 @@ const WidgetCard = ({ title, icon, color, style, onPress, mainValue, percent, su
           touchStart.current.ignore = false;
           return;
         }
+        if (isEditMode) return;
         onPress();
       } : undefined}
       activeOpacity={onPress ? 0.7 : 1}
+      disabled={isEditMode}
     >
       <View style={styles.cardHeaderFlex}>
-        <View style={styles.rowCentered}>
+        <View style={[styles.rowCentered, { flex: 1 }]}>
           <View style={[styles.iconBox, { backgroundColor: `${color}33` }]}>
             {icon}
           </View>
           <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <Text style={styles.cardTitle}>{title}</Text>
-            <Text style={styles.cardValue}>{mainValue}</Text>
+            <Text style={[styles.cardValue, { textAlign: 'right', flex: 1 }]} numberOfLines={1}>{mainValue}</Text>
           </View>
         </View>
       </View>
@@ -63,6 +67,17 @@ const WidgetCard = ({ title, icon, color, style, onPress, mainValue, percent, su
         {subLeft}
         {subRight}
       </View>
+
+      {isEditMode && (
+        <View style={styles.editOverlay}>
+          <TouchableOpacity style={styles.actionBtn} onPress={onMoveUp}>
+            <ChevronUp color={colors.text} size={24} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionBtn} onPress={onMoveDown}>
+            <ChevronDown color={colors.text} size={24} />
+          </TouchableOpacity>
+        </View>
+      )}
     </CardComponent>
   );
 };
@@ -85,6 +100,43 @@ export default function DashboardScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
 
+  const { isLayoutUnlocked } = useEdit();
+  const [widgetOrder, setWidgetOrder] = useState(['system', 'cpu', 'ram', 'disk', 'network', 'weather']);
+  const [prefsLoaded, setPrefsLoaded] = useState(false);
+
+  const fetchPreferences = async () => {
+    try {
+      const res = await apiClient.get('/api/system/preferences');
+      if (Array.isArray(res.data.dashboardWidgetOrder) && res.data.dashboardWidgetOrder.length > 0) {
+        const defaultOrder = ['system', 'cpu', 'ram', 'disk', 'network', 'weather'];
+        const savedOrder = res.data.dashboardWidgetOrder;
+        const missing = defaultOrder.filter(w => !savedOrder.includes(w));
+        setWidgetOrder([...savedOrder, ...missing]);
+      }
+    } catch (e) {
+      console.error('Error loading preferences', e);
+    } finally {
+      setPrefsLoaded(true);
+    }
+  };
+
+  const moveWidget = (id, direction) => {
+    const newOrder = [...widgetOrder];
+    const index = newOrder.indexOf(id);
+    if (index === -1) return;
+
+    if (direction === -1 && index > 0) {
+      const temp = newOrder[index - 1];
+      newOrder[index - 1] = newOrder[index];
+      newOrder[index] = temp;
+    } else if (direction === 1 && index < newOrder.length - 1) {
+      const temp = newOrder[index + 1];
+      newOrder[index + 1] = newOrder[index];
+      newOrder[index] = temp;
+    }
+    setWidgetOrder(newOrder);
+  };
+
   const fetchStats = async () => {
     try {
       setError(null);
@@ -106,10 +158,27 @@ export default function DashboardScreen() {
   };
 
   useEffect(() => {
+    fetchPreferences();
     fetchStats();
     const interval = setInterval(fetchStats, 5000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (!prefsLoaded) return;
+    
+    // Optimistically update API order.
+    // In a real app we'd debounce this if we do a lot of drags
+    apiClient.get('/api/system/preferences').then(res => {
+      const currentPrefs = res.data || {};
+      return apiClient.post('/api/system/preferences', {
+        ...currentPrefs,
+        dashboardWidgetOrder: widgetOrder
+      });
+    }).catch(e => {
+      console.warn('Failed to save widget order to preferences', e);
+    });
+  }, [widgetOrder, prefsLoaded]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -147,6 +216,91 @@ export default function DashboardScreen() {
   };
 
 
+  const getWidgetDefinition = (id) => {
+    switch(id) {
+      case 'system':
+        return {
+          title: "System",
+          icon: <Server color="#8b5cf6" size={20} />,
+          color: "#8b5cf6",
+          style: fullCardStyle,
+          mainValue: formatUptime(stats.os?.uptime),
+          subLeft: <Text style={styles.cardFooterText}>{stats.os?.distro} {stats.os?.release}</Text>,
+          subRight: <Text style={styles.cardFooterText}>Uptime</Text>,
+        };
+      case 'cpu':
+        return {
+          title: "CPU",
+          icon: <Cpu color="#3b82f6" size={20} />,
+          color: "#3b82f6",
+          style: cpuCardStyle,
+          onPress: () => navigation.navigate('WidgetDetails', { type: 'cpu', title: 'Processor Details' }),
+          mainValue: `${formatCpu(stats.cpu?.load)}% ${stats.cpu?.temperature ? `| ${Math.round(stats.cpu.temperature)}°C` : ''}`,
+          percent: stats.cpu?.load,
+          subLeft: <Text style={styles.cardFooterText}>{stats.cpu?.cores || 0} Cores</Text>,
+          subRight: <Text style={styles.cardFooterText}>Active</Text>,
+        };
+      case 'ram':
+        return {
+          title: "RAM",
+          icon: <Activity color="#8b5cf6" size={20} />,
+          color: "#8b5cf6",
+          style: resourceCardStyle,
+          onPress: () => navigation.navigate('WidgetDetails', { type: 'ram', title: 'RAM Details' }),
+          mainValue: `${Math.round(stats.memory?.percent || 0)}%`,
+          percent: stats.memory?.percent,
+          subLeft: <Text style={styles.cardFooterText}>{formatBytes(stats.memory?.used)}</Text>,
+          subRight: <Text style={styles.cardFooterText}>{formatBytes(stats.memory?.total)}</Text>,
+        };
+      case 'disk':
+        return {
+          title: "Disk",
+          icon: <HardDrive color="#10b981" size={20} />,
+          color: "#10b981",
+          style: resourceCardStyle,
+          mainValue: `${Math.round(stats.disk?.percent || 0)}%`,
+          percent: stats.disk?.percent,
+          subLeft: <Text style={styles.cardFooterText}>{formatBytes(stats.disk?.used)}</Text>,
+          subRight: <Text style={styles.cardFooterText}>{formatBytes(stats.disk?.total)}</Text>,
+        };
+      case 'network':
+        return {
+          title: "Network",
+          icon: <Network color="#f59e0b" size={20} />,
+          color: "#f59e0b",
+          style: fullCardStyle,
+          mainValue: "Real-time",
+          subLeft: (
+            <View style={styles.networkCol}>
+              <ArrowDown color="#10b981" size={16} />
+              <Text style={styles.networkValue}>{formatBytes(stats.network?.rx_sec)}/s</Text>
+            </View>
+          ),
+          subRight: (
+            <View style={styles.networkCol}>
+              <ArrowUp color="#3b82f6" size={16} />
+              <Text style={styles.networkValue}>{formatBytes(stats.network?.tx_sec)}/s</Text>
+            </View>
+          ),
+        };
+      case 'weather':
+        return {
+          title: "Weather",
+          icon: weatherData?.description?.toLowerCase().includes('sun') || weatherData?.description?.toLowerCase().includes('clear') ? <Sun color="#f59e0b" size={20} /> :
+                weatherData?.description?.toLowerCase().includes('cloud') ? <CloudSun color="#f59e0b" size={20} /> :
+                weatherData?.description?.toLowerCase().includes('rain') ? <CloudRain color="#3b82f6" size={20} /> :
+                weatherData?.description?.toLowerCase().includes('snow') ? <Snowflake color="#60a5fa" size={20} /> :
+                <CloudSun color="#f59e0b" size={20} />,
+          color: weatherData?.description?.toLowerCase().includes('rain') || weatherData?.description?.toLowerCase().includes('snow') ? '#3b82f6' : '#f59e0b',
+          style: fullCardStyle,
+          mainValue: weatherData ? `${weatherData.temp}°C` : '--°C',
+          subLeft: <Text style={styles.cardFooterText}>{weatherData ? weatherData.city : 'Loading...'}</Text>,
+          subRight: <Text style={styles.cardFooterText}>{weatherData ? weatherData.description : '--'}</Text>,
+        };
+      default: return null;
+    }
+  };
+
   return (
     <View style={styles.container}>
       <ScrollView
@@ -165,95 +319,19 @@ export default function DashboardScreen() {
 
         {stats && (
           <View style={styles.grid}>
-            
-            {/* SYSTEM INFO Card (Full Width) */}
-            <WidgetCard
-              title="System"
-              icon={<Server color="#8b5cf6" size={20} />}
-              color="#8b5cf6"
-              style={fullCardStyle}
-              mainValue={formatUptime(stats.os?.uptime)}
-              subLeft={<Text style={styles.cardFooterText}>{stats.os?.distro} {stats.os?.release}</Text>}
-              subRight={<Text style={styles.cardFooterText}>Uptime</Text>}
-            />
-
-            {/* CPU Card */}
-            <WidgetCard
-              title="CPU"
-              icon={<Cpu color="#3b82f6" size={20} />}
-              color="#3b82f6"
-              style={cpuCardStyle}
-              onPress={() => navigation.navigate('WidgetDetails', { type: 'cpu', title: 'Processor Details' })}
-              mainValue={`${formatCpu(stats.cpu?.load)}% ${stats.cpu?.temperature ? `| ${Math.round(stats.cpu.temperature)}°C` : ''}`}
-              percent={stats.cpu?.load}
-              subLeft={<Text style={styles.cardFooterText}>{stats.cpu?.cores || 0} Cores</Text>}
-              subRight={<Text style={styles.cardFooterText}>Active</Text>}
-            />
-
-            {/* RAM Card */}
-            <WidgetCard
-              title="RAM"
-              icon={<Activity color="#8b5cf6" size={20} />}
-              color="#8b5cf6"
-              style={resourceCardStyle}
-              onPress={() => navigation.navigate('WidgetDetails', { type: 'ram', title: 'RAM Details' })}
-              mainValue={`${Math.round(stats.memory?.percent || 0)}%`}
-              percent={stats.memory?.percent}
-              subLeft={<Text style={styles.cardFooterText}>{formatBytes(stats.memory?.used)}</Text>}
-              subRight={<Text style={styles.cardFooterText}>{formatBytes(stats.memory?.total)}</Text>}
-            />
-
-            {/* DISK Card */}
-            <WidgetCard
-              title="Disk"
-              icon={<HardDrive color="#10b981" size={20} />}
-              color="#10b981"
-              style={resourceCardStyle}
-              mainValue={`${Math.round(stats.disk?.percent || 0)}%`}
-              percent={stats.disk?.percent}
-              subLeft={<Text style={styles.cardFooterText}>{formatBytes(stats.disk?.used)}</Text>}
-              subRight={<Text style={styles.cardFooterText}>{formatBytes(stats.disk?.total)}</Text>}
-            />
-
-            {/* NETWORK Card */}
-            <WidgetCard
-              title="Network"
-              icon={<Network color="#f59e0b" size={20} />}
-              color="#f59e0b"
-              style={fullCardStyle}
-              mainValue="Real-time"
-              subLeft={
-                <View style={styles.networkCol}>
-                  <ArrowDown color="#10b981" size={16} />
-                  <Text style={styles.networkValue}>{formatBytes(stats.network?.rx_sec)}/s</Text>
-                </View>
-              }
-              subRight={
-                <View style={styles.networkCol}>
-                  <ArrowUp color="#3b82f6" size={16} />
-                  <Text style={styles.networkValue}>{formatBytes(stats.network?.tx_sec)}/s</Text>
-                </View>
-              }
-            />
-
-            {/* WEATHER Card */}
-            <WidgetCard
-              title="Weather"
-              icon={
-                weatherData?.description?.toLowerCase().includes('sun') || weatherData?.description?.toLowerCase().includes('clear') ? <Sun color="#f59e0b" size={20} /> :
-                weatherData?.description?.toLowerCase().includes('cloud') ? <CloudSun color="#f59e0b" size={20} /> :
-                weatherData?.description?.toLowerCase().includes('rain') ? <CloudRain color="#3b82f6" size={20} /> :
-                weatherData?.description?.toLowerCase().includes('snow') ? <Snowflake color="#60a5fa" size={20} /> :
-                <CloudSun color="#f59e0b" size={20} />
-              }
-              color={
-                weatherData?.description?.toLowerCase().includes('rain') || weatherData?.description?.toLowerCase().includes('snow') ? '#3b82f6' : '#f59e0b'
-              }
-              style={fullCardStyle}
-              mainValue={weatherData ? `${weatherData.temp}°C` : '--°C'}
-              subLeft={<Text style={styles.cardFooterText}>{weatherData ? weatherData.city : 'Loading...'}</Text>}
-              subRight={<Text style={styles.cardFooterText}>{weatherData ? weatherData.description : '--'}</Text>}
-            />
+            {widgetOrder.map((id) => {
+              const def = getWidgetDefinition(id);
+              if (!def) return null;
+              return (
+                <WidgetCard
+                  key={id}
+                  {...def}
+                  isEditMode={isLayoutUnlocked}
+                  onMoveUp={() => moveWidget(id, -1)}
+                  onMoveDown={() => moveWidget(id, 1)}
+                />
+              );
+            })}
           </View>
         )}
       </ScrollView>
@@ -301,12 +379,12 @@ const createStyles = (colors, typography) => StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
+    gap: CARD.gap,
   },
   card: {
     backgroundColor: colors.surface,
     borderRadius: CARD.borderRadius,
     padding: CARD.padding,
-    marginBottom: CARD.gap,
     borderWidth: CARD.borderWidth,
     borderColor: colors.surfaceElevated === colors.surface ? colors.border : colors.surfaceElevated,
     shadowColor: colors.shadow,
@@ -373,5 +451,20 @@ const createStyles = (colors, typography) => StyleSheet.create({
     ...typography.caption,
     fontFamily: 'Inter_600SemiBold',
     color: colors.text,
+  },
+  editOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    borderRadius: CARD.borderRadius,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 24,
+    zIndex: 10,
+  },
+  actionBtn: {
+    padding: 12,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 8,
   },
 });

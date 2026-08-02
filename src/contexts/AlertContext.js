@@ -48,7 +48,7 @@ export const AlertProvider = ({ children }) => {
               <Text style={styles.alertMessage}>{alertConfig.message}</Text>
             )}
             
-            <View style={styles.alertButtonsRow}>
+            <View style={[styles.alertButtonsRow, alertConfig.buttons.length >= 3 && styles.alertButtonsColumn]}>
               {alertConfig.buttons.map((btn, idx) => {
                 const isCancel = btn.style === 'cancel';
                 const isDestructive = btn.style === 'destructive';
@@ -121,6 +121,9 @@ const createStyles = (colors, typography) => StyleSheet.create({
     justifyContent: 'center',
     gap: 12,
     width: '100%',
+  },
+  alertButtonsColumn: {
+    flexDirection: 'column',
   },
   alertButton: {
     flex: 1,

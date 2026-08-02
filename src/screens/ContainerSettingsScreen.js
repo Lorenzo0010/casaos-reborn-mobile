@@ -304,10 +304,7 @@ export default function ContainerSettingsScreen({ route, navigation }) {
       <View style={[styles.headerCard, { flexDirection: 'row', alignItems: 'center' }]}>
         {displayIconUrl ? (
           <Image 
-            source={{ 
-              uri: displayIconUrl,
-              headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' }
-            }} 
+            source={{ uri: displayIconUrl }} 
             style={{ width: 64, height: 64, borderRadius: 12, marginRight: 16 }} 
             contentFit="contain"
             transition={200}

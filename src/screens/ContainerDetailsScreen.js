@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, Text, View, ScrollView, ActivityIndicator, TouchableOpacity, Alert, RefreshControl, Linking } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, ActivityIndicator, TouchableOpacity, Alert, RefreshControl, Linking, useWindowDimensions } from 'react-native';
 import { Image } from 'expo-image';
 import { Settings, Play, Square, RotateCw, Globe, RefreshCcw, Github, Box, Tag, Calendar, Network, FileCode, ArrowRight } from 'lucide-react-native';
 import { useFocusEffect } from '@react-navigation/native';
@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { apiClient } from '../api/client';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAlert } from '../contexts/AlertContext';
-import { SPACING, HEADER } from '../constants/layout';
+import { SPACING, HEADER, isTabletWidth } from '../constants/layout';
 
 const getContainerColor = (name) => {
     let hash = 0;
@@ -19,8 +19,10 @@ const getContainerColor = (name) => {
 };
 
 export default function ContainerDetailsScreen({ route, navigation }) {
+  const { width: windowWidth } = useWindowDimensions();
+  const isTablet = isTabletWidth(windowWidth);
   const { colors, typography } = useTheme();
-  const styles = createStyles(colors, typography);
+  const styles = createStyles(colors, typography, isTablet);
   const { showAlert } = useAlert();
   const insets = useSafeAreaInsets();
 
@@ -199,10 +201,7 @@ export default function ContainerDetailsScreen({ route, navigation }) {
       <View style={styles.headerCard}>
         {iconUrl ? (
           <Image 
-            source={{ 
-              uri: iconUrl,
-              headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' }
-            }} 
+            source={{ uri: iconUrl }} 
             style={{ width: 64, height: 64, borderRadius: 12, marginRight: 16 }} 
             contentFit="contain"
             transition={200}
@@ -363,7 +362,7 @@ export default function ContainerDetailsScreen({ route, navigation }) {
   );
 }
 
-const createStyles = (colors, typography) => StyleSheet.create({
+const createStyles = (colors, typography, isTablet) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -409,7 +408,7 @@ const createStyles = (colors, typography) => StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: 12,
     flexGrow: 1,
-    flexBasis: '30%',
+    flexBasis: isTablet ? '14%' : '30%',
     minWidth: 100,
     marginBottom: 4,
   },

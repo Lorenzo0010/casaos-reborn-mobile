@@ -62,34 +62,29 @@ Default credentials (set in the backend's `docker-compose.yml`) are:
 - **API Calls:** Axios
 
 ### 🚀 Quick Start: Development & Testing
-Thanks to **Expo**, you have multiple ways to test the app depending on your needs.
 
-#### 1. Test directly on PC (Web Mode)
-The quickest way to test UI changes without installing anything else:
+#### 1. Test in your browser (Web Mode)
+The quickest way to test the app locally in your browser is by using Expo Web:
+
 1. Open a terminal in this directory (`casaos-reborn-mobile`).
 2. Run `npm install` (only the first time).
-3. Run `npm run web` to start the app as a website in your browser.
-4. Press `F12` and enable device mode (`Ctrl+Shift+M`) to simulate a mobile screen.
+3. Run the development server with:
+   ```bash
+   npx expo start --web
+   ```
+4. A browser window will open automatically. Press `F12` and enable device mode (`Ctrl+Shift+M` or `Cmd+Shift+M`) to simulate a mobile screen.
+
+*(Note: To clear the cache during startup, you can use `npx expo start -c --web`)*
 
 #### 2. Test on your physical phone (Expo Go)
 Run the app directly on your smartphone in seconds!
+
 1. Download the free **Expo Go** app on your smartphone (Android/iOS).
 2. Start the development server on your PC:
    ```bash
-   npm start
+   npx expo start
    ```
-3. A giant **QR Code** will appear in your terminal. Scan it using **Expo Go** (Android) or the Camera app (iOS).
-   *Note: If it gets stuck, press `t` in the terminal to activate **Tunnel mode** to bypass local network issues, or connect via USB and press `a`.*
-
-#### 3. Test on Android Emulator (High fidelity)
-For the most accurate representation of the Android app directly on your Windows PC:
-1. Install **Android Studio** and create a Virtual Device (AVD).
-2. Launch the virtual device.
-3. Open a terminal and run:
-   ```bash
-   npm run android
-   ```
-   *The app will automatically compile and launch on the virtual device on your screen.*
+3. A giant **QR Code** will appear in your terminal. Scan it using **Expo Go** (Android) or the Camera app (iOS) to load the app directly on your device.
 
 ### 📦 Building the Final APK
 When you are ready to build the official APK using **EAS Build** (Expo's cloud service):

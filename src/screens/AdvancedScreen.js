@@ -9,9 +9,11 @@ import { apiClient, logout } from '../api/client';
 import { Palette, Send, Save, RefreshCcw, LogOut, DownloadCloud } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useEdit } from '../contexts/EditContext';
 import { SPACING, HEADER, CARD, FADE, CONTENT, isTabletWidth } from '../constants/layout';
 
 export default function AdvancedScreen() {
+  const { isLayoutUnlocked, setIsLayoutUnlocked } = useEdit();
   const { colors, activeTheme, currentTheme, themeMode, changeTheme, typography, isDark } = useTheme();
   const { showAlert } = useAlert();
   const styles = createStyles(colors, typography);
@@ -224,6 +226,22 @@ export default function AdvancedScreen() {
                   </TouchableOpacity>
                 );
               })}
+            </View>
+
+            {/* Sblocca Layout all'interno di Appearance */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 24 }}>
+              <View style={{ flex: 1, marginRight: 16 }}>
+                <Text style={styles.label}>Unlock Layout Editing</Text>
+                <Text style={{ ...typography.caption, color: colors.textSecondary }}>
+                  Allows reordering of widgets and containers across the app. Changes are saved automatically.
+                </Text>
+              </View>
+              <Switch
+                value={isLayoutUnlocked}
+                onValueChange={setIsLayoutUnlocked}
+                trackColor={{ false: colors.border, true: colors.primary }}
+                thumbColor={Platform.OS === 'android' ? (isLayoutUnlocked ? '#ffffff' : '#f4f3f4') : ''}
+              />
             </View>
 
           </View>
