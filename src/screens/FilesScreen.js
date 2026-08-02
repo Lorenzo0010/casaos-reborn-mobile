@@ -58,7 +58,9 @@ export default function FilesScreen({ navigation }) {
   // Context Menu & Clipboard State
   const [contextMenuVisible, setContextMenuVisible] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
-  const [clipboard, setClipboard] = useState(null); // { action: 'copy'|'move', source: string, name: string }
+  const [clipboard, setClipboard] = useState(null); // { action: 'copy'|'move', files: [] }
+  const [selectedFiles, setSelectedFiles] = useState(new Set());
+  const [selectionMode, setSelectionMode] = useState(false);
 
   const fetchFiles = useCallback(async (path, isRefresh = false) => {
     if (!isRefresh) setLoading(true);
@@ -264,26 +266,67 @@ export default function FilesScreen({ navigation }) {
     );
   };
 
-  const handleCopyToClipboard = (action) => {
-    setClipboard({ action, source: selectedItem.path, name: selectedItem.name });
-    setContextMenuVisible(false);
+  const handleBulkDelete = () => {
+    if (selectedFiles.size === 0) return;
+    showAlert(
+      'Confirm Bulk Delete',
+      `Are you sure you want to delete ${selectedFiles.size} items?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Delete', 
+          style: 'destructive',
+          onPress: async () => {
+            setLoading(true);
+            try {
+              const paths = Array.from(selectedFiles);
+              await Promise.all(paths.map(p => apiClient.post('/api/files/delete', { path: p })));
+              setSelectedFiles(new Set());
+              setSelectionMode(false);
+              fetchFiles(currentPath);
+            } catch (e) {
+              setError(e.response?.data?.error || e.message || 'Failed to delete some items');
+            } finally {
+              setLoading(false);
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handleCopyToClipboard = (action, isBulk = false) => {
+    if (isBulk) {
+      const selectedFilesList = files.filter(f => selectedFiles.has(f.path));
+      setClipboard({ action, files: selectedFilesList });
+      setSelectedFiles(new Set());
+      setSelectionMode(false);
+    } else {
+      setClipboard({ action, files: [selectedItem] });
+      setContextMenuVisible(false);
+    }
   };
 
   const handlePaste = async () => {
-    if (!clipboard) return;
+    if (!clipboard || !clipboard.files.length) return;
+    setLoading(true);
     try {
       const separator = (currentPath || '').includes('\\') ? '\\' : '/';
-      const destPath = (currentPath || '').endsWith(separator) ? `${currentPath}${clipboard.name}` : `${currentPath}${separator}${clipboard.name}`;
       
-      if (clipboard.action === 'copy') {
-        await apiClient.post('/api/files/copy', { source: clipboard.source, dest: destPath });
-      } else {
-        await apiClient.post('/api/files/move', { source: clipboard.source, dest: destPath });
-      }
+      await Promise.all(clipboard.files.map(async (f) => {
+        const destPath = (currentPath || '').endsWith(separator) ? `${currentPath}${f.name}` : `${currentPath}${separator}${f.name}`;
+        if (clipboard.action === 'copy') {
+          await apiClient.post('/api/files/copy', { source: f.path, dest: destPath });
+        } else {
+          await apiClient.post('/api/files/move', { source: f.path, dest: destPath });
+        }
+      }));
       setClipboard(null);
       fetchFiles(currentPath);
     } catch (e) {
-      setError(e.response?.data?.error || e.message || 'Failed to paste');
+      setError(e.response?.data?.error || e.message || 'Failed to paste some items');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -320,52 +363,146 @@ export default function FilesScreen({ navigation }) {
         
         const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
         if (permissions.granted) {
+          const fileInfo = await FileSystem.getInfoAsync(downloadRes.uri);
+          if (fileInfo.size > 50 * 1024 * 1024) {
+            showAlert('Large File', 'This file is too large for direct download. Please save it via the share menu.');
+            await Sharing.shareAsync(downloadRes.uri);
+            return;
+          }
           const base64 = await FileSystem.readAsStringAsync(downloadRes.uri, { encoding: FileSystem.EncodingType.Base64 });
           let mimeType = 'application/octet-stream';
           if (fileName.endsWith('.zip')) mimeType = 'application/zip';
           else if (fileName.endsWith('.pdf')) mimeType = 'application/pdf';
-          
+          else if (fileName.endsWith('.json')) mimeType = 'application/json';
+          else if (fileName.endsWith('.txt')) mimeType = 'text/plain';
+
           const newFileUri = await FileSystem.StorageAccessFramework.createFileAsync(permissions.directoryUri, fileName, mimeType);
           await FileSystem.writeAsStringAsync(newFileUri, base64, { encoding: FileSystem.EncodingType.Base64 });
           showAlert('Success', 'File downloaded successfully.');
         } else {
-          // fallback to share
           if (await Sharing.isAvailableAsync()) {
             await Sharing.shareAsync(downloadRes.uri);
           }
         }
       } else {
-        if (await Sharing.isAvailableAsync()) {
-          await Sharing.shareAsync(downloadRes.uri);
-        } else {
-          showAlert('Success', 'Downloaded to ' + downloadRes.uri);
-        }
+        await Sharing.shareAsync(downloadRes.uri);
       }
     } catch (e) {
-      setError(e.message || 'Failed to download file');
+      console.error(e);
+      setError(e.message || 'Download failed');
     }
+  };
+
+  const handleBulkDownload = async () => {
+    const selectedFilesList = files.filter(f => selectedFiles.has(f.path) && !f.isDir);
+    if (selectedFilesList.length === 0) {
+      showAlert('Error', 'No downloadable files selected (folders are skipped).');
+      return;
+    }
+    setLoading(true);
+    try {
+      const token = await AsyncStorage.getItem('token');
+      const items = selectedFilesList.map(f => f.path);
+      const res = await apiClient.post('/api/files/archive', {
+        items,
+        destination: currentPath,
+        archiveName: 'CasaOS_Export.zip'
+      });
+      
+      if (res.data.success) {
+        const separator = (currentPath || '').includes('\\') ? '\\' : '/';
+        const zipPath = (currentPath || '').endsWith(separator) ? `${currentPath}CasaOS_Export.zip` : `${currentPath}${separator}CasaOS_Export.zip`;
+        const downloadRes = await FileSystem.downloadAsync(
+          `${apiClient.defaults.baseURL}/api/files/read?path=${encodeURIComponent(zipPath)}`,
+          `${FileSystem.documentDirectory}CasaOS_Export.zip`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        
+        if (Platform.OS === 'android') {
+          const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+          if (permissions.granted) {
+            const fileInfo = await FileSystem.getInfoAsync(downloadRes.uri);
+            if (fileInfo.size > 50 * 1024 * 1024) {
+               showAlert('Large File', 'This file is too large for direct download. Please save it via the share menu.');
+               await Sharing.shareAsync(downloadRes.uri);
+            } else {
+               const base64 = await FileSystem.readAsStringAsync(downloadRes.uri, { encoding: FileSystem.EncodingType.Base64 });
+               const newFileUri = await FileSystem.StorageAccessFramework.createFileAsync(permissions.directoryUri, 'CasaOS_Export.zip', 'application/zip');
+               await FileSystem.writeAsStringAsync(newFileUri, base64, { encoding: FileSystem.EncodingType.Base64 });
+               showAlert('Success', 'Files downloaded successfully.');
+            }
+          }
+        } else {
+          await Sharing.shareAsync(downloadRes.uri);
+        }
+        
+        await apiClient.post('/api/files/delete', { path: zipPath });
+        fetchFiles(currentPath);
+        setSelectedFiles(new Set());
+        setSelectionMode(false);
+      }
+    } catch (e) {
+      console.error(e);
+      setError(e.response?.data?.error || e.message || 'Failed to pack files for download');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleSelection = (item) => {
+    const newSet = new Set(selectedFiles);
+    if (newSet.has(item.path)) {
+      newSet.delete(item.path);
+      if (newSet.size === 0) setSelectionMode(false);
+    } else {
+      newSet.add(item.path);
+    }
+    setSelectedFiles(newSet);
   };
 
   const renderItem = ({ item }) => {
     const isDir = item.isDir;
+    const isSelected = selectedFiles.has(item.path);
     return (
       <TouchableOpacity 
-        style={[styles.row, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}
+        style={[styles.row, { backgroundColor: isSelected ? 'rgba(59, 130, 246, 0.1)' : colors.surfaceElevated, borderColor: isSelected ? colors.primary : colors.border }]}
         onPress={() => {
+          if (selectionMode) {
+            toggleSelection(item);
+            return;
+          }
           if (isDir) {
             navigateToDir(item.path);
           } else {
             const type = getFileType(item.name);
             if (type !== 'other') {
+              if (type === 'text' && item.size > 2 * 1024 * 1024) {
+                showAlert('Warning', 'This file is too large to preview in the app (Max 2MB). You can download it instead.');
+                return;
+              }
               navigation.navigate('FileViewer', { path: item.path, name: item.name });
             } else {
               showAlert('Unsupported File', 'This file type cannot be previewed in the app. You can download it instead.');
             }
           }
         }}
-        onLongPress={() => openContextMenu(item)}
-        activeOpacity={isDir ? 0.7 : 1}
+        onLongPress={() => {
+          if (!selectionMode) {
+            setSelectionMode(true);
+            toggleSelection(item);
+          } else {
+            openContextMenu(item);
+          }
+        }}
+        activeOpacity={isDir || selectionMode ? 0.7 : 1}
       >
+        {selectionMode && (
+          <View style={{ marginRight: 12 }}>
+            <View style={{ width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: isSelected ? colors.primary : colors.border, backgroundColor: isSelected ? colors.primary : 'transparent', justifyContent: 'center', alignItems: 'center' }}>
+              {isSelected && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: 'white' }} />}
+            </View>
+          </View>
+        )}
         <View style={styles.iconContainer}>
           {isDir ? (
             <Folder color={colors.primary} size={24} fill="rgba(59, 130, 246, 0.2)" />
@@ -468,12 +605,33 @@ export default function FilesScreen({ navigation }) {
         }
       />
 
-      {clipboard && (
+      {selectionMode && selectedFiles.size > 0 && (
+        <View style={[styles.clipboardBar, { backgroundColor: colors.surfaceElevated, borderColor: colors.border, paddingBottom: insets.bottom || SPACING.base, flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 12 }]}>
+          <TouchableOpacity style={{ alignItems: 'center' }} onPress={handleBulkDownload}>
+            <Download color={colors.primary} size={24} />
+            <Text style={[typography.caption, { color: colors.text, marginTop: 4 }]}>Download</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={{ alignItems: 'center' }} onPress={() => handleCopyToClipboard('copy', true)}>
+            <Copy color={colors.primary} size={24} />
+            <Text style={[typography.caption, { color: colors.text, marginTop: 4 }]}>Copy</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={{ alignItems: 'center' }} onPress={() => handleCopyToClipboard('move', true)}>
+            <Scissors color={colors.primary} size={24} />
+            <Text style={[typography.caption, { color: colors.text, marginTop: 4 }]}>Move</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={{ alignItems: 'center' }} onPress={handleBulkDelete}>
+            <Trash2 color={colors.error} size={24} />
+            <Text style={[typography.caption, { color: colors.error, marginTop: 4 }]}>Delete</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {clipboard && !selectionMode && (
         <View style={[styles.clipboardBar, { backgroundColor: colors.surfaceElevated, borderColor: colors.border, paddingBottom: insets.bottom || SPACING.base }]}>
           <View style={styles.clipboardInfo}>
             {clipboard.action === 'copy' ? <Copy color={colors.primary} size={20} /> : <Scissors color={colors.primary} size={20} />}
             <Text style={[typography.bodyMedium, { color: colors.text, marginLeft: 8 }]} numberOfLines={1}>
-              {clipboard.action === 'copy' ? 'Copying' : 'Moving'} {clipboard.name}
+              {clipboard.action === 'copy' ? 'Copying' : 'Moving'} {clipboard.files?.length} item(s)
             </Text>
           </View>
           <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -502,15 +660,22 @@ export default function FilesScreen({ navigation }) {
               {selectedItem?.name}
             </Text>
             
+            <TouchableOpacity style={styles.sheetAction} onPress={() => { setContextMenuVisible(false); setSelectionMode(true); toggleSelection(selectedItem); }}>
+              <Copy color={colors.text} size={20} />
+              <Text style={[typography.bodyMedium, { color: colors.text, marginLeft: 16 }]}>Select</Text>
+            </TouchableOpacity>
+
             <TouchableOpacity style={styles.sheetAction} onPress={() => { setContextMenuVisible(false); setCreateMode('rename'); setNewItemName(selectedItem?.name); setCreateModalVisible(true); }}>
               <Edit color={colors.text} size={20} />
               <Text style={[typography.bodyMedium, { color: colors.text, marginLeft: 16 }]}>Rename</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.sheetAction} onPress={handleDownload}>
-              <Download color={colors.text} size={20} />
-              <Text style={[typography.bodyMedium, { color: colors.text, marginLeft: 16 }]}>Download</Text>
-            </TouchableOpacity>
+            {!selectedItem?.isDir && (
+              <TouchableOpacity style={styles.sheetAction} onPress={handleDownload}>
+                <Download color={colors.text} size={20} />
+                <Text style={[typography.bodyMedium, { color: colors.text, marginLeft: 16 }]}>Download</Text>
+              </TouchableOpacity>
+            )}
             
             <TouchableOpacity style={styles.sheetAction} onPress={() => handleCopyToClipboard('copy')}>
               <Copy color={colors.text} size={20} />
