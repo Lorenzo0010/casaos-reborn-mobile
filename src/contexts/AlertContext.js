@@ -49,11 +49,11 @@ export const AlertProvider = ({ children }) => {
             )}
             
             <View style={[styles.alertButtonsRow, alertConfig.buttons.length >= 3 && styles.alertButtonsColumn]}>
-              {alertConfig.buttons.map((btn, idx) => {
+              {(alertConfig.buttons.length >= 3 ? [...alertConfig.buttons].reverse() : alertConfig.buttons).map((btn, idx) => {
                 const isCancel = btn.style === 'cancel';
                 const isDestructive = btn.style === 'destructive';
                 
-                let btnStyle = [styles.alertButton];
+                let btnStyle = [styles.alertButton, alertConfig.buttons.length >= 3 && styles.alertButtonColumnItem];
                 let textStyle = [styles.alertButtonText];
 
                 if (isCancel) {
@@ -132,6 +132,11 @@ const createStyles = (colors, typography) => StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: 48,
+  },
+  alertButtonColumnItem: {
+    flex: 0,
+    width: '100%',
   },
   alertButtonText: {
     ...typography.button,

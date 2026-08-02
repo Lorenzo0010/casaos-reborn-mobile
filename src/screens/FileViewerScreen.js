@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { StyleSheet, View, Text, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, TouchableOpacity, ScrollView, Linking } from 'react-native';
+import { StyleSheet, View, Text, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, TouchableOpacity, ScrollView } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAlert } from '../contexts/AlertContext';
 import { apiClient } from '../api/client';
@@ -183,20 +183,7 @@ export default function FileViewerScreen({ route, navigation }) {
         </View>
       )}
 
-      {fileType === 'other' && (
-        <View style={[styles.center, { marginTop: insets.top + HEADER.totalOffset }]}>
-          <Text style={[typography.h3, { color: colors.text }]}>Preview not available</Text>
-          <Text style={[typography.body, { color: colors.textSecondary, marginTop: 8, textAlign: 'center', paddingHorizontal: 32 }]}>
-            This file type cannot be previewed in the app.
-          </Text>
-          <TouchableOpacity 
-            style={[styles.downloadBtn, { backgroundColor: colors.primary }]} 
-            onPress={() => Linking.openURL(imageUrl)}
-          >
-            <Text style={[typography.button, { color: '#fff' }]}>Open / Download</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+
     </KeyboardAvoidingView>
   );
 }

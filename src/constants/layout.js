@@ -61,9 +61,9 @@ export const NAVBAR = {
   height: 64,
   radius: 32,
   bottomGap: SPACING.sm, // reduced from SPACING.base to lower the navbar
-  maxWidthPhone: 260,
-  maxWidthTablet: 360,
-  sideMargin: 48,                 // total horizontal margin (24 each side)
+  maxWidthPhone: 340,
+  maxWidthTablet: 420,
+  sideMargin: 32,                 // total horizontal margin (16 each side)
 };
 
 // ─── Bottom Fade ────────────────────────────────────────────────────

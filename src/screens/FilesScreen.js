@@ -10,6 +10,17 @@ import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as MediaLibrary from 'expo-media-library';
+
+const IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp', 'svg'];
+const TEXT_EXTENSIONS = ['txt', 'md', 'json', 'js', 'html', 'css', 'yml', 'yaml', 'ini', 'conf', 'sh', 'py', 'csv', 'log'];
+
+function getFileType(fileName) {
+  const ext = fileName.split('.').pop().toLowerCase();
+  if (IMAGE_EXTENSIONS.includes(ext)) return 'image';
+  if (TEXT_EXTENSIONS.includes(ext) || !fileName.includes('.')) return 'text';
+  return 'other';
+}
 
 function formatBytes(bytes, decimals = 2) {
   if (!+bytes) return '0 Bytes';
@@ -285,18 +296,50 @@ export default function FilesScreen({ navigation }) {
       const fileName = isDir ? `${selectedItem.name}.zip` : selectedItem.name;
       const token = await AsyncStorage.getItem('token');
       
+      const fileUri = `${FileSystem.documentDirectory}${fileName}`;
+
       const downloadRes = await FileSystem.downloadAsync(
         `${apiClient.defaults.baseURL}/api/files/read?path=${encodeURIComponent(selectedItem.path)}`,
-        FileSystem.documentDirectory + fileName,
+        fileUri,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
       );
-      
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(downloadRes.uri);
+
+      const type = getFileType(selectedItem.name);
+
+      if (Platform.OS === 'android') {
+        if (type === 'image' && !isDir) {
+          const permission = await MediaLibrary.requestPermissionsAsync();
+          if (permission.granted) {
+            await MediaLibrary.saveToLibraryAsync(downloadRes.uri);
+            showAlert('Success', 'Image saved to gallery.');
+            return;
+          }
+        }
+        
+        const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+        if (permissions.granted) {
+          const base64 = await FileSystem.readAsStringAsync(downloadRes.uri, { encoding: FileSystem.EncodingType.Base64 });
+          let mimeType = 'application/octet-stream';
+          if (fileName.endsWith('.zip')) mimeType = 'application/zip';
+          else if (fileName.endsWith('.pdf')) mimeType = 'application/pdf';
+          
+          const newFileUri = await FileSystem.StorageAccessFramework.createFileAsync(permissions.directoryUri, fileName, mimeType);
+          await FileSystem.writeAsStringAsync(newFileUri, base64, { encoding: FileSystem.EncodingType.Base64 });
+          showAlert('Success', 'File downloaded successfully.');
+        } else {
+          // fallback to share
+          if (await Sharing.isAvailableAsync()) {
+            await Sharing.shareAsync(downloadRes.uri);
+          }
+        }
       } else {
-        showAlert('Success', 'Downloaded to ' + downloadRes.uri);
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(downloadRes.uri);
+        } else {
+          showAlert('Success', 'Downloaded to ' + downloadRes.uri);
+        }
       }
     } catch (e) {
       setError(e.message || 'Failed to download file');
@@ -312,7 +355,12 @@ export default function FilesScreen({ navigation }) {
           if (isDir) {
             navigateToDir(item.path);
           } else {
-            navigation.navigate('FileViewer', { path: item.path, name: item.name });
+            const type = getFileType(item.name);
+            if (type !== 'other') {
+              navigation.navigate('FileViewer', { path: item.path, name: item.name });
+            } else {
+              showAlert('Unsupported File', 'This file type cannot be previewed in the app. You can download it instead.');
+            }
           }
         }}
         onLongPress={() => openContextMenu(item)}
