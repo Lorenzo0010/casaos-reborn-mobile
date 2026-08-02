@@ -360,10 +360,10 @@ export default function FilesScreen({ navigation }) {
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.shortcutsRow}>
         {((currentPath || '').includes('\\') || /^[A-Za-z]:/.test(currentPath || '') ? [
           { name: 'System (C:)', path: 'C:\\', icon: <HardDrive color={colors.primary} size={16} /> },
-          { name: 'Home', path: homedir || 'C:\\Users', icon: <Home color={colors.primary} size={16} /> },
+          { name: 'Home', path: '~', icon: <Home color={colors.primary} size={16} /> },
         ] : [
           { name: 'Root', path: '/', icon: <HardDrive color={colors.primary} size={16} /> },
-          { name: 'Home', path: homedir || '/home', icon: <Home color={colors.primary} size={16} /> },
+          { name: 'Home', path: '~', icon: <Home color={colors.primary} size={16} /> },
           { name: 'Media', path: '/media', icon: <Database color={colors.primary} size={16} /> },
           { name: 'Mounts', path: '/mnt', icon: <Folder color={colors.primary} size={16} /> },
         ]).map((s, idx) => (
