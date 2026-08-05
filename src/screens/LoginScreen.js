@@ -90,12 +90,12 @@ export default function LoginScreen({ navigation }) {
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Server IP / Hostname (es. 192.168.1.10:3000)</Text>
+            <Text style={styles.label}>Server IP / Hostname (es. 192.168.1.10:80 o 192.168.1.10)</Text>
             <TextInput
               style={styles.input}
               value={ipAddress}
               onChangeText={setIpAddress}
-              placeholder="192.168.1.x:3000"
+              placeholder="192.168.1.x"
               placeholderTextColor={colors.textSecondary}
               autoCapitalize="none"
               keyboardType="url"
