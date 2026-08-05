@@ -6,7 +6,7 @@ import Constants from 'expo-constants';
 import { useTheme, predefinedThemes } from '../contexts/ThemeContext';
 import { useAlert } from '../contexts/AlertContext';
 import { apiClient, logout } from '../api/client';
-import { Palette, Send, Save, RefreshCcw, LogOut, DownloadCloud, CloudSun } from 'lucide-react-native';
+import { Palette, Send, Save, RefreshCcw, LogOut, DownloadCloud, CloudSun, Settings } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEdit } from '../contexts/EditContext';
@@ -173,6 +173,22 @@ export default function AdvancedScreen() {
         contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + HEADER.totalOffset }]}
         keyboardShouldPersistTaps="handled"
       >
+
+        <View style={isTablet ? styles.tabletGrid : null}>
+          <View style={[styles.section, isTablet && styles.tabletCard]}>
+            <View style={styles.sectionHeader}>
+              <Settings color={colors.text} size={24} />
+              <Text style={styles.sectionTitle}>CasaOS System</Text>
+            </View>
+            <Text style={{ ...typography.caption, color: colors.textSecondary, marginBottom: 16 }}>
+              Main container settings (Ports, Volumes, Environment, etc.)
+            </Text>
+            <TouchableOpacity style={styles.primaryBtn} onPress={() => navigation.navigate('SystemContainerSettings')}>
+              <Settings color="#fff" size={20} style={{ marginRight: 8 }} />
+              <Text style={styles.primaryBtnText}>Configure System</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
 
         <View style={isTablet ? styles.tabletGrid : null}>
           <View style={[styles.section, isTablet && styles.tabletCard]}>
