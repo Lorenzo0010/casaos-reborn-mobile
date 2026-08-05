@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, ScrollView, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, TextInput, ScrollView, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { Plus, Trash2, Settings, Save } from 'lucide-react-native';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAlert } from '../contexts/AlertContext';
@@ -195,32 +195,34 @@ export default function SystemContainerSettingsScreen({ navigation }) {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ padding: 16, paddingTop: insets.top + HEADER.totalOffset, paddingBottom: 120 }}>
-      
-      <View style={[styles.headerCard, { flexDirection: 'row', alignItems: 'center' }]}>
-        <View style={{ width: 64, height: 64, borderRadius: 12, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center', marginRight: 16 }}>
-          <Settings color="white" size={32} />
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView style={styles.container} contentContainerStyle={{ padding: 16, paddingTop: insets.top + HEADER.totalOffset, paddingBottom: 120 }} keyboardShouldPersistTaps="handled">
+        
+        <View style={[styles.headerCard, { flexDirection: 'row', alignItems: 'center' }]}>
+          <View style={{ width: 64, height: 64, borderRadius: 12, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center', marginRight: 16 }}>
+            <Settings color="white" size={32} />
+          </View>
+          <View style={{ flex: 1, justifyContent: 'center' }}>
+            <Text style={styles.title} numberOfLines={1}>CasaOS System</Text>
+            <Text style={styles.subtitle}>casaos-reborn</Text>
+          </View>
         </View>
-        <View style={{ flex: 1, justifyContent: 'center' }}>
-          <Text style={styles.title} numberOfLines={1}>CasaOS System</Text>
-          <Text style={styles.subtitle}>casaos-reborn</Text>
-        </View>
-      </View>
 
-      {renderDynamicList('Ports (Restart UI)', ports, handleAddPort, handleRemovePort, handlePortChange, 'host', 'container', 'Host (e.g. 10000)', 'Container (e.g. 10000)')}
-      {renderDynamicList('Environment Variables', envs, handleAddEnv, handleRemoveEnv, handleEnvChange, 'key', 'value', 'Key (e.g. PUID)', 'Value (e.g. 1000)')}
+        {renderDynamicList('Ports (Restart UI)', ports, handleAddPort, handleRemovePort, handlePortChange, 'host', 'container', 'Host (e.g. 10000)', 'Container (e.g. 10000)')}
+        {renderDynamicList('Environment Variables', envs, handleAddEnv, handleRemoveEnv, handleEnvChange, 'key', 'value', 'Key (e.g. PUID)', 'Value (e.g. 1000)')}
 
-      <TouchableOpacity style={styles.createBtn} onPress={handleSave} disabled={loading}>
-        {loading ? <ActivityIndicator color="#fff" /> : (
-            <>
-                <Save color="#fff" size={20} style={{ marginRight: 8 }} />
-                <Text style={styles.createBtnText}>SAVE AND RESTART SYSTEM</Text>
-            </>
-        )}
-      </TouchableOpacity>
-      
-      <View style={{ height: 40 }} />
-    </ScrollView>
+        <TouchableOpacity style={styles.createBtn} onPress={handleSave} disabled={loading}>
+          {loading ? <ActivityIndicator color="#fff" /> : (
+              <>
+                  <Save color="#fff" size={20} style={{ marginRight: 8 }} />
+                  <Text style={styles.createBtnText}>SAVE AND RESTART SYSTEM</Text>
+              </>
+          )}
+        </TouchableOpacity>
+        
+        <View style={{ height: 40 }} />
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 

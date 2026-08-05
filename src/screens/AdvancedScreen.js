@@ -6,7 +6,7 @@ import Constants from 'expo-constants';
 import { useTheme, predefinedThemes } from '../contexts/ThemeContext';
 import { useAlert } from '../contexts/AlertContext';
 import { apiClient, logout } from '../api/client';
-import { Palette, Send, Save, RefreshCcw, LogOut, DownloadCloud } from 'lucide-react-native';
+import { Palette, Send, Save, RefreshCcw, LogOut, DownloadCloud, CloudSun } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEdit } from '../contexts/EditContext';
@@ -272,7 +272,23 @@ export default function AdvancedScreen() {
               onChangeText={setTelegramChatId}
             />
 
-            <Text style={styles.label}>Weather City</Text>
+            <TouchableOpacity style={styles.primaryBtn} onPress={handleSavePreferences} disabled={savingPrefs}>
+              {savingPrefs ? <ActivityIndicator color="#fff" /> : (
+                <>
+                  <Send color="#fff" size={20} style={{ marginRight: 8 }} />
+                  <Text style={styles.primaryBtnText}>Send Test</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          <View style={[styles.section, isTablet && styles.tabletCard]}>
+            <View style={styles.sectionHeader}>
+              <CloudSun color={colors.text} size={24} />
+              <Text style={styles.sectionTitle}>Weather Settings</Text>
+            </View>
+
+            <Text style={styles.label}>City Name</Text>
             <TextInput 
               style={styles.input}
               placeholder="e.g. Rome, Milan, Naples"
@@ -285,7 +301,7 @@ export default function AdvancedScreen() {
               {savingPrefs ? <ActivityIndicator color="#fff" /> : (
                 <>
                   <Save color="#fff" size={20} style={{ marginRight: 8 }} />
-                  <Text style={styles.primaryBtnText}>Save Preferences</Text>
+                  <Text style={styles.primaryBtnText}>Save Weather</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -486,7 +502,7 @@ const createStyles = (colors, typography) => StyleSheet.create({
   },
   logText: {
     ...typography.caption,
-    color: colors.textSecondary,
+    color: '#4ade80',
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
     marginBottom: 4,
   },

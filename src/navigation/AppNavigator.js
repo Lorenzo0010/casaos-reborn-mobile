@@ -55,13 +55,9 @@ function CustomHeader({ options, route, back, navigation }) {
         paddingHorizontal: SPACING.base,
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: hasRight ? 'space-between' : 'center',
       }}>
-        {/* Left spacer for centering when there are right buttons */}
-        {hasRight && <View style={{ width: rightAreaWidth, opacity: 0, flexShrink: 1 }} />}
-
         {/* Center Group (Back Button + Title Pill) */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: HEADER.actionGap }}>
+        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: HEADER.actionGap }}>
           {back && (
             <TouchableOpacity 
               onPress={() => navigation.goBack()} 
@@ -87,6 +83,7 @@ function CustomHeader({ options, route, back, navigation }) {
 
           {/* Title Pill */}
           <View style={{
+            flex: 1,
             backgroundColor: colors.surface,
             borderRadius: HEADER.pillRadius,
             height: HEADER.pillHeight,
@@ -101,9 +98,9 @@ function CustomHeader({ options, route, back, navigation }) {
             shadowRadius: CARD.shadowRadius,
             flexDirection: 'row',
             alignItems: 'center',
-            marginRight: hasRight ? SPACING.base : 0, // Garantisce sempre spazio tra pillola e bottoni a destra
+            marginRight: hasRight ? SPACING.base : 0,
           }}>
-            <Text style={{ ...typography.h1, fontFamily: 'Inter_500Medium', color: colors.text, fontSize: HEADER.titleFontSize }}>
+            <Text style={{ ...typography.h1, fontFamily: 'Inter_500Medium', color: colors.text, fontSize: HEADER.titleFontSize }} numberOfLines={1}>
               {title}
             </Text>
           </View>

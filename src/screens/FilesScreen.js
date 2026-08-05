@@ -505,7 +505,7 @@ export default function FilesScreen({ navigation }) {
         )}
         <View style={styles.iconContainer}>
           {isDir ? (
-            <Folder color={colors.primary} size={24} fill="rgba(59, 130, 246, 0.2)" />
+            <Folder color="#f59e0b" size={24} fill="rgba(245, 158, 11, 0.2)" />
           ) : (
             <File color={colors.textSecondary} size={24} />
           )}

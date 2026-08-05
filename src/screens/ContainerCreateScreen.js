@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, ScrollView, TouchableOpacity, ActivityIndicator, Switch, Alert } from 'react-native';
+import { StyleSheet, Text, View, TextInput, ScrollView, TouchableOpacity, ActivityIndicator, Switch, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { Plus, Trash2, Server, FileText, Code, Upload, Save, Check } from 'lucide-react-native';
 import { apiClient } from '../api/client';
 import { useTheme } from '../contexts/ThemeContext';
@@ -406,8 +406,9 @@ export default function ContainerCreateScreen({ navigation }) {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ padding: 16, paddingTop: insets.top + HEADER.totalOffset, paddingBottom: CONTENT.paddingBottom }}>
-      
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView style={styles.container} contentContainerStyle={{ padding: 16, paddingTop: insets.top + HEADER.totalOffset, paddingBottom: CONTENT.paddingBottom }} keyboardShouldPersistTaps="handled">
+        
       <View style={styles.headerCard}>
         <Server color={colors.primary} size={48} style={{ marginBottom: 16 }} />
         <Text style={styles.title}>New Container</Text>
@@ -581,7 +582,8 @@ export default function ContainerCreateScreen({ navigation }) {
           <View style={{ height: 40 }} />
         </>
       )}
-    </ScrollView>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { StyleSheet, Text, View, TextInput, ScrollView, TouchableOpacity, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import { Plus, Trash2, Settings, AlertTriangle } from 'lucide-react-native';
 import { apiClient } from '../api/client';
@@ -299,7 +299,8 @@ export default function ContainerSettingsScreen({ route, navigation }) {
   const bgColor = stableId ? getContainerColor(stableId) : colors.primary;
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ padding: 16, paddingTop: insets.top + HEADER.totalOffset, paddingBottom: CONTENT.paddingBottom }}>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView style={styles.container} contentContainerStyle={{ padding: 16, paddingTop: insets.top + HEADER.totalOffset, paddingBottom: CONTENT.paddingBottom }} keyboardShouldPersistTaps="handled">
       
       <View style={[styles.headerCard, { flexDirection: 'row', alignItems: 'center' }]}>
         {displayIconUrl ? (
@@ -399,7 +400,8 @@ export default function ContainerSettingsScreen({ route, navigation }) {
       </TouchableOpacity>
       
       <View style={{ height: 40 }} />
-    </ScrollView>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 

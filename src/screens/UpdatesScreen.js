@@ -304,7 +304,9 @@ export default function UpdatesScreen({ navigation }) {
             isAppUpdate: true,
             url: apkAsset.browser_download_url,
             tag: latestTag,
-            date: latestDate
+            currentTag: storedLatest || 'v1.0.0',
+            date: latestDate,
+            currentDate: storedDate
           });
         } else {
           setAppUpdate(null);
@@ -322,17 +324,35 @@ export default function UpdatesScreen({ navigation }) {
   const renderItem = ({ item }) => {
     if (item.isAppUpdate) {
       return (
-        <View style={[styles.card, isTablet && { flex: 1 }]}>
-          <View style={styles.cardInfo}>
-            <Text style={styles.containerName}>{item.name}</Text>
-            <Text style={styles.imageName}>{item.image}</Text>
+        <View style={[styles.card, isTablet && { flex: 1 }, { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' }]}>
+          <View style={[styles.cardInfo, { flex: 1, paddingRight: 16 }]}>
+            <Text style={[styles.containerName, { fontSize: 20 }]}>{item.name}</Text>
+            <View style={{ marginTop: 12, backgroundColor: 'rgba(0,0,0,0.15)', borderRadius: 8, padding: 10, flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={{ fontSize: 12, fontFamily: 'Inter_600SemiBold', color: colors.textSecondary, marginRight: 6 }}>Current</Text>
+                <View style={{ backgroundColor: 'rgba(255,255,255,0.08)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, marginRight: 6 }}>
+                  <Text style={{ fontSize: 13, color: '#ffffff', fontFamily: 'monospace' }}>{item.currentTag}</Text>
+                </View>
+                {item.currentDate ? <Text style={{ fontSize: 11, color: colors.textSecondary }}>{new Date(item.currentDate).toLocaleDateString()}</Text> : null}
+              </View>
+              <Text style={{ fontSize: 12, color: colors.textSecondary }}>➔</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={{ fontSize: 12, fontFamily: 'Inter_600SemiBold', color: colors.textSecondary, marginRight: 6 }}>Latest</Text>
+                <View style={{ backgroundColor: 'rgba(59, 130, 246, 0.15)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, marginRight: 6, borderWidth: 1, borderColor: 'rgba(59, 130, 246, 0.3)' }}>
+                  <Text style={{ fontSize: 13, color: '#60a5fa', fontFamily: 'monospace', fontWeight: 'bold' }}>{item.tag}</Text>
+                </View>
+                {item.date ? <Text style={{ fontSize: 11, color: colors.textSecondary }}>{new Date(item.date).toLocaleDateString()}</Text> : null}
+              </View>
+            </View>
           </View>
-          <TouchableOpacity 
-            style={styles.updateButton} 
-            onPress={() => downloadAndInstallApp(item.url, item.tag, item.date)}
-          >
-            <DownloadCloud color="#fff" size={20} />
-          </TouchableOpacity>
+          <View style={{ alignItems: 'flex-end', gap: 8 }}>
+            <TouchableOpacity 
+              style={{ backgroundColor: colors.primary, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 }}
+              onPress={() => downloadAndInstallApp(item.url, item.tag, item.date)}
+            >
+              <Text style={{ color: '#fff', fontFamily: 'Inter_600SemiBold', fontSize: 14 }}>Update</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       );
     }
@@ -341,32 +361,105 @@ export default function UpdatesScreen({ navigation }) {
     const isRecreating = !!task;
     
     return (
-      <View style={[styles.card, isTablet && { flex: 1 }]}>
-        <View style={styles.cardInfo}>
-          <Text style={styles.containerName}>{item.name}</Text>
-          <Text style={styles.imageName}>{item.image}</Text>
+      <View style={[styles.card, isTablet && { flex: 1 }, { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' }]}>
+        <View style={[styles.cardInfo, { flex: 1, paddingRight: 16 }]}>
+          <Text style={[styles.containerName, { fontSize: 20 }]}>{item.name}</Text>
+          <View style={{ marginTop: 12, backgroundColor: 'rgba(0,0,0,0.15)', borderRadius: 8, padding: 10, flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={{ fontSize: 12, fontFamily: 'Inter_600SemiBold', color: colors.textSecondary, marginRight: 6 }}>Current</Text>
+              <View style={{ backgroundColor: 'rgba(255,255,255,0.08)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, marginRight: 6 }}>
+                <Text style={{ fontSize: 13, color: '#ffffff', fontFamily: 'monospace' }}>
+                  {item.oldHash ? item.oldHash.replace('sha256:', '').substring(0, 7) : 'old'}
+                </Text>
+              </View>
+              {item.oldDate ? <Text style={{ fontSize: 11, color: colors.textSecondary }}>{new Date(item.oldDate).toLocaleDateString()}</Text> : null}
+            </View>
+            <Text style={{ fontSize: 12, color: colors.textSecondary }}>➔</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={{ fontSize: 12, fontFamily: 'Inter_600SemiBold', color: colors.textSecondary, marginRight: 6 }}>Latest</Text>
+              <View style={{ backgroundColor: 'rgba(59, 130, 246, 0.15)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, marginRight: 6, borderWidth: 1, borderColor: 'rgba(59, 130, 246, 0.3)' }}>
+                <Text style={{ fontSize: 13, color: '#60a5fa', fontFamily: 'monospace', fontWeight: 'bold' }}>
+                  {item.newHash ? item.newHash.replace('sha256:', '').substring(0, 7) : 'latest'}
+                </Text>
+              </View>
+              {item.newDate ? <Text style={{ fontSize: 11, color: colors.textSecondary }}>{new Date(item.newDate).toLocaleDateString()}</Text> : null}
+            </View>
+          </View>
           {isRecreating && (
             <Text style={[styles.imageName, { color: colors.primary, marginTop: 4, fontFamily: 'Inter_700Bold' }]}>
               {task.status || 'Updating...'}
             </Text>
           )}
         </View>
-        <TouchableOpacity 
-          style={[styles.updateButton, (updatingContainerId === item.id || isRecreating) && styles.updateButtonDisabled]} 
-          onPress={() => handleUpdate(item)}
-          disabled={updatingContainerId === item.id || isRecreating}
-        >
-          {updatingContainerId === item.id || isRecreating ? (
-            <ActivityIndicator color="#fff" size="small" />
-          ) : (
-            <DownloadCloud color="#fff" size={20} />
-          )}
-        </TouchableOpacity>
+        <View style={{ alignItems: 'flex-end', gap: 8 }}>
+          <TouchableOpacity 
+            style={{ backgroundColor: colors.primary, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, opacity: (updatingContainerId === item.id || isRecreating) ? 0.5 : 1 }}
+            onPress={() => handleUpdate(item)}
+            disabled={updatingContainerId === item.id || isRecreating}
+          >
+            {updatingContainerId === item.id || isRecreating ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Text style={{ color: '#fff', fontFamily: 'Inter_600SemiBold', fontSize: 14 }}>Update</Text>
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
     );
   };
 
   const listData = appUpdate ? [appUpdate, ...updates] : updates;
+
+  const renderHeader = () => (
+    <View style={{ paddingBottom: SPACING.sm }}>
+      <View style={styles.card}>
+        <View style={styles.cardInfo}>
+          <Text style={styles.containerName}>CasaOS System</Text>
+          <Text style={styles.imageName}>Main container settings</Text>
+        </View>
+        <TouchableOpacity 
+          style={styles.updateButton} 
+          onPress={() => navigation.navigate('SystemContainerSettings')}
+        >
+          <Settings color="#fff" size={20} />
+        </TouchableOpacity>
+      </View>
+
+      <TouchableOpacity 
+        style={{ backgroundColor: colors.primary, padding: 16, borderRadius: CARD.borderRadius, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10, marginTop: 8 }}
+        onPress={() => {
+          checkUpdates();
+          checkAppUpdate();
+        }}
+        disabled={isChecking || isCheckingApp}
+      >
+        {(isChecking || isCheckingApp) ? (
+          <ActivityIndicator color="#fff" size="small" />
+        ) : (
+          <>
+            <RefreshCw color="#fff" size={20} />
+            <Text style={{ color: '#fff', fontFamily: 'Inter_600SemiBold', fontSize: 16 }}>Check for Updates</Text>
+          </>
+        )}
+      </TouchableOpacity>
+
+      {isChecking && checkStatus && checkStatus.container && (
+        <View style={[styles.progressContainer, { marginTop: SPACING.sm }]}>
+          <Text style={styles.progressText}>Checking: {checkStatus.container}</Text>
+        </View>
+      )}
+    </View>
+  );
+
+  const renderEmpty = () => {
+    if (isChecking) return null;
+    return (
+      <View style={[styles.card, { flexDirection: 'row', alignItems: 'center', gap: 12 }]}>
+        <CheckCircle color={colors.success} size={24} />
+        <Text style={{ color: colors.success, fontFamily: 'Inter_600SemiBold', fontSize: 16 }}>Up to date</Text>
+      </View>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -381,65 +474,17 @@ export default function UpdatesScreen({ navigation }) {
         </View>
       </Modal>
 
-      <View style={{ paddingHorizontal: SPACING.base, paddingTop: insets.top + HEADER.totalOffset, paddingBottom: SPACING.sm }}>
-        
-        <View style={styles.card}>
-          <View style={styles.cardInfo}>
-            <Text style={styles.containerName}>CasaOS System</Text>
-            <Text style={styles.imageName}>Main container settings</Text>
-          </View>
-          <TouchableOpacity 
-            style={styles.updateButton} 
-            onPress={() => navigation.navigate('SystemContainerSettings')}
-          >
-            <Settings color="#fff" size={20} />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.card}>
-          <View style={styles.cardInfo}>
-            <Text style={styles.containerName}>Check for Updates</Text>
-            <Text style={styles.imageName}>Check updates for containers and app</Text>
-          </View>
-          <TouchableOpacity 
-            style={[styles.updateButton, (isChecking || isCheckingApp) && styles.updateButtonDisabled]} 
-            onPress={() => {
-              checkUpdates();
-              checkAppUpdate();
-            }}
-            disabled={isChecking || isCheckingApp}
-          >
-            {(isChecking || isCheckingApp) ? (
-              <ActivityIndicator color="#fff" size="small" />
-            ) : (
-              <RefreshCw color="#fff" size={20} />
-            )}
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {isChecking && checkStatus && checkStatus.container && (
-        <View style={styles.progressContainer}>
-          <Text style={styles.progressText}>Checking: {checkStatus.container}</Text>
-        </View>
-      )}
-
-      {!isChecking && listData.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <CheckCircle color={colors.success} size={48} style={{ marginBottom: 16 }} />
-          <Text style={styles.emptyText}>No updates available</Text>
-        </View>
-      ) : (
-        <FlatList
-          key={numColumns}
-          data={listData}
-          keyExtractor={(item) => item.id}
-          renderItem={renderItem}
-          numColumns={numColumns}
-          columnWrapperStyle={isTablet ? { gap: SPACING.base } : undefined}
-          contentContainerStyle={styles.list}
-        />
-      )}
+      <FlatList
+        ListHeaderComponent={renderHeader}
+        ListEmptyComponent={renderEmpty}
+        key={numColumns}
+        data={listData}
+        keyExtractor={(item) => item.id}
+        renderItem={renderItem}
+        numColumns={numColumns}
+        columnWrapperStyle={isTablet ? { gap: SPACING.base } : undefined}
+        contentContainerStyle={[styles.list, { paddingTop: insets.top + HEADER.totalOffset }]}
+      />
 
       {/* Modal di download aggiornamento App */}
       <Modal visible={isAppUpdating} transparent={true} animationType="fade">

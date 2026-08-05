@@ -302,62 +302,8 @@ export default function ContainersScreen() {
     const casaosName = getContainerName(item);
     const webUrl = isRunning ? getContainerUrl(item) : null;
 
-    const renderRightActions = () => {
-      if (isLayoutUnlocked) return null;
-      return (
-        <View style={{ flexDirection: 'row', alignItems: 'center', height: '100%', paddingLeft: 8 }}>
-          {isRunning ? (
-            <TouchableOpacity 
-              style={{ width: 64, height: '100%', backgroundColor: colors.error, justifyContent: 'center', alignItems: 'center', borderRadius: CARD.borderRadius }}
-              onPress={() => { handleAction(containerId, 'stop'); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); }}
-            >
-              <Square color="white" size={24} fill="white" />
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity 
-              style={{ width: 64, height: '100%', backgroundColor: colors.success, justifyContent: 'center', alignItems: 'center', borderRadius: CARD.borderRadius }}
-              onPress={() => { handleAction(containerId, 'start'); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); }}
-            >
-              <Play color="white" size={24} fill="white" />
-            </TouchableOpacity>
-          )}
-        </View>
-      );
-    };
-
-    const renderLeftActions = () => {
-      if (isLayoutUnlocked) return null;
-      return (
-        <View style={{ flexDirection: 'row', alignItems: 'center', height: '100%', paddingRight: 8 }}>
-          <TouchableOpacity 
-            style={{ width: 64, height: '100%', backgroundColor: colors.surfaceElevated, justifyContent: 'center', alignItems: 'center', borderRadius: CARD.borderRadius }}
-            onPress={() => { navigation.navigate('ContainerDetails', { containerId, containerName: casaosName }); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
-          >
-            <Settings color={colors.text} size={24} />
-          </TouchableOpacity>
-          {webUrl && (
-            <TouchableOpacity 
-              style={{ width: 64, height: '100%', backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center', borderRadius: CARD.borderRadius, marginLeft: 8 }}
-              onPress={() => { Linking.openURL(webUrl).catch(() => showAlert('Error', 'Cannot open link')); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
-            >
-              <Globe color="white" size={24} />
-            </TouchableOpacity>
-          )}
-        </View>
-      );
-    };
-
     return (
-      <Swipeable
-        renderLeftActions={renderLeftActions}
-        renderRightActions={renderRightActions}
-        enabled={!isLayoutUnlocked && !isRecreating}
-        onSwipeableOpen={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
-        containerStyle={[isTablet && { flex: 1 }, { marginBottom: CARD.gap }]}
-        friction={2}
-        rightThreshold={40}
-        leftThreshold={40}
-      >
+      <View style={[isTablet && { flex: 1 }, { marginBottom: CARD.gap }]}>
         <TouchableOpacity
           style={[
             styles.card,
@@ -388,65 +334,111 @@ export default function ContainersScreen() {
           }}
           activeOpacity={(isRecreating || isLayoutUnlocked) ? 1 : 0.7}
         >
-          <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-            <View style={{ position: (isLayoutUnlocked || isPinned) ? 'relative' : 'absolute', opacity: (isLayoutUnlocked || isPinned) ? 1 : 0, left: 0 }}>
-              <TouchableOpacity onPress={() => { togglePin(stableId); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }} style={{ padding: 8, marginRight: 4 }} disabled={!(isLayoutUnlocked || isPinned)}>
-                <Pin size={20} color={isPinned ? colors.primary : colors.textSecondary} fill={isPinned ? colors.primary : 'none'} />
-              </TouchableOpacity>
-            </View>
-
-            {(() => {
-              let iconUrl = item.Labels && (item.Labels['casaos.reborn.icon'] || item.Labels['icon']);
-              if (iconUrl && typeof iconUrl === 'string') {
-                iconUrl = iconUrl.trim();
-                if (!iconUrl.startsWith('http') && !iconUrl.startsWith('data:')) {
-                  if (!iconUrl.startsWith('/')) iconUrl = '/' + iconUrl;
-                  iconUrl = `${apiClient.defaults.baseURL}${iconUrl}`;
+          <View style={{ flex: 1, flexDirection: 'column', alignItems: 'stretch' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={{ position: (isLayoutUnlocked || isPinned) ? 'relative' : 'absolute', opacity: (isLayoutUnlocked || isPinned) ? 1 : 0, left: 0 }}>
+                <TouchableOpacity onPress={() => { togglePin(stableId); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }} style={{ padding: 8, marginRight: 4 }} disabled={!(isLayoutUnlocked || isPinned)}>
+                  <Pin size={20} color={isPinned ? colors.primary : colors.textSecondary} fill={isPinned ? colors.primary : 'none'} />
+                </TouchableOpacity>
+              </View>
+              {(() => {
+                let iconUrl = item.Labels && (item.Labels['casaos.reborn.icon'] || item.Labels['icon']);
+                if (iconUrl && typeof iconUrl === 'string') {
+                  iconUrl = iconUrl.trim();
+                  if (!iconUrl.startsWith('http') && !iconUrl.startsWith('data:')) {
+                    if (!iconUrl.startsWith('/')) iconUrl = '/' + iconUrl;
+                    iconUrl = `${apiClient.defaults.baseURL}${iconUrl}`;
+                  }
+                  return (
+                    <Image
+                      source={{ uri: iconUrl }}
+                      style={{ width: 40, height: 40, borderRadius: 8, marginRight: 12 }}
+                      contentFit="contain"
+                      transition={200}
+                    />
+                  );
                 }
+                const initial = stableId.charAt(0).toUpperCase();
+                const bgColor = getContainerColor(stableId);
                 return (
-                  <Image
-                    source={{ uri: iconUrl }}
-                    style={{ width: 40, height: 40, borderRadius: 8, marginRight: 12 }}
-                    contentFit="contain"
-                    transition={200}
-                  />
+                  <View style={{ width: 40, height: 40, borderRadius: 8, backgroundColor: bgColor, justifyContent: 'center', alignItems: 'center', marginRight: 12 }}>
+                    <Text style={[{ color: 'white' }, typography.h2]}>{initial}</Text>
+                  </View>
                 );
-              }
-              const initial = stableId.charAt(0).toUpperCase();
-              const bgColor = getContainerColor(stableId);
-              return (
-                <View style={{ width: 40, height: 40, borderRadius: 8, backgroundColor: bgColor, justifyContent: 'center', alignItems: 'center', marginRight: 12 }}>
-                  <Text style={[{ color: 'white' }, typography.h2]}>{initial}</Text>
-                </View>
-              );
-            })()}
+              })()}
 
-            <View style={styles.cardInfo}>
-              <Text style={styles.name}>{casaosName}</Text>
-              <Text style={[styles.status, { color: isRecreating ? colors.primary : (isRunning ? colors.success : colors.error), fontFamily: 'monospace' }]}>
-                {isRecreating ? String(containerState).toUpperCase() : (isRunning ? (getWebPort(item) ? `RUNNING ON ${getWebPort(item)}` : 'RUNNING') : String(containerState).toUpperCase())}
-              </Text>
-            </View>
-          </View>
+              <View style={[styles.cardInfo, { flex: 1, paddingRight: 8, justifyContent: 'center' }]}>
+                <Text style={styles.name} numberOfLines={1}>{casaosName}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 8 }}>
+                  <View style={{ backgroundColor: isRecreating ? colors.primary : (isRunning ? colors.success : colors.error), paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 }}>
+                    <Text style={{ color: '#fff', fontSize: 11, fontFamily: 'Inter_600SemiBold' }}>
+                      {isRecreating ? String(containerState).toLowerCase() : (isRunning ? 'running' : 'stopped')}
+                    </Text>
+                  </View>
 
-          <View style={styles.actions}>
-            {(actionLoading === containerId || isRecreating) ? (
-              <ActivityIndicator color={colors.primary} size="small" style={{ margin: 10 }} />
-            ) : (
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end' }}>
-                <View style={{ flexDirection: 'row', position: isLayoutUnlocked ? 'relative' : 'absolute', opacity: isLayoutUnlocked ? 1 : 0, right: 0 }} pointerEvents={isLayoutUnlocked ? 'auto' : 'none'}>
-                  <TouchableOpacity style={styles.actionBtn} onPress={() => { moveCustom(stableId, -1); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}>
-                    <ChevronUp color={colors.text} size={20} />
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.actionBtn} onPress={() => { moveCustom(stableId, 1); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}>
-                    <ChevronDown color={colors.text} size={20} />
-                  </TouchableOpacity>
+                  {(() => {
+                    let pub = item.Ports?.[0]?.PublicPort || item.Labels?.['casaos.reborn.web.port'];
+                    let priv = item.Ports?.[0]?.PrivatePort;
+                    if (!pub && !priv) return null;
+                    return (
+                      <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.05)', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10, gap: 4 }}>
+                        <Globe color="#ffffff" size={10} />
+                        <Text style={{ fontSize: 11, color: '#ffffff', fontFamily: 'monospace' }}>
+                          {pub || '?'}:{priv || '?'}
+                        </Text>
+                      </View>
+                    );
+                  })()}
                 </View>
               </View>
-            )}
+
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                {(actionLoading === containerId || isRecreating) ? (
+                  <ActivityIndicator color={colors.primary} size="small" style={{ margin: 10 }} />
+                ) : (
+                  <>
+                    {!isLayoutUnlocked && (
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <TouchableOpacity
+                          style={{ width: 38, height: 38, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.08)', justifyContent: 'center', alignItems: 'center' }}
+                          onPress={() => { navigation.navigate('ContainerDetails', { containerId, containerName: casaosName }); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                        >
+                          <Settings color={colors.text} size={18} />
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                          style={{ width: 38, height: 38, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.08)', justifyContent: 'center', alignItems: 'center' }}
+                          onPress={() => handleAction(containerId, 'start')}
+                          disabled={isRunning}
+                        >
+                          <Play color={colors.text} size={18} fill={isRunning ? 'rgba(255,255,255,0.3)' : colors.text} />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={{ width: 38, height: 38, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.08)', justifyContent: 'center', alignItems: 'center' }}
+                          onPress={() => handleAction(containerId, 'stop')}
+                          disabled={!isRunning}
+                        >
+                          <Square color={colors.text} size={18} fill={!isRunning ? 'rgba(255,255,255,0.3)' : colors.text} />
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                    {isLayoutUnlocked && (
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <TouchableOpacity style={{ width: 38, height: 38, justifyContent: 'center', alignItems: 'center' }} onPress={() => { moveCustom(stableId, -1); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}>
+                          <ChevronUp color={colors.text} size={24} />
+                        </TouchableOpacity>
+                        <TouchableOpacity style={{ width: 38, height: 38, justifyContent: 'center', alignItems: 'center' }} onPress={() => { moveCustom(stableId, 1); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}>
+                          <ChevronDown color={colors.text} size={24} />
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </>
+                )}
+              </View>
+            </View>
           </View>
         </TouchableOpacity>
-      </Swipeable>
+      </View>
     );
   };
 
@@ -644,9 +636,8 @@ const createStyles = (colors, typography) => StyleSheet.create({
     shadowOpacity: CARD.shadowOpacity,
     shadowRadius: CARD.shadowRadius,
     elevation: CARD.elevation,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: 'column',
+    alignItems: 'stretch',
   },
   cardInfo: {
     flex: 1,
