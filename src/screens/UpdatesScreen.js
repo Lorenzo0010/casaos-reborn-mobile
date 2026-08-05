@@ -443,19 +443,6 @@ export default function UpdatesScreen({ navigation }) {
 
   const renderHeader = () => (
     <View style={{ paddingBottom: SPACING.sm }}>
-      <View style={styles.card}>
-        <View style={styles.cardInfo}>
-          <Text style={styles.containerName}>CasaOS System</Text>
-          <Text style={styles.imageName}>Main container settings</Text>
-        </View>
-        <TouchableOpacity
-          style={styles.updateButton}
-          onPress={() => navigation.navigate('SystemContainerSettings')}
-        >
-          <Settings color="#fff" size={20} />
-        </TouchableOpacity>
-      </View>
-
       <TouchableOpacity
         style={{ backgroundColor: colors.primary, padding: 16, borderRadius: CARD.borderRadius, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10, marginTop: 8 }}
         onPress={() => {
