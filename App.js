@@ -1,7 +1,7 @@
 import 'react-native-gesture-handler';
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, Alert, Modal, ActivityIndicator, Platform } from 'react-native';
-import { NavigationContainer, DarkTheme } from '@react-navigation/native';
+import { NavigationContainer, DarkTheme, createNavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as FileSystem from 'expo-file-system';
 import * as IntentLauncher from 'expo-intent-launcher';
@@ -27,6 +27,16 @@ const Stack = createNativeStackNavigator();
 
 import { StatusBar } from 'expo-status-bar';
 import * as NavigationBar from 'expo-navigation-bar';
+
+export const navigationRef = createNavigationContainerRef();
+
+if (Platform.OS === 'web') {
+  window.navigateTab = (name) => {
+    if (navigationRef.isReady()) {
+      navigationRef.navigate(name);
+    }
+  };
+}
 
 function MainNavigation() {
   const { colors, isDark } = useTheme();
@@ -145,7 +155,7 @@ function MainNavigation() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <View style={{ flex: 1, backgroundColor: colors.background }}>
-        <NavigationContainer theme={customDarkTheme}>
+        <NavigationContainer ref={navigationRef} theme={customDarkTheme}>
           <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={typeof colors.background === 'object' ? 'transparent' : colors.background} />
           <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
             <Stack.Screen name="Login" component={LoginScreen} />

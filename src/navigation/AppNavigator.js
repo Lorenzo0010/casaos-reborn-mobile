@@ -328,6 +328,16 @@ function CustomTabBar({ state, descriptors, navigation, colors, BAR_WIDTH, leftP
           </TouchableOpacity>
         );
       })}
+      {typeof window !== 'undefined' && (
+        <View style={{ display: 'none' }}>
+          {(() => {
+            window.navigateFromTab = (name) => {
+              navigation.navigate(name);
+            };
+            return null;
+          })()}
+        </View>
+      )}
     </View>
   );
 }
