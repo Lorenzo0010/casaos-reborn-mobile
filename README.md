@@ -1,5 +1,8 @@
 # 📱 CasaOS Reborn Mobile
 
+<div align="center">
+  <img src="assets/mockup.png" alt="CasaOS Reborn Mobile Dashboard" width="300"/>
+</div>
 Welcome to the official mobile client repository for **CasaOS Reborn**! 
 This React Native application (built with Expo) allows you to manage, monitor, and update your containers and CasaOS server resources directly from the palm of your hand, with a modern and cohesive interface.
 
