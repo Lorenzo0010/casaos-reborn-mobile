@@ -17,6 +17,6 @@ veda
 
 .env
 
-TESTING_GUIDE.md
 .agents/
 docker-compose.local.yml
+documentazione_personale/
