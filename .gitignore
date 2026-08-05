@@ -18,5 +18,4 @@ veda
 .env
 
 .agents/
-docker-compose.local.yml
 documentazione_personale/
