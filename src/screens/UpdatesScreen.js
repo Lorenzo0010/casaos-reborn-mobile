@@ -236,7 +236,8 @@ export default function UpdatesScreen({ navigation }) {
         return;
       }
       
-      const includeBeta = await AsyncStorage.getItem('beta_updates') === 'true';
+      const betaSetting = await AsyncStorage.getItem('beta_updates');
+      const includeBeta = betaSetting !== 'false'; // Default to true unless explicitly disabled
       const availableReleases = res.data.filter(r => includeBeta ? true : !r.prerelease);
       
       if (availableReleases.length === 0) {
