@@ -484,7 +484,7 @@ export default function SystemContainerSettingsScreen({ navigation }) {
           </View>
         </View>
 
-        {renderDynamicList('Ports (Port Bindings)', ports, setPorts, { host: '', container: '' }, 'host', 'container', 'Host (e.g. 80)', 'Container (e.g. 80)')}
+        {renderDynamicList('Ports (Port Bindings)', ports, setPorts, { host: '', container: '' }, 'host', 'container', 'Host (e.g. 80)', 'Container (e.g. 3000)')}
         {renderDynamicList('Volumes (Binds)', volumes, setVolumes, { host: '', container: '' }, 'host', 'container', '/path/on/host', '/path/in/container')}
         {renderDynamicList('Devices', devices, setDevices, { host: '', container: '' }, 'host', 'container', '/dev/dri (Host)', '/dev/dri (Container)')}
         {renderDynamicList('Environment Variables', envs, setEnvs, { key: '', value: '' }, 'key', 'value', 'Key (e.g. PUID)', 'Value (e.g. 1000)')}
