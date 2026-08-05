@@ -27,7 +27,7 @@ export default function UpdatesScreen({ navigation }) {
   const isTablet = width >= 768;
   const numColumns = isTablet ? 2 : 1;
   const [checkStatus, setCheckStatus] = useState(null);
-  
+
   // Per l'aggiornamento bloccante di casaos-reborn
   const [isSystemUpdating, setIsSystemUpdating] = useState(false);
   const [updatingContainerId, setUpdatingContainerId] = useState(null);
@@ -125,9 +125,9 @@ export default function UpdatesScreen({ navigation }) {
       const res = await apiClient.get('/api/docker/updates');
       const fetchedUpdates = res.data.updates || [];
       setUpdates(fetchedUpdates);
-      
+
       const isCurrentlyChecking = res.data.status?.isChecking;
-      
+
       if (isCurrentlyChecking) {
         setIsChecking(true);
         if (res.data.status?.currentTask) {
@@ -159,13 +159,43 @@ export default function UpdatesScreen({ navigation }) {
 
   const handleUpdate = async (item) => {
     if (item.name === 'casaos-reborn') {
-      navigation.navigate('SystemContainerSettings');
+      // Quick update: call the updater API directly
+      setIsSystemUpdating(true);
+      try {
+        const ip = await AsyncStorage.getItem('server_ip');
+        if (!ip) throw new Error('Server IP not found');
+        let formattedIp = ip;
+        if (!formattedIp.startsWith('http://') && !formattedIp.startsWith('https://')) {
+          formattedIp = 'http://' + formattedIp;
+        }
+        const parsedUrl = new URL(formattedIp);
+        const updaterUrl = `${parsedUrl.protocol}//${parsedUrl.hostname}:1112/api/update`;
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 120000);
+
+        await fetch(updaterUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}), // empty = keep current config
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+      } catch (e) {
+        // Expected: the server restarts mid-request, connection drops
+        console.log('System update request sent (connection may have dropped as expected).');
+      } finally {
+        // Give the system time to restart before dismissing
+        setTimeout(() => {
+          setIsSystemUpdating(false);
+          fetchUpdates();
+        }, 8000);
+      }
     } else {
-      // Aggiornamento standard (background)
+      // Standard container update (background)
       setUpdatingContainerId(item.id);
       try {
         await apiClient.post(`/api/docker/containers/${item.id}/update`, { image: item.image });
-        // The container stays in the list; progress will be shown via fetchTasks
       } catch (err) {
         showAlert('Error', err.response?.data?.error || err.message);
       } finally {
@@ -179,7 +209,7 @@ export default function UpdatesScreen({ navigation }) {
     setAppUpdateProgress(0);
     try {
       const fileUri = FileSystem.cacheDirectory + 'app-release.apk';
-      
+
       const fileInfo = await FileSystem.getInfoAsync(fileUri);
       if (fileInfo.exists) {
         await FileSystem.deleteAsync(fileUri);
@@ -196,19 +226,19 @@ export default function UpdatesScreen({ navigation }) {
       );
 
       const { uri } = await downloadResumable.downloadAsync();
-      
+
       await AsyncStorage.setItem('latest_installed_tag', tag);
       if (releaseDate) {
         await AsyncStorage.setItem('latest_installed_date', releaseDate);
       }
-      
+
       const contentUri = await FileSystem.getContentUriAsync(uri);
       await IntentLauncher.startActivityAsync('android.intent.action.VIEW', {
         data: contentUri,
-        flags: 1, 
+        flags: 1,
         type: 'application/vnd.android.package-archive'
       });
-      
+
     } catch (e) {
       showAlert('Update Error', e.message);
     } finally {
@@ -235,16 +265,16 @@ export default function UpdatesScreen({ navigation }) {
         setAppUpdate(null);
         return;
       }
-      
+
       const betaSetting = await AsyncStorage.getItem('beta_updates');
       const includeBeta = betaSetting !== 'false'; // Default to true unless explicitly disabled
       const availableReleases = res.data.filter(r => includeBeta ? true : !r.prerelease);
-      
+
       if (availableReleases.length === 0) {
         setAppUpdate(null);
         return;
       }
-      
+
       // Helper function to parse semantic versioning from tag (e.g. v1.1.0-beta)
       const parseSemver = (tag) => {
         const m = tag.match(/v(\d+)\.(\d+)\.(\d+)(?:-(.*))?/);
@@ -273,11 +303,11 @@ export default function UpdatesScreen({ navigation }) {
         // Fallback to date if tags are identical or not semver
         return new Date(b.published_at || b.created_at) - new Date(a.published_at || a.created_at);
       });
-      
+
       const latestRelease = availableReleases[0];
       const latestTag = latestRelease.tag_name;
       const latestDate = latestRelease.published_at || latestRelease.created_at;
-      
+
       const storedDate = await AsyncStorage.getItem('latest_installed_date');
       const storedLatest = await AsyncStorage.getItem('latest_installed_tag');
 
@@ -347,7 +377,7 @@ export default function UpdatesScreen({ navigation }) {
             </View>
           </View>
           <View style={{ alignItems: 'flex-end', gap: 8 }}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={{ backgroundColor: colors.primary, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 }}
               onPress={() => downloadAndInstallApp(item.url, item.tag, item.date)}
             >
@@ -360,7 +390,7 @@ export default function UpdatesScreen({ navigation }) {
 
     const task = tasks[item.id];
     const isRecreating = !!task;
-    
+
     return (
       <View style={[styles.card, isTablet && { flex: 1 }, { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' }]}>
         <View style={[styles.cardInfo, { flex: 1, paddingRight: 16 }]}>
@@ -393,7 +423,7 @@ export default function UpdatesScreen({ navigation }) {
           )}
         </View>
         <View style={{ alignItems: 'flex-end', gap: 8 }}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={{ backgroundColor: colors.primary, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, opacity: (updatingContainerId === item.id || isRecreating) ? 0.5 : 1 }}
             onPress={() => handleUpdate(item)}
             disabled={updatingContainerId === item.id || isRecreating}
@@ -418,15 +448,15 @@ export default function UpdatesScreen({ navigation }) {
           <Text style={styles.containerName}>CasaOS System</Text>
           <Text style={styles.imageName}>Main container settings</Text>
         </View>
-        <TouchableOpacity 
-          style={styles.updateButton} 
+        <TouchableOpacity
+          style={styles.updateButton}
           onPress={() => navigation.navigate('SystemContainerSettings')}
         >
           <Settings color="#fff" size={20} />
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity 
+      <TouchableOpacity
         style={{ backgroundColor: colors.primary, padding: 16, borderRadius: CARD.borderRadius, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10, marginTop: 8 }}
         onPress={() => {
           checkUpdates();

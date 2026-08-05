@@ -34,7 +34,7 @@ export default function AdvancedScreen() {
   useEffect(() => {
     fetchPreferences();
     fetchLogs();
-    
+
     AsyncStorage.getItem('beta_updates').then(val => {
       setBetaUpdates(val === 'true');
     }).catch(e => console.error('Failed to load beta pref', e));
@@ -47,9 +47,9 @@ export default function AdvancedScreen() {
         'Pre-releases are in active development and can become very unstable. They are not recommended for production use. Do you want to enable them anyway?',
         [
           { text: 'Cancel', style: 'cancel' },
-          { 
-            text: 'Yes, Enable', 
-            style: 'destructive', 
+          {
+            text: 'Yes, Enable',
+            style: 'destructive',
             onPress: async () => {
               setBetaUpdates(true);
               try {
@@ -102,7 +102,7 @@ export default function AdvancedScreen() {
     try {
       const res = await apiClient.get('/api/system/preferences');
       const prefs = res.data || {};
-      
+
       await apiClient.post('/api/system/preferences', {
         ...prefs,
         telegramToken,
@@ -146,14 +146,16 @@ export default function AdvancedScreen() {
   const clearLogs = () => {
     showAlert('Clear Logs', 'Are you sure you want to clear the system logs?', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Yes, Clear', style: 'destructive', onPress: async () => {
-        try {
-          await apiClient.delete('/api/system/logs');
-          setLogs('');
-        } catch(e) {
-          showAlert('Error', 'Cannot clear logs');
+      {
+        text: 'Yes, Clear', style: 'destructive', onPress: async () => {
+          try {
+            await apiClient.delete('/api/system/logs');
+            setLogs('');
+          } catch (e) {
+            showAlert('Error', 'Cannot clear logs');
+          }
         }
-      }}
+      }
     ]);
   };
 
@@ -167,11 +169,11 @@ export default function AdvancedScreen() {
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + HEADER.totalOffset }]}
         keyboardShouldPersistTaps="handled"
       >
-        
+
         <View style={isTablet ? styles.tabletGrid : null}>
           <View style={[styles.section, isTablet && styles.tabletCard]}>
             <View style={styles.sectionHeader}>
@@ -182,8 +184,8 @@ export default function AdvancedScreen() {
             <Text style={styles.label}>Theme Mode</Text>
             <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
               {['system', 'light', 'dark'].map(mode => (
-                <TouchableOpacity 
-                  key={mode} 
+                <TouchableOpacity
+                  key={mode}
                   style={[styles.modeBtn, themeMode === mode && { backgroundColor: colors.primary, borderColor: colors.primary }]}
                   onPress={() => handleModeChange(mode)}
                 >
@@ -193,24 +195,24 @@ export default function AdvancedScreen() {
                 </TouchableOpacity>
               ))}
             </View>
-            
+
             <Text style={styles.label}>Graphic Theme</Text>
             <View style={styles.colorRow}>
               {predefinedThemes.map(theme => {
                 const isMonet = theme.id === 'monet';
                 let btnColor = theme.primary;
                 if (isMonet) {
-                  btnColor = (Platform.OS === 'android' && Platform.Version >= 31) 
-                    ? PlatformColor('@android:color/system_accent1_500') 
+                  btnColor = (Platform.OS === 'android' && Platform.Version >= 31)
+                    ? PlatformColor('@android:color/system_accent1_500')
                     : '#3b82f6';
                 }
-                
+
                 return (
-                  <TouchableOpacity 
-                    key={theme.id} 
+                  <TouchableOpacity
+                    key={theme.id}
                     style={[
-                      styles.colorCircle, 
-                      { 
+                      styles.colorCircle,
+                      {
                         backgroundColor: isDark ? theme.darkSurface : theme.lightSurface,
                         borderWidth: activeTheme === theme.id ? 2 : 1,
                         borderColor: activeTheme === theme.id ? colors.text : colors.border,
@@ -252,9 +254,9 @@ export default function AdvancedScreen() {
               <Send color={colors.text} size={24} />
               <Text style={styles.sectionTitle}>Telegram Notifications</Text>
             </View>
-            
+
             <Text style={styles.label}>Bot Token</Text>
-            <TextInput 
+            <TextInput
               style={styles.input}
               placeholder="Enter bot token"
               placeholderTextColor={colors.textSecondary}
@@ -264,7 +266,7 @@ export default function AdvancedScreen() {
             />
 
             <Text style={styles.label}>Chat ID</Text>
-            <TextInput 
+            <TextInput
               style={styles.input}
               placeholder="Enter chat ID"
               placeholderTextColor={colors.textSecondary}
@@ -289,7 +291,7 @@ export default function AdvancedScreen() {
             </View>
 
             <Text style={styles.label}>City Name</Text>
-            <TextInput 
+            <TextInput
               style={styles.input}
               placeholder="e.g. Rome, Milan, Naples"
               placeholderTextColor={colors.textSecondary}
@@ -334,25 +336,25 @@ export default function AdvancedScreen() {
           {/* Log di Sistema */}
           <View style={[styles.section, isTablet && styles.tabletCard]}>
             <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>System Logs</Text>
-            <TouchableOpacity onPress={fetchLogs}>
-              <RefreshCcw color={colors.primary} size={20} />
-            </TouchableOpacity>
-          </View>
-          
-          <View style={styles.logContainer}>
-            {logsLoading ? (
-              <ActivityIndicator color={colors.primary} />
-            ) : (
-              <ScrollView nestedScrollEnabled style={{ maxHeight: 300 }}>
-                {logs ? logs.split('\n').map((line, idx) => (
-                  <Text key={idx} style={[styles.logText, line.includes('[ERROR]') && { color: colors.error }]}>
-                    {line}
-                  </Text>
-                )) : <Text style={styles.logText}>No logs available.</Text>}
-              </ScrollView>
-            )}
-          </View>
+              <Text style={styles.sectionTitle}>System Logs</Text>
+              <TouchableOpacity onPress={fetchLogs}>
+                <RefreshCcw color={colors.primary} size={20} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.logContainer}>
+              {logsLoading ? (
+                <ActivityIndicator color={colors.primary} />
+              ) : (
+                <ScrollView nestedScrollEnabled style={{ maxHeight: 300 }}>
+                  {logs ? logs.split('\n').map((line, idx) => (
+                    <Text key={idx} style={[styles.logText, line.includes('[ERROR]') && { color: colors.error }]}>
+                      {line}
+                    </Text>
+                  )) : <Text style={styles.logText}>No logs available.</Text>}
+                </ScrollView>
+              )}
+            </View>
 
             <TouchableOpacity style={[styles.dangerBtn, { marginTop: 12 }]} onPress={clearLogs}>
               <Text style={styles.dangerBtnText}>Clear Logs</Text>
@@ -374,7 +376,7 @@ export default function AdvancedScreen() {
             App Version: {Constants.expoConfig?.version || '1.0.0'} ({Constants.expoConfig?.extra?.buildType || 'Dev'})
           </Text>
         </View>
-        
+
       </ScrollView>
 
     </KeyboardAvoidingView>
