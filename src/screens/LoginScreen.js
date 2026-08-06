@@ -69,8 +69,12 @@ export default function LoginScreen({ navigation }) {
         setError('Login failed. No token returned.');
       }
     } catch (err) {
-      const errorMsg = err.response ? `API Error: ${err.response.status}` : err.message;
-      setError(`Error: ${errorMsg}`);
+      if (err.response && err.response.data && err.response.data.setupRequired) {
+        setError('Setup required. Please complete the initial setup via the Web UI first.');
+      } else {
+        const errorMsg = err.response ? `API Error: ${err.response.status}` : err.message;
+        setError(`Error: ${errorMsg}`);
+      }
     } finally {
       setLoading(false);
     }
