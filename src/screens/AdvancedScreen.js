@@ -198,7 +198,7 @@ export default function AdvancedScreen() {
             </Text>
 
             <Text style={styles.label}>Backend Update Channel</Text>
-            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
+            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 24 }}>
               <TouchableOpacity
                 style={[styles.modeBtn, updateChannel === 'stable' && { backgroundColor: colors.primary, borderColor: colors.primary }]}
                 onPress={() => handleChannelChange('stable')}
@@ -210,6 +210,25 @@ export default function AdvancedScreen() {
                 onPress={() => handleChannelChange('dev')}
               >
                 <Text style={[styles.modeText, updateChannel === 'dev' && { color: '#fff' }]}>Dev</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.label}>Mobile App Updates</Text>
+            <Text style={{ ...typography.caption, color: colors.textSecondary, marginBottom: 8 }}>
+              Install pre-release updates (beta) that may contain bugs.
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
+              <TouchableOpacity
+                style={[styles.modeBtn, !betaUpdates && { backgroundColor: colors.primary, borderColor: colors.primary }]}
+                onPress={() => toggleBetaUpdates(false)}
+              >
+                <Text style={[styles.modeText, !betaUpdates && { color: '#fff' }]}>Stable</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modeBtn, betaUpdates && { backgroundColor: colors.primary, borderColor: colors.primary }]}
+                onPress={() => toggleBetaUpdates(true)}
+              >
+                <Text style={[styles.modeText, betaUpdates && { color: '#fff' }]}>Beta</Text>
               </TouchableOpacity>
             </View>
 
@@ -357,29 +376,6 @@ export default function AdvancedScreen() {
         </View>
 
         <View style={isTablet ? styles.tabletGrid : null}>
-          {/* Aggiornamenti App */}
-          <View style={[styles.section, isTablet && styles.tabletCard]}>
-            <View style={styles.sectionHeader}>
-              <DownloadCloud color={colors.text} size={24} />
-              <Text style={styles.sectionTitle}>App Updates</Text>
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <View style={{ flex: 1, marginRight: 16 }}>
-                <Text style={styles.label}>Receive Beta versions</Text>
-                <Text style={{ ...typography.caption, color: colors.textSecondary }}>
-                  Install pre-release updates (beta) that may contain bugs.
-                </Text>
-              </View>
-              <Switch
-                value={betaUpdates}
-                onValueChange={toggleBetaUpdates}
-                trackColor={{ false: colors.border, true: colors.primary }}
-                thumbColor={Platform.OS === 'android' ? (betaUpdates ? '#ffffff' : '#f4f3f4') : ''}
-              />
-            </View>
-          </View>
-
-          {/* Log di Sistema */}
           <View style={[styles.section, isTablet && styles.tabletCard]}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>System Logs</Text>
