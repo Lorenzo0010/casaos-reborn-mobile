@@ -260,7 +260,7 @@ export default function UpdatesScreen({ navigation }) {
     setIsCheckingApp(true);
     try {
       const repo = 'Lorenzo0010/casaos-reborn-mobile';
-      const res = await axios.get(`https://api.github.com/repos/${repo}/releases`, {
+      const res = await axios.get(`https://api.github.com/repos/${repo}/releases?t=${Date.now()}`, {
         headers: {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
           'Pragma': 'no-cache',
