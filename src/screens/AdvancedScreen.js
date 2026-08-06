@@ -27,6 +27,7 @@ export default function AdvancedScreen() {
   const [weatherCity, setWeatherCity] = useState('Roma');
   const [savingPrefs, setSavingPrefs] = useState(false);
   const [betaUpdates, setBetaUpdates] = useState(false);
+  const [updateChannel, setUpdateChannel] = useState('stable');
 
   const [logs, setLogs] = useState('');
   const [logsLoading, setLogsLoading] = useState(true);
@@ -78,6 +79,7 @@ export default function AdvancedScreen() {
         if (res.data.telegramToken) setTelegramToken(res.data.telegramToken);
         if (res.data.telegramChatId) setTelegramChatId(res.data.telegramChatId);
         if (res.data.weatherCity) setWeatherCity(res.data.weatherCity);
+        if (res.data.updateChannel) setUpdateChannel(res.data.updateChannel);
       }
     } catch (e) {
       console.error('Failed to load preferences', e);
@@ -143,6 +145,17 @@ export default function AdvancedScreen() {
     }).catch(e => console.error(e));
   };
 
+  const handleChannelChange = (channel) => {
+    setUpdateChannel(channel);
+    apiClient.get('/api/system/preferences').then(res => {
+      const prefs = res.data || {};
+      apiClient.post('/api/system/preferences', {
+        ...prefs,
+        updateChannel: channel
+      }).catch(e => console.error(e));
+    }).catch(e => console.error(e));
+  };
+
   const clearLogs = () => {
     showAlert('Clear Logs', 'Are you sure you want to clear the system logs?', [
       { text: 'Cancel', style: 'cancel' },
@@ -183,6 +196,23 @@ export default function AdvancedScreen() {
             <Text style={{ ...typography.caption, color: colors.textSecondary, marginBottom: 16 }}>
               Main container settings (Ports, Volumes, Environment, etc.)
             </Text>
+
+            <Text style={styles.label}>Backend Update Channel</Text>
+            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
+              <TouchableOpacity
+                style={[styles.modeBtn, updateChannel === 'stable' && { backgroundColor: colors.primary, borderColor: colors.primary }]}
+                onPress={() => handleChannelChange('stable')}
+              >
+                <Text style={[styles.modeText, updateChannel === 'stable' && { color: '#fff' }]}>Stable</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modeBtn, updateChannel === 'dev' && { backgroundColor: colors.primary, borderColor: colors.primary }]}
+                onPress={() => handleChannelChange('dev')}
+              >
+                <Text style={[styles.modeText, updateChannel === 'dev' && { color: '#fff' }]}>Dev</Text>
+              </TouchableOpacity>
+            </View>
+
             <TouchableOpacity style={styles.primaryBtn} onPress={() => navigation.navigate('SystemContainerSettings')}>
               <Settings color="#fff" size={20} style={{ marginRight: 8 }} />
               <Text style={styles.primaryBtnText}>Configure System</Text>
