@@ -69,8 +69,8 @@ export default function LoginScreen({ navigation }) {
         setError('Login failed. No token returned.');
       }
     } catch (err) {
-      if (err.response && err.response.data && err.response.data.setupRequired) {
-        setError('Setup required. Please complete the initial setup via the Web UI first.');
+      if (err.response && err.response.data && err.response.data.error) {
+        setError(`Error: ${err.response.data.error}`);
       } else {
         const errorMsg = err.response ? `API Error: ${err.response.status}` : err.message;
         setError(`Error: ${errorMsg}`);
@@ -83,8 +83,7 @@ export default function LoginScreen({ navigation }) {
   return (
     <KeyboardAvoidingView 
       style={{ flex: 1, backgroundColor: colors.background }} 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <View style={styles.card}>
