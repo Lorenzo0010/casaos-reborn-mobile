@@ -174,10 +174,16 @@ export default function UpdatesScreen({ navigation }) {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 120000);
 
+        // Extract the target tag from the update notification
+        let targetTag = 'latest';
+        if (item.image && item.image.includes(':')) {
+          targetTag = item.image.split(':')[1];
+        }
+
         await fetch(updaterUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({}), // empty = keep current config
+          body: JSON.stringify({ imageTag: targetTag }),
           signal: controller.signal
         });
         clearTimeout(timeoutId);
